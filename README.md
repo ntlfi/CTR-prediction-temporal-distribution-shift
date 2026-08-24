@@ -33,7 +33,7 @@ yourself; the script checksums whatever is there
 (sha256 `94ac7a46...2391a98`, 653,015,824 bytes) and tells you if it doesn't
 match the known-good copy.
 
-## Run the baselines
+## Run the P0 baselines
 
 ```bash
 python run_baselines.py --sample-frac 0.2   # quick preliminary pass
@@ -57,14 +57,72 @@ Outputs land in `results/`:
 - `per_day_logloss.png` — per-day log loss for all P0 methods
 - `findings.md` — short auto-generated summary of the run
 
-## Notes / limitations of this first pass
+## Run the P1/P2 methods
 
-This is a preliminary baseline comparison, not the full protocol in the PDF:
+Run `run_baselines.py` (P0) first — `run_advanced.py` reuses its saved
+`results/per_day_metrics.csv` and `results/comparison_table.csv` to build
+the combined comparison.
+
+```bash
+python run_advanced.py --sample-frac 0.2   # quick preliminary pass
+python run_advanced.py                     # full dataset
+```
+
+Three methods, each reproducing a specific published mechanism rather than
+a heuristic stand-in (PDF 3.5–3.7):
+
+- **`han_arw`** (`han_arw.py`) — Han, Huang & Wang, *Model Assessment and
+  Selection under Temporal Distribution Shift*, ICML 2024
+  ([arXiv:2402.08672](https://arxiv.org/abs/2402.08672),
+  [reference code](https://github.com/eliselyhan/ARW)). Reproduces their
+  Algorithm 1 (Goldenshluger–Lepski bias/variance-adaptive windowed mean)
+  and Algorithm 3 (single-elimination tournament of Algorithm 2 pairwise
+  comparisons) to pick, fresh for every prediction day, among the P0
+  window-family candidates (expanding + rolling 1/3/7/14) using only their
+  historical per-sample loss trajectories. Unlike `validation_selected`
+  (frozen once), the effective window can change every test day.
+- **`diff_forgetting`** (`diff_forgetting.py`) — Bennett & Clarkson,
+  *Differentiable Forgetting* ([reference
+  code](https://github.com/jase-clarkson/pods_2022_icml_ts)). Learns a
+  scalar exponential-decay rate η (their "GradExp" weighting,
+  `α(τ)=exp(-ητ)`) via the paper's bilevel structure: an inner model fit on
+  age-weighted history, an outer objective evaluated on a chronologically
+  *later* held-out slice (never a random split) that picks η, then a final
+  refit on all permissible history with the learned η. η is optimized by
+  bounded derivative-free search (`scipy.optimize.minimize_scalar`) rather
+  than the paper's implicit-function-theorem hypergradients, since those
+  need a differentiable inner solver that `SGDClassifier` doesn't expose —
+  the paper's own `GridSearchExp` ablation is exactly this substitute for a
+  single decay parameter.
+- **`adamoe`** (`adamoe.py`) — Liu et al., *On the Adaptation to Concept
+  Drift for CTR Prediction* (AdaMoE). Reproduces AdaMoE's actual novelty —
+  a closed-form, gradient-free EMA update of per-expert aggregation
+  weights, based on each expert's per-sample correctness — using the P0
+  window-family models as the experts (the paper's own backbone is
+  explicitly swappable). Weights for day *t*'s prediction are the EMA as of
+  day *t*-1, updated only after *t*'s true labels are observed, so nothing
+  leaks.
+
+Additional outputs in `results/`:
+- `p1_p2_per_day_metrics.csv`, `all_methods_per_day_metrics.csv`,
+  `all_methods_comparison_table.csv`, `all_methods_per_day_logloss.png` —
+  P1/P2 combined with the P0 results
+- `han_arw_selected_window.csv` — selected window per prediction day
+- `diff_forgetting_eta.csv` — learned η / implied half-life per prediction day
+- `adamoe_expert_weights.csv` — EMA expert-weight trajectory
+- `advanced_memory_behavior.png` — Han ARW's selected window and
+  Differentiable Forgetting's learned half-life over time
+- `advanced_findings.md` — short auto-generated summary
+
+## Notes / limitations
+
 - Dev/test split is a simple last-N-days holdout, not full rolling-origin
   cross-validation within development.
-- Only the P0 baselines are implemented (expanding ERM, rolling windows,
-  exponential forgetting, validation-selected window). Han et al. adaptive
-  rolling window, Differentiable Forgetting, and the CTR-specific P2 model
-  (AdaMoE/SFTL) are P1/P2 and not built yet.
+- SFTL (the P2 alternative to AdaMoE) is not implemented — its trajectory
+  loss assumes gradient-based minibatch training with pairwise ranking,
+  a much larger lift to adapt to this benchmark's per-day-refit logistic
+  regression than AdaMoE's closed-form weight update.
 - No leakage/reproducibility test suite yet (PDF section 8 acceptance
   tests) — the day-based masks are the only leakage guard so far.
+- The autobidding stage (PDF section 11) is out of scope until this
+  prediction benchmark is frozen.

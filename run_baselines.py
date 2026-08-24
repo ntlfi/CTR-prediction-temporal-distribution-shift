@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 from baselines import build_candidates, fit_predict, WINDOW_FAMILY
 from data import load_dataset
 from metrics import day_metrics
+from splits import compute_splits
 
 
 def run_all_days(X, y, day, days, candidates, alpha, seed):
@@ -126,10 +127,7 @@ def main():
                               sample_frac=args.sample_frac, seed=args.seed)
     print(f"Loaded {X.shape[0]} rows, {day.max() + 1} days, click rate {y.mean():.3f}")
 
-    eligible_days = np.arange(args.warmup_days + 1, day.max() + 1)
-    n_test_days = max(1, int(round(len(eligible_days) * args.test_frac)))
-    dev_days = set(eligible_days[:-n_test_days])
-    test_days = set(eligible_days[-n_test_days:])
+    eligible_days, dev_days, test_days = compute_splits(day, args.warmup_days, args.test_frac)
     print(f"Dev days: {sorted(dev_days)}")
     print(f"Test days (locked): {sorted(test_days)}")
 
