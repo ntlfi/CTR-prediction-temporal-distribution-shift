@@ -168,14 +168,42 @@ three P1/P2 methods default to "use everything" — recency-based adaptation
 has no notion of periodicity, so it can't track a cycle even though it
 clearly can track a one-off regime change.
 
+## SFTL (`sftl.py`)
+
+The other P2 alternative (PDF 3.7): Zhu et al.'s *Generalize for Future:
+Slow and Fast Trajectory Learning for CTR Prediction* (SFTL), AAAI 2024.
+Unlike every other method here, it isn't built on the `SGDClassifier`
+window-family infrastructure — it needed a genuine neural model (embedding
++ MLP) and its own continuous streaming-training loop, since its
+"trajectory loss" only makes sense as a training-time regularizer on a
+differentiable model trained across the whole chronological stream:
+
+```bash
+python run_sftl.py --source synthetic --synthetic-days 120 --synthetic-drift abrupt --synthetic-shift-day 95 --epochs-per-domain 5 --out results_synthetic_abrupt
+```
+
+Three copies of one model — a working learner (trained every minibatch), a
+slow learner (hard-copied from the working learner once per day), and a
+fast learner (EMA of the working learner, served at inference) — coupled by
+a bipartite-ranking loss that pushes the working learner to exceed the
+slow/fast learner's own margin. Reproducing this surfaced a real bug: the
+trajectory loss has no natural floor (the slow learner is a hard copy of an
+already-more-confident past self every domain), and the paper doesn't
+disclose its loss weights — a naive guess of 1.0 caused runaway confidence
+escalation (log loss > 4 before evaluation even started). Lowered to 0.05
+(found empirically, documented in `sftl.py`), training is stable, but
+**SFTL still underperforms every other method in every drift mode tested**,
+worst of all under `abrupt` drift — the opposite of what a dual-timescale
+method should show, and the opposite of `han_arw`'s behavior. Full
+mechanistic write-up, including why (a ranking loss with no absolute
+calibration anchor, plus likely far less data/capacity per domain than the
+paper's industrial-scale datasets), is in
+[`results/sftl_analysis.md`](results/sftl_analysis.md).
+
 ## Notes / limitations
 
 - Dev/test split is a simple last-N-days holdout, not full rolling-origin
   cross-validation within development.
-- SFTL (the P2 alternative to AdaMoE) is not implemented — its trajectory
-  loss assumes gradient-based minibatch training with pairwise ranking,
-  a much larger lift to adapt to this benchmark's per-day-refit logistic
-  regression than AdaMoE's closed-form weight update.
 - No leakage/reproducibility test suite yet (PDF section 8 acceptance
   tests) — the day-based masks are the only leakage guard so far.
 - The autobidding stage (PDF section 11) is out of scope until this

@@ -7,6 +7,7 @@ anonymized contextual categories (cat1-cat9). Everything else in the raw file
 last click) either happens after the impression or leaks the outcome, so it
 is dropped.
 """
+import hashlib
 from pathlib import Path
 
 import numpy as np
@@ -47,6 +48,23 @@ def hash_features(df: pd.DataFrame, columns=CAT_COLUMNS, n_features: int = 2**18
     for col in columns:
         tokens[col] = col + "=" + tokens[col]
     return hasher.transform(tokens.values.tolist())
+
+
+def hash_indices(df: pd.DataFrame, columns=CAT_COLUMNS, vocab_size: int = 2**16) -> np.ndarray:
+    """Per-column integer embedding indices in [0, vocab_size), for the
+    neural (embedding + MLP) model used by sftl.py. Uses the same
+    "column=value" token convention as hash_features, hashed with md5 for
+    determinism regardless of PYTHONHASHSEED. Only unique values per
+    column are hashed, not every row.
+    """
+    out = np.zeros((len(df), len(columns)), dtype=np.int64)
+    for j, col in enumerate(columns):
+        tokens = (col + "=" + df[col].astype(str)).to_numpy()
+        uniques, inverse = np.unique(tokens, return_inverse=True)
+        buckets = np.array(
+            [int(hashlib.md5(u.encode()).hexdigest(), 16) % vocab_size for u in uniques], dtype=np.int64)
+        out[:, j] = buckets[inverse]
+    return out
 
 
 def load_dataset(tsv_path: str | Path, n_features: int = 2**18, sample_frac: float = 1.0, seed: int = 0):
