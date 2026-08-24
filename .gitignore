@@ -4,5 +4,4 @@ __pycache__/
 data/*.tsv.gz
 data/*.zip
 data/*.csv
-results/
 .ipynb_checkpoints/
