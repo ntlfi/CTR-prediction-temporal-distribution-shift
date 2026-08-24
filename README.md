@@ -113,6 +113,10 @@ Additional outputs in `results/`:
 - `advanced_memory_behavior.png` — Han ARW's selected window and
   Differentiable Forgetting's learned half-life over time
 - `advanced_findings.md` — short auto-generated summary
+- [`analysis.md`](results/analysis.md) — hand-written findings note (PDF
+  deliverable in section 9): when recency helps, when history helps, and
+  why none of the P1/P2 methods clearly beat the simplest P0 baseline on
+  this dataset
 
 ## Notes / limitations
 
