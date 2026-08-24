@@ -34,15 +34,17 @@ def load_raw(tsv_path: str | Path, sample_frac: float = 1.0, seed: int = 0) -> p
     return df
 
 
-def hash_features(df: pd.DataFrame, n_features: int = 2**18) -> "scipy.sparse.csr_matrix":
-    """Hash the categorical context columns into a fixed-width sparse matrix.
+def hash_features(df: pd.DataFrame, columns=CAT_COLUMNS, n_features: int = 2**18) -> "scipy.sparse.csr_matrix":
+    """Hash categorical columns into a fixed-width sparse matrix.
 
     Each row becomes a list of "column=value" string tokens, matching the
-    hashing-trick approach used in the dataset's original paper.
+    hashing-trick approach used in the dataset's original paper. `columns`
+    defaults to the Criteo context columns but is reused as-is by
+    synthetic_data.py for the drift-injection experiments.
     """
     hasher = FeatureHasher(n_features=n_features, input_type="string")
-    tokens = df[CAT_COLUMNS].astype(str)
-    for col in CAT_COLUMNS:
+    tokens = df[columns].astype(str)
+    for col in columns:
         tokens[col] = col + "=" + tokens[col]
     return hasher.transform(tokens.values.tolist())
 

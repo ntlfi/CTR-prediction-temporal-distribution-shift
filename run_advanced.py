@@ -22,7 +22,7 @@ from adamoe import run_adamoe
 from baselines import WINDOW_FAMILY
 from candidate_bank import build_candidate_bank
 import diff_forgetting
-from data import load_dataset
+from data_source import add_data_source_args, load_data
 from han_arw import run_han_arw
 from metrics import day_metrics
 from run_baselines import aggregate_table
@@ -100,8 +100,7 @@ def plot_memory_behavior(han_rows, df_results, out_path: Path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--data", default="data/criteo_attribution_dataset.tsv.gz")
-    parser.add_argument("--sample-frac", type=float, default=1.0)
+    add_data_source_args(parser)
     parser.add_argument("--n-features", type=int, default=2**18)
     parser.add_argument("--warmup-days", type=int, default=3)
     parser.add_argument("--test-frac", type=float, default=0.3)
@@ -119,9 +118,7 @@ def main():
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Loading data from {args.data} (sample_frac={args.sample_frac}) ...")
-    X, y, day = load_dataset(args.data, n_features=args.n_features,
-                              sample_frac=args.sample_frac, seed=args.seed)
+    X, y, day = load_data(args, args.n_features, args.seed)
     print(f"Loaded {X.shape[0]} rows, {day.max() + 1} days, click rate {y.mean():.3f}")
 
     eligible_days, dev_days, test_days = compute_splits(day, args.warmup_days, args.test_frac)

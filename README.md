@@ -118,6 +118,46 @@ Additional outputs in `results/`:
   why none of the P1/P2 methods clearly beat the simplest P0 baseline on
   this dataset
 
+## Synthetic drift-injection experiments
+
+The real Criteo Attribution dataset (31 days) shows only shallow drift —
+every P1/P2 method converges to roughly what a static 7-day window already
+gives (see [`results/analysis.md`](results/analysis.md)). Neither the
+papers being reproduced here nor the general CTR-benchmark literature
+(AdaMoE's own public benchmark, Ali-CCP, Criteo 1TB, Avazu) offer a public,
+CTR-native dataset with a genuinely long horizon and documented drift — the
+two papers that needed real multi-month/multi-year drift to demonstrate
+their own methods (Han et al., Differentiable Forgetting) had to leave the
+CTR domain entirely (text-topic trends, real-estate prices, equities) to
+find it.
+
+`synthetic_data.py` follows the same workaround: a synthetic CTR generator
+with a *known* ground-truth logistic model whose weights evolve over a much
+longer horizon according to a chosen schedule, so every method's tracking
+behavior can be checked against a true process instead of inferred
+indirectly from held-out loss on data whose true process is unknown. Same
+`(X, y, day)` interface as `data.load_dataset`, so every P0/P1/P2 method
+runs against it unchanged via `--source synthetic`:
+
+```bash
+python run_baselines.py --source synthetic --synthetic-days 120 --synthetic-drift abrupt --synthetic-shift-day 95 --out results_synthetic_abrupt
+python run_advanced.py  --source synthetic --synthetic-days 120 --synthetic-drift abrupt --synthetic-shift-day 95 --out results_synthetic_abrupt
+```
+
+Drift schedules (`--synthetic-drift`):
+- `none` — stationary ground truth; sanity check that no method claims a
+  spurious advantage when there is nothing to adapt to.
+- `abrupt` — a single full regime swap at `--synthetic-shift-day`; tests
+  recovery speed right after a sharp change (PDF section 10's "recovers
+  slowly after abrupt shifts").
+- `gradual` — the true weights interpolate linearly across the whole
+  horizon; tests whether recency/decay/window choice keeps pace with
+  continuous drift.
+- `recurring` — the true weights oscillate with period
+  `--synthetic-period-days`; tests whether recency-based adaptation
+  (none of these methods model periodicity explicitly) can still track a
+  cyclical regime.
+
 ## Notes / limitations
 
 - Dev/test split is a simple last-N-days holdout, not full rolling-origin

@@ -16,7 +16,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from baselines import build_candidates, fit_predict, WINDOW_FAMILY
-from data import load_dataset
+from data_source import add_data_source_args, load_data
 from metrics import day_metrics
 from splits import compute_splits
 
@@ -106,9 +106,7 @@ def plot_hindsight_window(hindsight: pd.Series, out_path: Path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--data", default="data/criteo_attribution_dataset.tsv.gz")
-    parser.add_argument("--sample-frac", type=float, default=1.0,
-                         help="Subsample rows for a faster preliminary run.")
+    add_data_source_args(parser)
     parser.add_argument("--n-features", type=int, default=2**18, help="Hashing-trick dimensionality.")
     parser.add_argument("--warmup-days", type=int, default=3,
                          help="Skip this many initial days (too little history to be meaningful).")
@@ -122,9 +120,7 @@ def main():
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Loading data from {args.data} (sample_frac={args.sample_frac}) ...")
-    X, y, day = load_dataset(args.data, n_features=args.n_features,
-                              sample_frac=args.sample_frac, seed=args.seed)
+    X, y, day = load_data(args, args.n_features, args.seed)
     print(f"Loaded {X.shape[0]} rows, {day.max() + 1} days, click rate {y.mean():.3f}")
 
     eligible_days, dev_days, test_days = compute_splits(day, args.warmup_days, args.test_frac)
