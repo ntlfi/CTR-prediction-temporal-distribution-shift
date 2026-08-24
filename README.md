@@ -158,6 +158,16 @@ Drift schedules (`--synthetic-drift`):
   (none of these methods model periodicity explicitly) can still track a
   cyclical regime.
 
+Results for a 120-day run of all four modes are in
+`results_synthetic_{none,abrupt,gradual,recurring}/`, analyzed in
+[`results/synthetic_analysis.md`](results/synthetic_analysis.md). Headline:
+`han_arw` decisively beats every static P0 baseline under `abrupt` drift
+(tracking the regime change day-by-day, visible in
+`han_arw_selected_window.csv`), but under `recurring` (cyclical) drift all
+three P1/P2 methods default to "use everything" — recency-based adaptation
+has no notion of periodicity, so it can't track a cycle even though it
+clearly can track a one-off regime change.
+
 ## Notes / limitations
 
 - Dev/test split is a simple last-N-days holdout, not full rolling-origin
