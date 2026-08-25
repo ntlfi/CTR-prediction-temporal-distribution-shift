@@ -35,17 +35,41 @@ lambda_s/lambda_f, and the warmup length. The defaults below are
 reasonable choices, not reproductions of the authors' own tuning --
 documented in README.md.
 
-Stability note (found empirically, not in the paper): lambda_s/lambda_f
-need to be small (default 0.05). The trajectory loss has no equilibrium on
-its own -- since the slow learner is a hard copy of the working learner at
+Stability note (found empirically, not in the paper; see
+results/sftl_debug_findings.md for the full staged diagnosis run against
+sftl-debugging-plan.pdf): the trajectory loss has no equilibrium on its
+own -- since the slow learner is a hard copy of the working learner at
 each domain boundary, "beat the slow learner's margin" becomes "beat your
 own slightly-more-confident-than-last-time past self" every domain, a
 positive feedback loop. At lambda=1.0 this makes predicted probabilities
 escalate toward 0/1 within a handful of domains (log loss > 4 by the time
-locked-test evaluation starts); at lambda=0.05 the BCE term's calibration
-pull dominates and log loss stays stable and comparable to a no-trajectory-
-loss ablation over a 60-domain run. This may just reflect that the paper's
-own lambda_s/lambda_f (undisclosed) are similarly small.
+locked-test evaluation starts).
+
+CORRECTION to an earlier claim in this file: lambda=0.05 (this module's
+default, and the value used for the reported production results) does
+*not* keep training stable -- it only delays the runaway. A 60-domain
+check looked fine, but over the full 120-domain production run, logits
+reach the tens of thousands by day 90 (well before any actual distribution
+shift), i.e. numerically saturated predictions; AUC stays reasonable
+throughout (ranking survives) while log loss is already far worse than
+every other method's on the same days -- a clean calibration-runaway
+signature, not a ranking failure. Measuring gradient norms directly (not
+just loss values, which stay near a flat, misleadingly reassuring plateau)
+shows why: the trajectory term's gradient is already 3-4.5x larger than
+BCE's from the first domain it activates in, and that ratio *grows* over
+training even with nothing in the environment changing. Choosing lambda by
+target gradient contribution rather than arbitrary scale shows a clean
+dose-response (1% target contribution ~= BCE-only baseline; lambda=0.05
+corresponds to ~14-15% initial contribution, already past where
+degradation becomes visible). A properly small lambda (~1-5% target
+contribution, i.e. roughly 10-50x smaller than 0.05) is a real, actionable
+fix direction for the calibration problem specifically -- but even a
+BCE-only model at this benchmark's data scale still underperforms the
+simple window baselines, so this alone would not make SFTL competitive
+here. lambda_s/lambda_f are not changed from 0.05 in this file, since
+that is the value the reported results/sftl_analysis.md numbers use;
+retuning would be a new, separately-labeled variant, not a silent edit to
+what's already reported as SFTL.
 """
 import copy
 import time
@@ -54,6 +78,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+
+def ema_half_life_to_alpha(half_life_steps: float) -> float:
+    """alpha = 2^(-1/H): the EMA coefficient whose half-life is H optimizer
+    steps (debugging-plan Stage 4 convention -- interpretable independent of
+    how many updates a domain happens to contain)."""
+    return 2 ** (-1.0 / half_life_steps)
 
 
 class CTRNet(nn.Module):
@@ -85,7 +116,8 @@ class SFTL:
     def __init__(self, n_columns: int, vocab_size: int = 2**16, embed_dim: int = 16, hidden=(128, 64),
                  lr: float = 1e-3, weight_decay: float = 1e-5, ema_alpha: float = 0.9,
                  lambda_slow: float = 0.05, lambda_fast: float = 0.05, warmup_domains: int = 3,
-                 batch_size: int = 512, seed: int = 0, device: str = "cpu"):
+                 batch_size: int = 512, seed: int = 0, device: str = "cpu",
+                 use_slow_trajectory: bool = True, use_fast_trajectory: bool = True):
         torch.manual_seed(seed)
         self.device = device
         self.working = CTRNet(n_columns, vocab_size, embed_dim, hidden).to(device)
@@ -104,14 +136,68 @@ class SFTL:
         self.batch_size = batch_size
         self.domain_idx = 0
         self.n_seen = 0
+        # Debugging-plan Stage 5 ablation switches: disabling one trajectory
+        # term entirely (not just zeroing its lambda) isolates whether one
+        # signal alone is responsible for instability.
+        self.use_slow_trajectory = use_slow_trajectory
+        self.use_fast_trajectory = use_fast_trajectory
+
+    def _predict_net(self, net: nn.Module, x_idx: np.ndarray) -> np.ndarray:
+        net.eval()
+        with torch.no_grad():
+            x = torch.as_tensor(x_idx, dtype=torch.long, device=self.device)
+            return torch.sigmoid(net(x)).cpu().numpy()
 
     def predict_fast(self, x_idx: np.ndarray) -> np.ndarray:
         """Fast learner's predictions -- what the paper serves at inference,
         since it "captures more short-term temporal information."""
-        self.fast.eval()
+        return self._predict_net(self.fast, x_idx)
+
+    def predict_working(self, x_idx: np.ndarray) -> np.ndarray:
+        """Working learner's predictions -- for debugging-plan Stage 1/2,
+        to locate which branch (working vs. fast/slow/EMA) a failure is in."""
+        return self._predict_net(self.working, x_idx)
+
+    def predict_slow(self, x_idx: np.ndarray) -> np.ndarray:
+        return self._predict_net(self.slow, x_idx)
+
+    def margin_and_logits(self, net: nn.Module, x_idx: np.ndarray, y: np.ndarray):
+        """Debugging-plan Stage 2/3: positive-negative margin and raw logit
+        statistics for one learner on one day's data."""
+        net.eval()
         with torch.no_grad():
             x = torch.as_tensor(x_idx, dtype=torch.long, device=self.device)
-            return torch.sigmoid(self.fast(x)).cpu().numpy()
+            logits = net(x).cpu().numpy()
+        pos, neg = y == 1, y == 0
+        margin = float(logits[pos].mean() - logits[neg].mean()) if pos.sum() > 0 and neg.sum() > 0 else float("nan")
+        return margin, logits
+
+    def measure_gradient_norms(self, x_idx: np.ndarray, y: np.ndarray) -> dict:
+        """Debugging-plan Stage 6: ||grad(BCE)|| and ||grad(trajectory term)||
+        computed SEPARATELY on one batch via the functional autograd API, so
+        this is a pure measurement -- no .grad populated, no optimizer step,
+        the actual training run is unaffected by calling this."""
+        net = self.working
+        net.train()
+        x = torch.as_tensor(x_idx, dtype=torch.long, device=self.device)
+        yt = torch.as_tensor(y, dtype=torch.float32, device=self.device)
+        logits = net(x)
+        bce = self.bce(logits, yt)
+        traj_s = self._trajectory_loss(logits, self.slow, x, yt)
+        traj_f = self._trajectory_loss(logits, self.fast, x, yt)
+        params = [p for p in net.parameters() if p.requires_grad]
+
+        def norm_of(loss):
+            if float(loss.item()) == 0.0:
+                return 0.0
+            grads = torch.autograd.grad(loss, params, retain_graph=True, allow_unused=True)
+            sq = sum((g ** 2).sum().item() for g in grads if g is not None)
+            return sq ** 0.5
+
+        return {
+            "bce_loss": float(bce.item()), "traj_s_loss": float(traj_s.item()), "traj_f_loss": float(traj_f.item()),
+            "bce_grad_norm": norm_of(bce), "traj_s_grad_norm": norm_of(traj_s), "traj_f_grad_norm": norm_of(traj_f),
+        }
 
     def _trajectory_loss(self, working_logits: torch.Tensor, target_net: nn.Module,
                           x_idx: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
@@ -131,7 +217,8 @@ class SFTL:
         # which happens easily with randomly-initialized embeddings.
         return F.softplus(-(u - v)).mean()
 
-    def train_domain(self, x_idx: np.ndarray, y: np.ndarray, rng: np.random.Generator, epochs: int = 1):
+    def train_domain(self, x_idx: np.ndarray, y: np.ndarray, rng: np.random.Generator, epochs: int = 1,
+                      collect_stats: bool = False):
         """`epochs` passes over one domain's (day's) data. The paper reports
         results for both a one-pass streaming setting (epochs=1) and a
         standard multi-epoch setting -- at this benchmark's smaller
@@ -139,12 +226,18 @@ class SFTL:
         industrial daily volumes), one pass gives too few gradient steps
         for the embeddings to leave their random initialization, so the
         default here uses their multi-epoch variant instead (see
-        --epochs-per-domain in run_sftl.py)."""
+        --epochs-per-domain in run_sftl.py).
+
+        `collect_stats=True` (debugging-plan Stage 2) returns the mean BCE /
+        slow-trajectory / fast-trajectory loss over this domain's batches;
+        otherwise returns None with no extra overhead.
+        """
         self.working.train()
         n = len(y)
         x_all = torch.as_tensor(x_idx, dtype=torch.long, device=self.device)
         y_all = torch.as_tensor(y, dtype=torch.float32, device=self.device)
         use_trajectory = self.domain_idx >= self.warmup_domains
+        stats = {"bce": [], "traj_s": [], "traj_f": []} if collect_stats else None
 
         for _ in range(epochs):
             perm = rng.permutation(n)
@@ -152,10 +245,18 @@ class SFTL:
                 idx = perm[start:start + self.batch_size]
                 xb, yb = x_all[idx], y_all[idx]
                 logits = self.working(xb)
-                loss = self.bce(logits, yb)
+                bce = self.bce(logits, yb)
+                loss = bce
+                traj_s_val = traj_f_val = 0.0
                 if use_trajectory:
-                    loss = (loss + self.lambda_slow * self._trajectory_loss(logits, self.slow, xb, yb)
-                                 + self.lambda_fast * self._trajectory_loss(logits, self.fast, xb, yb))
+                    if self.use_slow_trajectory and self.lambda_slow > 0:
+                        traj_s = self._trajectory_loss(logits, self.slow, xb, yb)
+                        loss = loss + self.lambda_slow * traj_s
+                        traj_s_val = float(traj_s.item())
+                    if self.use_fast_trajectory and self.lambda_fast > 0:
+                        traj_f = self._trajectory_loss(logits, self.fast, xb, yb)
+                        loss = loss + self.lambda_fast * traj_f
+                        traj_f_val = float(traj_f.item())
                 self.opt.zero_grad()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.working.parameters(), max_norm=5.0)
@@ -163,10 +264,17 @@ class SFTL:
                 with torch.no_grad():
                     for pf, pw in zip(self.fast.parameters(), self.working.parameters()):
                         pf.mul_(self.ema_alpha).add_(pw, alpha=1 - self.ema_alpha)
+                if collect_stats:
+                    stats["bce"].append(float(bce.item()))
+                    stats["traj_s"].append(traj_s_val)
+                    stats["traj_f"].append(traj_f_val)
 
         self.slow.load_state_dict(self.working.state_dict())  # domain-boundary hard copy (eq. 7)
         self.domain_idx += 1
         self.n_seen += n
+        if collect_stats:
+            return {k: float(np.mean(v)) if v else 0.0 for k, v in stats.items()}
+        return None
 
 
 def run_sftl(x_idx: np.ndarray, y: np.ndarray, day: np.ndarray, eligible_days,

@@ -26,10 +26,31 @@ domain 0 to `[0.00, 0.94]` by domain 9) isolated this to the trajectory
 loss specifically -- disabling it entirely gave stable, reasonable log loss
 (~0.5-0.6) throughout. Lowering `lambda_slow = lambda_fast` to **0.05**
 (found empirically, not disclosed in the paper) keeps the escalation slow
-enough that the BCE term's calibration pull dominates over a 60-domain
-test run. This is documented in `sftl.py`'s module docstring. All numbers
-below use this fixed, stable configuration -- the NaN/divergence bug is
-not the reason for the results that follow.
+enough that log loss looks stable over a 60-domain test run. This is
+documented in `sftl.py`'s module docstring. All numbers below use this
+configuration -- the NaN/divergence bug is not the reason for the results
+that follow.
+
+**Correction, found by the full staged debugging pass in
+[`sftl_debug_findings.md`](sftl_debug_findings.md):** `lambda=0.05` does
+*not* actually stay stable -- the 60-domain check above was too short to
+see it. Over the full 120-domain production run used below, logits reach
+the tens of thousands by day 90 (`max_abs_logit` up to 29,474, five days
+*before* the shift), with AUC still reasonable (0.876-0.887, ranking
+survives) while log loss is already far worse than every other method's on
+the same days. Measuring gradient norms (not just loss values, which stay
+on a misleadingly flat plateau) shows why: the trajectory term's gradient
+is 3-4.5x larger than BCE's from the moment it activates, and that ratio
+*grows* over training with nothing in the environment changing --
+`lambda=0.05` corresponds to roughly a 14-15% initial gradient
+contribution, already past where a clean dose-response sweep (Stage 6)
+shows visible degradation starts (~10%). A properly small lambda (~1-5%
+target contribution) does prevent the runaway in that same sweep, but even
+a BCE-only model at this benchmark's data scale still trails the simple
+window baselines -- so this is a diagnosed, fixable calibration bug
+layered on top of a separate, still-unresolved data-scale limitation, not
+a reason to expect a retuned SFTL to become competitive here without
+addressing both.
 
 ## Even stabilized, SFTL underperforms every other method in every mode
 

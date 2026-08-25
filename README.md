@@ -191,14 +191,25 @@ trajectory loss has no natural floor (the slow learner is a hard copy of an
 already-more-confident past self every domain), and the paper doesn't
 disclose its loss weights — a naive guess of 1.0 caused runaway confidence
 escalation (log loss > 4 before evaluation even started). Lowered to 0.05
-(found empirically, documented in `sftl.py`), training is stable, but
-**SFTL still underperforms every other method in every drift mode tested**,
-worst of all under `abrupt` drift — the opposite of what a dual-timescale
-method should show, and the opposite of `han_arw`'s behavior. Full
-mechanistic write-up, including why (a ranking loss with no absolute
-calibration anchor, plus likely far less data/capacity per domain than the
-paper's industrial-scale datasets), is in
-[`results/sftl_analysis.md`](results/sftl_analysis.md).
+(found empirically), training merely *looks* stable over a short check —
+**a full staged debugging pass (`debug_sftl.py`, following
+[`sftl-debugging-plan.pdf`](sftl-debugging-plan.pdf)) found that 0.05 only
+delays the same runaway**: logits reach the tens of thousands by day 90 of
+the full 120-day run, days before any actual drift, while AUC stays fine
+(ranking survives) and log loss is already far worse than every other
+method — a clean calibration/confidence-runaway diagnosis, confirmed by
+measuring gradient norms directly (the trajectory term's gradient is
+3-4.5x larger than BCE's and grows over training, invisible if you only
+watch the loss value). **SFTL underperforms every other method in every
+drift mode tested**, worst of all under `abrupt` drift — the opposite of
+`han_arw`'s behavior. Implementation bug is ruled out (Stage 1 passes
+exactly); a properly small lambda is a real, quantified fix direction for
+the calibration problem, but even a BCE-only model still trails the simple
+window baselines at this benchmark's data scale, so the debugging plan's
+own stop criterion applies. Full analysis in
+[`results/sftl_analysis.md`](results/sftl_analysis.md) and the complete
+staged diagnosis in
+[`results/sftl_debug_findings.md`](results/sftl_debug_findings.md).
 
 ## Notes / limitations
 
