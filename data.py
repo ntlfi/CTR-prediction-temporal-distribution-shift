@@ -67,6 +67,27 @@ def hash_indices(df: pd.DataFrame, columns=CAT_COLUMNS, vocab_size: int = 2**16)
     return out
 
 
+def raw_numeric_features(df: pd.DataFrame, columns=CAT_COLUMNS) -> np.ndarray:
+    """Per-column raw category codes, each normalized to [0, 1] by its own
+    max -- a compact, dense per-example context vector for m2_context_gate
+    .py's gate to condition on, distinct from the hashed sparse features
+    used by the SGDClassifier candidates (hashing scrambles category codes
+    into buckets, destroying any ordinal/threshold structure a linear gate
+    could exploit). This carries a genuinely useful signal only when the
+    underlying codes have order -- true by construction for
+    synthetic_data.py's synthetic columns (e.g. its S4 local-drift group
+    split is literally a cat0 threshold); for Criteo's anonymized ids
+    it's just extra numeric input the gate's L2 penalty can learn to
+    downweight.
+    """
+    out = np.zeros((len(df), len(columns)), dtype=np.float64)
+    for j, col in enumerate(columns):
+        vals = df[col].to_numpy(dtype=np.float64)
+        vmax = vals.max()
+        out[:, j] = vals / vmax if vmax > 0 else vals
+    return out
+
+
 def load_dataset(tsv_path: str | Path, n_features: int = 2**18, sample_frac: float = 1.0, seed: int = 0):
     """Convenience wrapper: returns (X, y, day) ready for the baselines."""
     df = load_raw(tsv_path, sample_frac=sample_frac, seed=seed)
