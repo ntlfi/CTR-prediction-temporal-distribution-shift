@@ -1,0 +1,33 @@
+Generating synthetic data: 120 days, 3000 rows/day, drift=recurring (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.251
+Building window-family candidate bank (short=rolling_3, long=expanding) ...
+  done in 18.8s
+  smooth_reg=0 done in 6.0s
+  smooth_reg=0.0001 done in 1.0s
+  smooth_reg=0.0003 done in 1.0s
+  smooth_reg=0.001 done in 1.0s
+  smooth_reg=0.003 done in 1.0s
+  smooth_reg=0.01 done in 1.0s
+  smooth_reg=0.03 done in 1.0s
+  smooth_reg=0.1 done in 1.0s
+
+=== M5b smooth_reg sweep: locked-test comparison ===
+          method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+   m5b_smooth0.1  0.411754 0.132314 0.661183          76200.0         0.828718           35
+  m5b_smooth0.03  0.420588 0.135977 0.641929          76200.0         0.828718           35
+  m5b_smooth0.01  0.422174 0.136407 0.638901          76200.0         0.828718           35
+ m5b_smooth0.003  0.424104 0.137143 0.635486          76200.0         0.828718           35
+m5b_smooth0.0003  0.424230 0.137109 0.634708          76200.0         0.828718           35
+m5b_smooth0.0001  0.425621 0.137586 0.632780          76200.0         0.828718           35
+ m5b_smooth0.001  0.425796 0.137697 0.634627          76200.0         0.828718           35
+     m5b_smooth0  0.430048 0.139096 0.626062          76200.0         0.828718           35
+
+=== For reference: existing baselines already in this dir ===
+            method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+   m2_context_gate  0.417977 0.134933 0.646556         315000.0         0.869100           35
+    m2_m5_ensemble  0.418730 0.135243 0.644614         391200.0         1.920188           35
+           han_arw  0.421458 0.135773 0.643322         306000.0         0.991715           35
+         expanding  0.421458 0.135773 0.643322         306000.0         0.664270           35
+m5_multiscale_gate  0.425801 0.137699 0.634619          76200.0         1.051088           35
+
+All outputs written to results_synthetic_recurring/

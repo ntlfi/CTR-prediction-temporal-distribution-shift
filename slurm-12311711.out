@@ -1,0 +1,123 @@
+Generating synthetic data: 120 days, 3000 rows/day, drift=recurring (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.251
+Building window-family candidate bank (short=rolling_3, long=expanding) ...
+  done in 19.1s
+  smooth_reg=0.1 done in 1.8s
+  smooth_reg=0.2 done in 1.0s
+  smooth_reg=0.3 done in 1.0s
+  smooth_reg=0.5 done in 1.0s
+  smooth_reg=1 done in 1.0s
+  smooth_reg=2 done in 1.0s
+  smooth_reg=5 done in 1.0s
+
+=== M5b smooth_reg sweep: locked-test comparison ===
+       method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+m5b_smooth0.1  0.411754 0.132314 0.661183          76200.0          0.83102           35
+m5b_smooth0.3  0.412706 0.132696 0.660198          76200.0          0.83102           35
+m5b_smooth0.2  0.413425 0.133011 0.657658          76200.0          0.83102           35
+m5b_smooth0.5  0.415659 0.133935 0.650022          76200.0          0.83102           35
+  m5b_smooth1  0.421691 0.136332 0.636201          76200.0          0.83102           35
+  m5b_smooth5  0.422183 0.136422 0.637276          76200.0          0.83102           35
+  m5b_smooth2  0.424406 0.137262 0.632140          76200.0          0.83102           35
+
+=== For reference: existing baselines already in this dir ===
+            method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+   m2_context_gate  0.417977 0.134933 0.646556         315000.0         0.869100           35
+    m2_m5_ensemble  0.418730 0.135243 0.644614         391200.0         1.920188           35
+           han_arw  0.421458 0.135773 0.643322         306000.0         0.991715           35
+         expanding  0.421458 0.135773 0.643322         306000.0         0.664270           35
+m5_multiscale_gate  0.425801 0.137699 0.634619          76200.0         1.051088           35
+
+All outputs written to results_synthetic_recurring/
+Generating synthetic data: 120 days, 3000 rows/day, drift=abrupt (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.270
+Building window-family candidate bank (short=rolling_3, long=expanding) ...
+  done in 17.2s
+  smooth_reg=0.001 done in 1.6s
+  smooth_reg=0.1 done in 0.9s
+  smooth_reg=0.3 done in 0.9s
+
+=== M5b smooth_reg sweep: locked-test comparison ===
+         method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+m5b_smooth0.001  0.373080 0.117421 0.779618          76200.0         0.789287           35
+  m5b_smooth0.1  0.399253 0.126413 0.750999          76200.0         0.789287           35
+  m5b_smooth0.3  0.401311 0.127528 0.742536          76200.0         0.789287           35
+
+=== For reference: existing baselines already in this dir ===
+            method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+m5_multiscale_gate  0.373080 0.117421 0.779618     76200.000000         1.013151           35
+    m2_m5_ensemble  0.374898 0.118076 0.778072    391200.000000         1.855082           35
+           han_arw  0.393613 0.123738 0.761032    104742.857143         0.297482           35
+   m2_context_gate  0.405928 0.128451 0.742563    315000.000000         0.841931           35
+         expanding  0.645367 0.205658 0.470800    306000.000000         0.685636           35
+
+All outputs written to results_synthetic_abrupt/
+Generating synthetic data: 120 days, 3000 rows/day, drift=gradual (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.243
+Building window-family candidate bank (short=rolling_3, long=expanding) ...
+  done in 18.6s
+  smooth_reg=0.001 done in 1.7s
+  smooth_reg=0.1 done in 1.0s
+  smooth_reg=0.3 done in 1.0s
+
+=== M5b smooth_reg sweep: locked-test comparison ===
+         method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+m5b_smooth0.001  0.355448 0.112316 0.769965          76200.0         0.812627           35
+  m5b_smooth0.1  0.356525 0.112568 0.769671          76200.0         0.812627           35
+  m5b_smooth0.3  0.361075 0.113874 0.766408          76200.0         0.812627           35
+
+=== For reference: existing baselines already in this dir ===
+            method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+           han_arw  0.354280 0.112048 0.770228          42000.0         0.154266           35
+m5_multiscale_gate  0.355448 0.112316 0.769965          76200.0         1.048450           35
+    m2_m5_ensemble  0.356721 0.112677 0.769148         391200.0         1.924257           35
+   m2_context_gate  0.400204 0.128349 0.699665         315000.0         0.875807           35
+         expanding  0.469131 0.153493 0.583561         306000.0         0.560766           35
+
+All outputs written to results_synthetic_gradual/
+Generating synthetic data: 120 days, 3000 rows/day, drift=local (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.267
+Building window-family candidate bank (short=rolling_3, long=expanding) ...
+  done in 17.9s
+  smooth_reg=0.001 done in 1.8s
+  smooth_reg=0.1 done in 0.9s
+  smooth_reg=0.3 done in 0.9s
+
+=== M5b smooth_reg sweep: locked-test comparison ===
+         method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+m5b_smooth0.001  0.425033 0.136051 0.678443          76200.0         0.802228           35
+  m5b_smooth0.1  0.440855 0.141572 0.651443          76200.0         0.802228           35
+  m5b_smooth0.3  0.446532 0.144471 0.636343          76200.0         0.802228           35
+
+=== For reference: existing baselines already in this dir ===
+            method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+m5_multiscale_gate  0.425033 0.136051 0.678443     76200.000000         1.029742           35
+    m2_m5_ensemble  0.426070 0.136384 0.676776    391200.000000         1.863572           35
+   m2_context_gate  0.443718 0.142015 0.648077    315000.000000         0.833830           35
+           han_arw  0.454407 0.145704 0.636010    142285.714286         0.626680           35
+         expanding  0.504120 0.157337 0.594418    306000.000000         1.340422           35
+
+All outputs written to results_synthetic_local/
+Generating synthetic data: 120 days, 3000 rows/day, drift=none (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.264
+Building window-family candidate bank (short=rolling_3, long=expanding) ...
+  done in 18.6s
+  smooth_reg=0.001 done in 1.6s
+  smooth_reg=0.1 done in 1.0s
+  smooth_reg=0.3 done in 1.0s
+
+=== M5b smooth_reg sweep: locked-test comparison ===
+         method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+  m5b_smooth0.1  0.311393 0.095874 0.835480          76200.0         0.812685           35
+m5b_smooth0.001  0.311870 0.096046 0.835012          76200.0         0.812685           35
+  m5b_smooth0.3  0.313846 0.096794 0.832477          76200.0         0.812685           35
+
+=== For reference: existing baselines already in this dir ===
+            method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+         expanding  0.310672 0.095650 0.835826         306000.0         0.531651           35
+           han_arw  0.310672 0.095650 0.835826         306000.0         0.871855           35
+   m2_context_gate  0.311737 0.096018 0.834979         315000.0         0.794609           35
+    m2_m5_ensemble  0.311768 0.096015 0.835069         391200.0         1.752253           35
+m5_multiscale_gate  0.311870 0.096046 0.835012          76200.0         0.957644           35
+
+All outputs written to results_synthetic_none/

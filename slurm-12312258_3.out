@@ -1,0 +1,44 @@
+Generating synthetic data: 120 days, 3000 rows/day, drift=recurring (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.279
+Dev days: [np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22), np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30), np.int64(31), np.int64(32), np.int64(33), np.int64(34), np.int64(35), np.int64(36), np.int64(37), np.int64(38), np.int64(39), np.int64(40), np.int64(41), np.int64(42), np.int64(43), np.int64(44), np.int64(45), np.int64(46), np.int64(47), np.int64(48), np.int64(49), np.int64(50), np.int64(51), np.int64(52), np.int64(53), np.int64(54), np.int64(55), np.int64(56), np.int64(57), np.int64(58), np.int64(59), np.int64(60), np.int64(61), np.int64(62), np.int64(63), np.int64(64), np.int64(65), np.int64(66), np.int64(67), np.int64(68), np.int64(69), np.int64(70), np.int64(71), np.int64(72), np.int64(73), np.int64(74), np.int64(75), np.int64(76), np.int64(77), np.int64(78), np.int64(79), np.int64(80), np.int64(81), np.int64(82), np.int64(83), np.int64(84)]
+Test days (locked): [np.int64(85), np.int64(86), np.int64(87), np.int64(88), np.int64(89), np.int64(90), np.int64(91), np.int64(92), np.int64(93), np.int64(94), np.int64(95), np.int64(96), np.int64(97), np.int64(98), np.int64(99), np.int64(100), np.int64(101), np.int64(102), np.int64(103), np.int64(104), np.int64(105), np.int64(106), np.int64(107), np.int64(108), np.int64(109), np.int64(110), np.int64(111), np.int64(112), np.int64(113), np.int64(114), np.int64(115), np.int64(116), np.int64(117), np.int64(118), np.int64(119)]
+Building window-family candidate bank (short=rolling_3, long=expanding) ...
+  done in 22.2s
+Running M2 (context-dependent gating) ...
+  done in 6.0s (116 prediction days)
+Running M5b-default (smooth_reg=1e-3) ...
+  done in 0.7s (116 prediction days)
+Running M5b-high-smooth (smooth_reg=0.1) ...
+  done in 0.7s (116 prediction days)
+Running 3-way ensemble (M2 / M5b-default / M5b-high-smooth) ...
+  done in 0.6s (116 prediction days)
+Merging with existing all_methods_with_new_methods_per_day_metrics.csv / all_methods_with_new_methods_comparison_table.csv
+
+=== Locked-test comparison table (all methods + ensemble3) ===
+                          method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+                 m5b_high_smooth  0.428691 0.138614 0.686810          76200.0         1.022838           35
+                       ensemble3  0.430113 0.139193 0.684064         467400.0         2.890980           35
+                 m2_context_gate  0.435341 0.141308 0.673917         315000.0         0.856481           35
+                   m1_global_mix  0.437175 0.142450 0.666241         315000.0         0.856481           35
+                  m2_m5_ensemble  0.437475 0.142168 0.669000         391200.0         1.892728           35
+validation_selected(h=expanding)  0.438872 0.142176 0.671360         306000.0         0.751785           35
+                         han_arw  0.438872 0.142176 0.671360         306000.0         0.830439           35
+                       expanding  0.438872 0.142176 0.671360         306000.0         0.751785           35
+              m5_multiscale_gate  0.440389 0.143011 0.666684          76200.0         1.036247           35
+                          adamoe  0.441462 0.143656 0.660437          76200.0         1.049938           35
+                 diff_forgetting  0.442889 0.143344 0.669795         306000.0         8.804072           35
+                      rolling_14  0.454906 0.148356 0.639903          42000.0         0.121022           35
+                       decay_hl7  0.492482 0.160726 0.643931         306000.0         0.604919           35
+                       rolling_3  0.500832 0.159829 0.614362           9000.0         0.035114           35
+                       rolling_7  0.523354 0.170436 0.562130          21000.0         0.068238           35
+                       decay_hl3  0.526256 0.173852 0.623037         306000.0         0.583910           35
+                       decay_hl1  0.566049 0.189723 0.600625         306000.0         0.564132           35
+                       rolling_1  0.712022 0.201165 0.525218           3000.0         0.008088           35
+
+=== Findings ===
+- ensemble3 is a 3-way meta-gate (ensemble3.py) blending M2, M5b-default (smooth_reg=1e-3), and M5b-high-smooth (smooth_reg=0.1) -- built after the smooth_reg sweep found M5b-high-smooth beats every method on recurring drift but regresses on abrupt/local.
+- ensemble3 locked-test log loss 0.4301; final-day mean weights [('m2', 0.02), ('m5b', 0.05), ('m5b_hs', 0.94)], top expert m5b_hs.
+- M5b-high-smooth (standalone) locked-test log loss 0.4287.
+- Best method overall on locked test (including ensemble3): m5b_high_smooth (log loss 0.4287).
+
+All outputs written to results_synthetic_recurring_seed3/

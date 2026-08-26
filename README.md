@@ -211,7 +211,7 @@ own stop criterion applies. Full analysis in
 staged diagnosis in
 [`results/sftl_debug_findings.md`](results/sftl_debug_findings.md).
 
-## M1/M2/M5b and the M2+M5b ensemble: combining short- and long-term memory
+## M1/M2/M5b and the ensembles: combining short- and long-term memory
 
 The project's own proposed methods (`adaptive-training-methods-implementation-
 plan.md`), evaluated on the same synthetic drift suite plus real Criteo:
@@ -219,23 +219,33 @@ plan.md`), evaluated on the same synthetic drift suite plus real Criteo:
 and long/expanding candidate), **M2** (`m2_context_gate.py`, the same
 short/long blend but with a per-example weight from a small online gate),
 **M5b** (`m5_multiscale_gate.py`, M2's gate generalized to all 5
-window-family candidates so it can reach `rolling_14`), and a follow-up
-**M2+M5b ensemble** (`ensemble_m2_m5.py`, a meta-gate blending M2's and
-M5b's final predictions per example):
+window-family candidates so it can reach `rolling_14`), and two ensembles
+that hedge across specialists instead of picking one upfront: the
+**M2+M5b ensemble** (`ensemble_m2_m5.py`), and **`ensemble3`**
+(`ensemble3.py`), a 3-way meta-gate over M2, M5b-default, and
+**M5b-high-smooth** (M5b with its day-to-day smoothness penalty raised to
+`smooth_reg=0.1` — a single-hyperparameter change that beats every method
+tried on recurring drift, at the cost of regressing on abrupt/local; see
+`sweep_m5_smooth_reg.py`). `ensemble3` is the current recommended default:
 
 ```bash
 python run_new_methods.py --source synthetic --synthetic-days 120 \
     --synthetic-drift abrupt --synthetic-shift-day 95 --out results_synthetic_abrupt
+python run_ensemble3.py --source synthetic --synthetic-days 120 \
+    --synthetic-drift abrupt --synthetic-shift-day 95 --out results_synthetic_abrupt
 python run_new_methods.py --sample-frac 1.0 --out results   # real Criteo
 ```
 
-Headline: **M2 wins under recurring/cyclical drift; M5b wins under abrupt,
-gradual, and local/subpopulation drift; the ensemble lands within 0.2–0.5%
-relative log loss of whichever one wins, in every regime tested** — without
-ever being told which regime is active, since its meta-gate only sees
-per-example M2/M5b disagreement and each method's recent loss. Full findings,
-per-regime tables, and the meta-gate's learned trust weights in
-[`results/m5_analysis.md`](results/m5_analysis.md).
+Headline: **M2 wins under recurring/cyclical drift, M5b-default wins under
+abrupt/gradual/local drift, and M5b-high-smooth beats everything (including
+M2) under recurring — but regresses sharply on abrupt/local.** No single
+fixed configuration wins everywhere, so `ensemble3`'s 3-way meta-gate blends
+all three per example, correctly inferring which specialist to trust in
+each regime (0.84–0.93 mean weight on the right one) with no regime label
+ever given — and it beats the earlier 2-way ensemble in 4 of 5 regimes,
+most clearly on recurring (a 1.1–1.7% relative improvement, reproduced
+across 5 seeds). Full findings, per-regime tables, and the smooth_reg sweep
+in [`results/m5_analysis.md`](results/m5_analysis.md).
 
 ## Notes / limitations
 

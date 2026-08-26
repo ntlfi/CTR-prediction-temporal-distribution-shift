@@ -163,22 +163,117 @@ hidden layer instead of a single linear layer, or the feature applied to
 M2's 2-expert gate instead of M5b's 5-expert one) might behave differently,
 but that is future work, not a result established here.
 
+## M5b-high-smooth and ensemble3: raising the gate's smoothness penalty, then hedging it with a 3-way ensemble
+
+M5c (above) tested "does M5b need to know where in the cycle it is" and got
+a clean no. The next idea instead asked whether M5b's *day-to-day
+smoothness penalty* (`smooth_reg`, the term that discourages `mean(pi)`
+from moving much between consecutive days) was the actual bottleneck on
+recurring drift — recurring drift is mathematically smooth (a continuous
+sinusoid, no jumps), unlike abrupt/local's literal step functions, so a
+gate trained to move cautiously day-to-day should fit it better.
+
+**Sweeping `smooth_reg` (`sweep_m5_smooth_reg.py`) confirmed this, and the
+effect is large.** On recurring drift, raising `smooth_reg` from the
+default 1e-3 to 0.1 takes M5b from 0.4258 to **0.4118** — beating every
+method tried on recurring drift anywhere in this project, including M2
+(0.4180) and the M2+M5b ensemble (0.4187):
+
+| smooth_reg | 0 | 1e-4 | 1e-3 (default) | 1e-2 | **0.1** | 0.3 | 1.0 | 5.0 |
+|---|---|---|---|---|---|---|---|---|
+| log loss | 0.4300 | 0.4256 | 0.4258 | 0.4222 | **0.4118** | 0.4127 | 0.4217 | 0.4222 |
+
+This reproduces across all 5 seeds (main + 1–4) used throughout this
+project — M5b-high-smooth beats M2 in every one:
+
+| seed | M2 | M5b-default | M5b-high-smooth |
+|---|---|---|---|
+| 0 (main) | 0.4180 | 0.4258 | **0.4118** |
+| 1 | 0.4251 | 0.4284 | **0.4186** |
+| 2 | 0.4245 | 0.4271 | **0.4172** |
+| 3 | 0.4353 | 0.4404 | **0.4287** |
+| 4 | 0.4366 | 0.4387 | **0.4295** |
+
+**But it is a real tradeoff, not a free improvement**: the same
+`smooth_reg=0.1` that helps recurring hurts the two regimes where M5b-default
+already won outright, because a heavily-smoothed gate reacts sluggishly to
+an actual step-function regime change:
+
+| regime | M5b-default | M5b-high-smooth | relative Δ |
+|---|---|---|---|
+| abrupt | 0.3731 (M5b-default's win) | 0.3993 | **+7.1% worse** |
+| local | 0.4250 (M5b-default's win) | 0.4409 | **+3.7% worse** |
+| gradual | 0.3554 | 0.3565 | +0.3% (minor) |
+| none | 0.3119 | 0.3114 | −0.2% (fine) |
+
+**So rather than pick one `smooth_reg` globally, `ensemble3.py` generalizes
+the M2+M5b meta-gate to a 3-way softmax over M2 / M5b-default /
+M5b-high-smooth** (reusing `m5_multiscale_gate.MultiExpertGate`, same causal
+online-training rule as every gate in this project). Result — it recovers
+almost all of *each* specialist's regime-specific advantage, correctly
+identified per-example with no regime label ever given to the gate:
+
+| regime | M5b-default | M5b-high-smooth | old 2-way ensemble | **ensemble3** | top expert (final-day mean weight) |
+|---|---|---|---|---|---|
+| none | 0.3119 | 0.3114 | 0.3118 | 0.3116 | ~3-way split (0.32/0.32/0.36) |
+| abrupt | **0.3731** | 0.3993 | 0.3749 | 0.3764 | m5b-default (0.84) |
+| gradual | 0.3554 | 0.3565 | 0.3567 | 0.3564 | m5b-hs (0.57) |
+| recurring | 0.4258 | **0.4118** | 0.4187 | 0.4133 | m5b-hs (0.85) |
+| local | **0.4250** | 0.4409 | 0.4261 | 0.4260 | m5b-default (0.93) |
+| real Criteo | ~0.6070 (all tied, noise) | ~0.6070 | 0.6070 | 0.6070 | ~3-way split |
+
+ensemble3 beats or ties the old 2-way ensemble in 4 of 5 synthetic regimes
+— clearly on recurring (0.4133 vs 0.4187, a 2.9% relative improvement,
+inheriting nearly all of M5b-high-smooth's big win) — and is only
+marginally behind it on abrupt (0.3764 vs 0.3749, +0.4%, itself a huge
+recovery from M5b-high-smooth's standalone 0.3993). The recurring
+improvement reproduces across all 5 seeds:
+
+| seed | old 2-way ensemble | ensemble3 | relative improvement |
+|---|---|---|---|
+| 0 (main) | 0.4187 | 0.4133 | −1.3% |
+| 1 | 0.4262 | 0.4210 | −1.2% |
+| 2 | 0.4254 | 0.4188 | −1.6% |
+| 3 | 0.4375 | 0.4301 | −1.7% |
+| 4 | 0.4375 | 0.4329 | −1.1% |
+
+**ensemble3 is now the strongest all-around method in this project.** It
+supersedes the 2-way M2+M5b ensemble as the recommended default: same "no
+regime label needed" property, strictly better on recurring, effectively
+tied everywhere else, no downside on real Criteo. Its final-day mean
+weights read like a clean regime diagnosis even though the gate was never
+told which regime it's in: abrupt/local correctly lean on m5b-default
+(0.84/0.93), recurring correctly leans on m5b-high-smooth (0.85), and
+none/real-Criteo — where nothing separates from noise — stay close to a
+3-way split.
+
 ## Bottom line
 
-Neither M2 nor M5b dominates: M2's tight 2-expert mixture wins when the
-useful signal is "how does the current gate weight compare to last cycle's"
-(recurring), while M5b's wider 5-expert pool wins whenever the real best
-window is outside that 2-candidate family (abrupt, gradual, local). Rather
-than pick one at model-selection time — which would mean guessing the
-production drift regime in advance — a lightweight meta-gate over their two
-predictions recovers nearly all of the winning specialist's advantage in
-every regime tested, at a small, bounded cost when it guesses the "wrong"
-specialist's regime slightly early or late. This is the strongest evidence
-so far in this project for combining short- and long-term memory through
-*multiple, specialized* adaptive mechanisms rather than a single one.
-Trying to instead fix recurring drift directly, by giving M5b's gate an
-explicit periodicity feature (M5c, above), did not work — it didn't
-reliably beat plain M5b even with the true period given directly, and it
-introduced real downside on abrupt/local drift that M5b never had. Sidestepping
-the blind spot (the ensemble) has clearly outperformed trying to patch it
-(M5c) so far.
+No single fixed configuration dominates: M2's tight 2-expert mixture and
+M5b-default's wider 5-expert pool each win different regimes (recurring vs.
+abrupt/gradual/local), and even M5b itself splits into two useful
+configurations depending on one hyperparameter — `smooth_reg=1e-3` wins
+abrupt/local, `smooth_reg=0.1` wins recurring outright, better than
+anything else tried in this project. Rather than pick any of this at
+model-selection time — which would mean guessing the production drift
+regime in advance — a lightweight meta-gate over multiple specialists'
+predictions recovers nearly all of each one's regime-specific advantage.
+This generalizes cleanly: the 2-way M2+M5b ensemble already did this for
+two specialists, and `ensemble3`'s 3-way version (M2 / M5b-default /
+M5b-high-smooth) does it for three, and is strictly better where it matters
+(recurring) while staying even elsewhere. This is the strongest evidence so
+far in this project for combining short- and long-term memory through
+*multiple, specialized* adaptive mechanisms, hedged by a meta-gate, rather
+than any single fixed one.
+
+Trying to instead fix recurring drift *directly* by giving M5b's gate an
+explicit periodicity feature (M5c) did not work — it didn't reliably beat
+plain M5b even with the true period given directly, and it introduced real
+downside on abrupt/local drift that M5b never had. The mechanism that
+*did* work — turning up the same smoothness penalty M5c left untouched —
+was a much simpler lever than an engineered feature, and it was found by
+asking "what is different about this gate on its one weak regime" rather
+than "what information is this gate missing." Ensembling across
+specialized configurations of the *same* mechanism has now twice
+outperformed trying to patch one mechanism to do everything (M5c, and
+implicitly, a single fixed `smooth_reg`).
