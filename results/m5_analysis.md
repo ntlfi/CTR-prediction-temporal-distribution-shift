@@ -85,12 +85,26 @@ input. It also inherits both specialists' blind spot: neither M2 nor M5b
 carries an explicit periodicity feature, so the ensemble's recurring-drift
 performance is bounded by M2's, not some hypothetical better cyclical model.
 
-**Caveat**: unlike M2's recurring-drift win (validated across 5 seeds,
-`results_synthetic_recurring_seed{1..4}/`), the ensemble result above is a
-single seed per regime. Given M2's own seed-to-seed log loss on recurring
-ranged 0.4245–0.4366, the ensemble's tight 0.0007–0.0018 margins over the
-winning specialist should be treated as indicative, not conclusive, until
-re-run across seeds.
+**Caveat**: the table above is a single seed per regime, *except* recurring,
+where the ensemble has now been re-run across the same 5 seeds used to
+validate M2's original recurring win (`results_synthetic_recurring_seed{1..4}/`
+plus the main seed=0 run):
+
+| seed | M2 (wins every seed) | M5b | ensemble | ensemble vs M2 (relative) | mean β |
+|---|---|---|---|---|---|
+| 0 (main) | 0.4180 | 0.4258 | 0.4187 | +0.17% | 0.24 |
+| 1 | 0.4251 | 0.4284 | 0.4262 | +0.26% | 0.26 |
+| 2 | 0.4245 | 0.4271 | 0.4254 | +0.21% | 0.35 |
+| 3 | 0.4353 | 0.4404 | 0.4375 | +0.51% | 0.37 |
+| 4 | 0.4366 | 0.4387 | 0.4375 | +0.21% | 0.30 |
+
+M2 beats M5b in all 5 seeds (confirming the original recurring-win result is
+robust, not seed-dependent), and the ensemble tracks M2 closely in every one
+of them — always within 0.51% relative log loss, always clearly ahead of
+M5b, and the meta-gate's mean β stays correctly on the "trust M2" side
+(0.24–0.37) in every seed without ever seeing which regime is active. The
+abrupt/gradual/local/none/real-Criteo rows above are still single-seed and
+should be treated as indicative until similarly re-run.
 
 ## Bottom line
 
