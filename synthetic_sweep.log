@@ -1,0 +1,721 @@
+=== none -> results_synthetic_none ===
+Generating synthetic data: 120 days, 3000 rows/day, drift=none (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.264
+Dev days: [np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22), np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30), np.int64(31), np.int64(32), np.int64(33), np.int64(34), np.int64(35), np.int64(36), np.int64(37), np.int64(38), np.int64(39), np.int64(40), np.int64(41), np.int64(42), np.int64(43), np.int64(44), np.int64(45), np.int64(46), np.int64(47), np.int64(48), np.int64(49), np.int64(50), np.int64(51), np.int64(52), np.int64(53), np.int64(54), np.int64(55), np.int64(56), np.int64(57), np.int64(58), np.int64(59), np.int64(60), np.int64(61), np.int64(62), np.int64(63), np.int64(64), np.int64(65), np.int64(66), np.int64(67), np.int64(68), np.int64(69), np.int64(70), np.int64(71), np.int64(72), np.int64(73), np.int64(74), np.int64(75), np.int64(76), np.int64(77), np.int64(78), np.int64(79), np.int64(80), np.int64(81), np.int64(82), np.int64(83), np.int64(84)]
+Test days (locked): [np.int64(85), np.int64(86), np.int64(87), np.int64(88), np.int64(89), np.int64(90), np.int64(91), np.int64(92), np.int64(93), np.int64(94), np.int64(95), np.int64(96), np.int64(97), np.int64(98), np.int64(99), np.int64(100), np.int64(101), np.int64(102), np.int64(103), np.int64(104), np.int64(105), np.int64(106), np.int64(107), np.int64(108), np.int64(109), np.int64(110), np.int64(111), np.int64(112), np.int64(113), np.int64(114), np.int64(115), np.int64(116), np.int64(117), np.int64(118), np.int64(119)]
+Running 8 P0 methods over 116 prediction days ...
+  day 4: done
+  day 5: done
+  day 6: done
+  day 7: done
+  day 8: done
+  day 9: done
+  day 10: done
+  day 11: done
+  day 12: done
+  day 13: done
+  day 14: done
+  day 15: done
+  day 16: done
+  day 17: done
+  day 18: done
+  day 19: done
+  day 20: done
+  day 21: done
+  day 22: done
+  day 23: done
+  day 24: done
+  day 25: done
+  day 26: done
+  day 27: done
+  day 28: done
+  day 29: done
+  day 30: done
+  day 31: done
+  day 32: done
+  day 33: done
+  day 34: done
+  day 35: done
+  day 36: done
+  day 37: done
+  day 38: done
+  day 39: done
+  day 40: done
+  day 41: done
+  day 42: done
+  day 43: done
+  day 44: done
+  day 45: done
+  day 46: done
+  day 47: done
+  day 48: done
+  day 49: done
+  day 50: done
+  day 51: done
+  day 52: done
+  day 53: done
+  day 54: done
+  day 55: done
+  day 56: done
+  day 57: done
+  day 58: done
+  day 59: done
+  day 60: done
+  day 61: done
+  day 62: done
+  day 63: done
+  day 64: done
+  day 65: done
+  day 66: done
+  day 67: done
+  day 68: done
+  day 69: done
+  day 70: done
+  day 71: done
+  day 72: done
+  day 73: done
+  day 74: done
+  day 75: done
+  day 76: done
+  day 77: done
+  day 78: done
+  day 79: done
+  day 80: done
+  day 81: done
+  day 82: done
+  day 83: done
+  day 84: done
+  day 85: done
+  day 86: done
+  day 87: done
+  day 88: done
+  day 89: done
+  day 90: done
+  day 91: done
+  day 92: done
+  day 93: done
+  day 94: done
+  day 95: done
+  day 96: done
+  day 97: done
+  day 98: done
+  day 99: done
+  day 100: done
+  day 101: done
+  day 102: done
+  day 103: done
+  day 104: done
+  day 105: done
+  day 106: done
+  day 107: done
+  day 108: done
+  day 109: done
+  day 110: done
+  day 111: done
+  day 112: done
+  day 113: done
+  day 114: done
+  day 115: done
+  day 116: done
+  day 117: done
+  day 118: done
+  day 119: done
+Done in 165.7s
+
+=== Locked-test comparison table ===
+                          method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+                       expanding  0.310672 0.095650 0.835826         306000.0         0.531651           35
+validation_selected(h=expanding)  0.310672 0.095650 0.835826         306000.0         0.531651           35
+                      rolling_14  0.321893 0.100489 0.812220          42000.0         0.109338           35
+                       rolling_7  0.337773 0.106858 0.784464          21000.0         0.064241           35
+                       rolling_3  0.388869 0.124259 0.718115           9000.0         0.034140           35
+                       decay_hl7  0.420111 0.131605 0.812362         306000.0         0.443716           35
+                       decay_hl3  0.481022 0.155177 0.775558         306000.0         0.437819           35
+                       decay_hl1  0.546794 0.181174 0.679603         306000.0         0.442356           35
+                       rolling_1  0.620239 0.179971 0.552798           3000.0         0.008332           35
+
+=== Findings ===
+- Prediction days: 116 total (81 dev, 35 locked test).
+- Best baseline on locked test by mean log loss: expanding (log loss 0.3107).
+- Validation-selected window on dev period: h=expanding.
+- Hindsight best fixed window took 1 distinct value(s) across the 35 test days: ['expanding'].
+- One fixed horizon dominated every test day -- no empirical motivation yet for adaptive memory from this diagnostic alone (see PDF section 5, 10).
+
+All outputs written to results_synthetic_none/
+Generating synthetic data: 120 days, 3000 rows/day, drift=none (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.264
+Dev days: [np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22), np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30), np.int64(31), np.int64(32), np.int64(33), np.int64(34), np.int64(35), np.int64(36), np.int64(37), np.int64(38), np.int64(39), np.int64(40), np.int64(41), np.int64(42), np.int64(43), np.int64(44), np.int64(45), np.int64(46), np.int64(47), np.int64(48), np.int64(49), np.int64(50), np.int64(51), np.int64(52), np.int64(53), np.int64(54), np.int64(55), np.int64(56), np.int64(57), np.int64(58), np.int64(59), np.int64(60), np.int64(61), np.int64(62), np.int64(63), np.int64(64), np.int64(65), np.int64(66), np.int64(67), np.int64(68), np.int64(69), np.int64(70), np.int64(71), np.int64(72), np.int64(73), np.int64(74), np.int64(75), np.int64(76), np.int64(77), np.int64(78), np.int64(79), np.int64(80), np.int64(81), np.int64(82), np.int64(83), np.int64(84)]
+Test days (locked): [np.int64(85), np.int64(86), np.int64(87), np.int64(88), np.int64(89), np.int64(90), np.int64(91), np.int64(92), np.int64(93), np.int64(94), np.int64(95), np.int64(96), np.int64(97), np.int64(98), np.int64(99), np.int64(100), np.int64(101), np.int64(102), np.int64(103), np.int64(104), np.int64(105), np.int64(106), np.int64(107), np.int64(108), np.int64(109), np.int64(110), np.int64(111), np.int64(112), np.int64(113), np.int64(114), np.int64(115), np.int64(116), np.int64(117), np.int64(118), np.int64(119)]
+Building window-family candidate bank (shared by Han ARW & AdaMoE) ...
+  done in 51.7s
+Running Han ARW tournament ...
+  done in 1.5s (113 prediction days)
+Running AdaMoE ...
+  done in 0.0s (116 prediction days)
+Running Differentiable Forgetting (2 parallel workers) ...
+  done in 338.9s (114 prediction days)
+
+=== Locked-test comparison table (all methods) ===
+                          method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+                       expanding  0.310672 0.095650 0.835826         306000.0         0.531651           35
+validation_selected(h=expanding)  0.310672 0.095650 0.835826         306000.0         0.531651           35
+                         han_arw  0.310672 0.095650 0.835826         306000.0         0.871855           35
+                      rolling_14  0.321893 0.100489 0.812220          42000.0         0.109338           35
+                 diff_forgetting  0.322014 0.098668 0.835136         306000.0         9.785462           35
+                          adamoe  0.336987 0.106037 0.793850          76200.0         1.170831           35
+                       rolling_7  0.337773 0.106858 0.784464          21000.0         0.064241           35
+                       rolling_3  0.388869 0.124259 0.718115           9000.0         0.034140           35
+                       decay_hl7  0.420111 0.131605 0.812362         306000.0         0.443716           35
+                       decay_hl3  0.481022 0.155177 0.775558         306000.0         0.437819           35
+                       decay_hl1  0.546794 0.181174 0.679603         306000.0         0.442356           35
+                       rolling_1  0.620239 0.179971 0.552798           3000.0         0.008332           35
+
+=== Findings ===
+- P1/P2 methods: han_arw (Han et al. adaptive rolling window, PDF 3.5), diff_forgetting (Differentiable Forgetting, PDF 3.6), adamoe (AdaMoE-style closed-form mixture-of-experts, PDF 3.7).
+- Best method overall on locked test by mean log loss: expanding (log loss 0.3107).
+- Best P1/P2 method: han_arw (log loss 0.3107).
+- Han ARW selected windows used across prediction days: ['expanding', 'rolling_14'].
+- Differentiable Forgetting learned half-life ranged 8.37-74.40 days (mean 73.56).
+
+All outputs written to results_synthetic_none/
+=== abrupt -> results_synthetic_abrupt ===
+Generating synthetic data: 120 days, 3000 rows/day, drift=abrupt (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.270
+Dev days: [np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22), np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30), np.int64(31), np.int64(32), np.int64(33), np.int64(34), np.int64(35), np.int64(36), np.int64(37), np.int64(38), np.int64(39), np.int64(40), np.int64(41), np.int64(42), np.int64(43), np.int64(44), np.int64(45), np.int64(46), np.int64(47), np.int64(48), np.int64(49), np.int64(50), np.int64(51), np.int64(52), np.int64(53), np.int64(54), np.int64(55), np.int64(56), np.int64(57), np.int64(58), np.int64(59), np.int64(60), np.int64(61), np.int64(62), np.int64(63), np.int64(64), np.int64(65), np.int64(66), np.int64(67), np.int64(68), np.int64(69), np.int64(70), np.int64(71), np.int64(72), np.int64(73), np.int64(74), np.int64(75), np.int64(76), np.int64(77), np.int64(78), np.int64(79), np.int64(80), np.int64(81), np.int64(82), np.int64(83), np.int64(84)]
+Test days (locked): [np.int64(85), np.int64(86), np.int64(87), np.int64(88), np.int64(89), np.int64(90), np.int64(91), np.int64(92), np.int64(93), np.int64(94), np.int64(95), np.int64(96), np.int64(97), np.int64(98), np.int64(99), np.int64(100), np.int64(101), np.int64(102), np.int64(103), np.int64(104), np.int64(105), np.int64(106), np.int64(107), np.int64(108), np.int64(109), np.int64(110), np.int64(111), np.int64(112), np.int64(113), np.int64(114), np.int64(115), np.int64(116), np.int64(117), np.int64(118), np.int64(119)]
+Running 8 P0 methods over 116 prediction days ...
+  day 4: done
+  day 5: done
+  day 6: done
+  day 7: done
+  day 8: done
+  day 9: done
+  day 10: done
+  day 11: done
+  day 12: done
+  day 13: done
+  day 14: done
+  day 15: done
+  day 16: done
+  day 17: done
+  day 18: done
+  day 19: done
+  day 20: done
+  day 21: done
+  day 22: done
+  day 23: done
+  day 24: done
+  day 25: done
+  day 26: done
+  day 27: done
+  day 28: done
+  day 29: done
+  day 30: done
+  day 31: done
+  day 32: done
+  day 33: done
+  day 34: done
+  day 35: done
+  day 36: done
+  day 37: done
+  day 38: done
+  day 39: done
+  day 40: done
+  day 41: done
+  day 42: done
+  day 43: done
+  day 44: done
+  day 45: done
+  day 46: done
+  day 47: done
+  day 48: done
+  day 49: done
+  day 50: done
+  day 51: done
+  day 52: done
+  day 53: done
+  day 54: done
+  day 55: done
+  day 56: done
+  day 57: done
+  day 58: done
+  day 59: done
+  day 60: done
+  day 61: done
+  day 62: done
+  day 63: done
+  day 64: done
+  day 65: done
+  day 66: done
+  day 67: done
+  day 68: done
+  day 69: done
+  day 70: done
+  day 71: done
+  day 72: done
+  day 73: done
+  day 74: done
+  day 75: done
+  day 76: done
+  day 77: done
+  day 78: done
+  day 79: done
+  day 80: done
+  day 81: done
+  day 82: done
+  day 83: done
+  day 84: done
+  day 85: done
+  day 86: done
+  day 87: done
+  day 88: done
+  day 89: done
+  day 90: done
+  day 91: done
+  day 92: done
+  day 93: done
+  day 94: done
+  day 95: done
+  day 96: done
+  day 97: done
+  day 98: done
+  day 99: done
+  day 100: done
+  day 101: done
+  day 102: done
+  day 103: done
+  day 104: done
+  day 105: done
+  day 106: done
+  day 107: done
+  day 108: done
+  day 109: done
+  day 110: done
+  day 111: done
+  day 112: done
+  day 113: done
+  day 114: done
+  day 115: done
+  day 116: done
+  day 117: done
+  day 118: done
+  day 119: done
+Done in 200.9s
+
+=== Locked-test comparison table ===
+                          method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+                       rolling_7  0.397693 0.126147 0.744409          21000.0         0.067278           35
+                      rolling_14  0.421861 0.134114 0.715377          42000.0         0.117366           35
+                       rolling_3  0.427948 0.135618 0.714044           9000.0         0.035171           35
+                       decay_hl7  0.482215 0.156510 0.704730         306000.0         0.545859           35
+                       decay_hl3  0.509841 0.167034 0.734435         306000.0         0.523480           35
+                       decay_hl1  0.564890 0.189342 0.677549         306000.0         0.540145           35
+                       expanding  0.645367 0.205658 0.470800         306000.0         0.685636           35
+validation_selected(h=expanding)  0.645367 0.205658 0.470800         306000.0         0.685636           35
+                       rolling_1  0.661583 0.190277 0.569508           3000.0         0.008321           35
+
+=== Findings ===
+- Prediction days: 116 total (81 dev, 35 locked test).
+- Best baseline on locked test by mean log loss: rolling_7 (log loss 0.3977).
+- Validation-selected window on dev period: h=expanding.
+- Hindsight best fixed window took 5 distinct value(s) across the 35 test days: ['expanding', 'rolling_1', 'rolling_14', 'rolling_3', 'rolling_7'].
+- The best horizon changed across test days -- motivates checking whether the adaptive baselines (Han ARW, Differentiable Forgetting) track that variation (see PDF section 5, 10).
+
+All outputs written to results_synthetic_abrupt/
+Generating synthetic data: 120 days, 3000 rows/day, drift=abrupt (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.270
+Dev days: [np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22), np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30), np.int64(31), np.int64(32), np.int64(33), np.int64(34), np.int64(35), np.int64(36), np.int64(37), np.int64(38), np.int64(39), np.int64(40), np.int64(41), np.int64(42), np.int64(43), np.int64(44), np.int64(45), np.int64(46), np.int64(47), np.int64(48), np.int64(49), np.int64(50), np.int64(51), np.int64(52), np.int64(53), np.int64(54), np.int64(55), np.int64(56), np.int64(57), np.int64(58), np.int64(59), np.int64(60), np.int64(61), np.int64(62), np.int64(63), np.int64(64), np.int64(65), np.int64(66), np.int64(67), np.int64(68), np.int64(69), np.int64(70), np.int64(71), np.int64(72), np.int64(73), np.int64(74), np.int64(75), np.int64(76), np.int64(77), np.int64(78), np.int64(79), np.int64(80), np.int64(81), np.int64(82), np.int64(83), np.int64(84)]
+Test days (locked): [np.int64(85), np.int64(86), np.int64(87), np.int64(88), np.int64(89), np.int64(90), np.int64(91), np.int64(92), np.int64(93), np.int64(94), np.int64(95), np.int64(96), np.int64(97), np.int64(98), np.int64(99), np.int64(100), np.int64(101), np.int64(102), np.int64(103), np.int64(104), np.int64(105), np.int64(106), np.int64(107), np.int64(108), np.int64(109), np.int64(110), np.int64(111), np.int64(112), np.int64(113), np.int64(114), np.int64(115), np.int64(116), np.int64(117), np.int64(118), np.int64(119)]
+Building window-family candidate bank (shared by Han ARW & AdaMoE) ...
+  done in 50.7s
+Running Han ARW tournament ...
+  done in 1.6s (113 prediction days)
+Running AdaMoE ...
+  done in 0.0s (116 prediction days)
+Running Differentiable Forgetting (2 parallel workers) ...
+  done in 308.5s (114 prediction days)
+
+=== Locked-test comparison table (all methods) ===
+                          method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+                         han_arw  0.393613 0.123738 0.761032    104742.857143         0.297482           35
+                       rolling_7  0.397693 0.126147 0.744409     21000.000000         0.067278           35
+                          adamoe  0.410597 0.130256 0.735765     76200.000000         1.204255           35
+                      rolling_14  0.421861 0.134114 0.715377     42000.000000         0.117366           35
+                       rolling_3  0.427948 0.135618 0.714044      9000.000000         0.035171           35
+                 diff_forgetting  0.459594 0.147866 0.735716    306000.000000         8.831829           35
+                       decay_hl7  0.482215 0.156510 0.704730    306000.000000         0.545859           35
+                       decay_hl3  0.509841 0.167034 0.734435    306000.000000         0.523480           35
+                       decay_hl1  0.564890 0.189342 0.677549    306000.000000         0.540145           35
+                       expanding  0.645367 0.205658 0.470800    306000.000000         0.685636           35
+validation_selected(h=expanding)  0.645367 0.205658 0.470800    306000.000000         0.685636           35
+                       rolling_1  0.661583 0.190277 0.569508      3000.000000         0.008321           35
+
+=== Findings ===
+- P1/P2 methods: han_arw (Han et al. adaptive rolling window, PDF 3.5), diff_forgetting (Differentiable Forgetting, PDF 3.6), adamoe (AdaMoE-style closed-form mixture-of-experts, PDF 3.7).
+- Best method overall on locked test by mean log loss: han_arw (log loss 0.3936).
+- Best P1/P2 method: han_arw (log loss 0.3936).
+- Han ARW selected windows used across prediction days: ['expanding', 'rolling_14', 'rolling_3', 'rolling_7'].
+- Differentiable Forgetting learned half-life ranged 2.18-74.40 days (mean 59.45).
+
+All outputs written to results_synthetic_abrupt/
+=== gradual -> results_synthetic_gradual ===
+Generating synthetic data: 120 days, 3000 rows/day, drift=gradual (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.243
+Dev days: [np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22), np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30), np.int64(31), np.int64(32), np.int64(33), np.int64(34), np.int64(35), np.int64(36), np.int64(37), np.int64(38), np.int64(39), np.int64(40), np.int64(41), np.int64(42), np.int64(43), np.int64(44), np.int64(45), np.int64(46), np.int64(47), np.int64(48), np.int64(49), np.int64(50), np.int64(51), np.int64(52), np.int64(53), np.int64(54), np.int64(55), np.int64(56), np.int64(57), np.int64(58), np.int64(59), np.int64(60), np.int64(61), np.int64(62), np.int64(63), np.int64(64), np.int64(65), np.int64(66), np.int64(67), np.int64(68), np.int64(69), np.int64(70), np.int64(71), np.int64(72), np.int64(73), np.int64(74), np.int64(75), np.int64(76), np.int64(77), np.int64(78), np.int64(79), np.int64(80), np.int64(81), np.int64(82), np.int64(83), np.int64(84)]
+Test days (locked): [np.int64(85), np.int64(86), np.int64(87), np.int64(88), np.int64(89), np.int64(90), np.int64(91), np.int64(92), np.int64(93), np.int64(94), np.int64(95), np.int64(96), np.int64(97), np.int64(98), np.int64(99), np.int64(100), np.int64(101), np.int64(102), np.int64(103), np.int64(104), np.int64(105), np.int64(106), np.int64(107), np.int64(108), np.int64(109), np.int64(110), np.int64(111), np.int64(112), np.int64(113), np.int64(114), np.int64(115), np.int64(116), np.int64(117), np.int64(118), np.int64(119)]
+Running 8 P0 methods over 116 prediction days ...
+  day 4: done
+  day 5: done
+  day 6: done
+  day 7: done
+  day 8: done
+  day 9: done
+  day 10: done
+  day 11: done
+  day 12: done
+  day 13: done
+  day 14: done
+  day 15: done
+  day 16: done
+  day 17: done
+  day 18: done
+  day 19: done
+  day 20: done
+  day 21: done
+  day 22: done
+  day 23: done
+  day 24: done
+  day 25: done
+  day 26: done
+  day 27: done
+  day 28: done
+  day 29: done
+  day 30: done
+  day 31: done
+  day 32: done
+  day 33: done
+  day 34: done
+  day 35: done
+  day 36: done
+  day 37: done
+  day 38: done
+  day 39: done
+  day 40: done
+  day 41: done
+  day 42: done
+  day 43: done
+  day 44: done
+  day 45: done
+  day 46: done
+  day 47: done
+  day 48: done
+  day 49: done
+  day 50: done
+  day 51: done
+  day 52: done
+  day 53: done
+  day 54: done
+  day 55: done
+  day 56: done
+  day 57: done
+  day 58: done
+  day 59: done
+  day 60: done
+  day 61: done
+  day 62: done
+  day 63: done
+  day 64: done
+  day 65: done
+  day 66: done
+  day 67: done
+  day 68: done
+  day 69: done
+  day 70: done
+  day 71: done
+  day 72: done
+  day 73: done
+  day 74: done
+  day 75: done
+  day 76: done
+  day 77: done
+  day 78: done
+  day 79: done
+  day 80: done
+  day 81: done
+  day 82: done
+  day 83: done
+  day 84: done
+  day 85: done
+  day 86: done
+  day 87: done
+  day 88: done
+  day 89: done
+  day 90: done
+  day 91: done
+  day 92: done
+  day 93: done
+  day 94: done
+  day 95: done
+  day 96: done
+  day 97: done
+  day 98: done
+  day 99: done
+  day 100: done
+  day 101: done
+  day 102: done
+  day 103: done
+  day 104: done
+  day 105: done
+  day 106: done
+  day 107: done
+  day 108: done
+  day 109: done
+  day 110: done
+  day 111: done
+  day 112: done
+  day 113: done
+  day 114: done
+  day 115: done
+  day 116: done
+  day 117: done
+  day 118: done
+  day 119: done
+Done in 168.1s
+
+=== Locked-test comparison table ===
+                           method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+                       rolling_14  0.354280 0.112048 0.770228          42000.0         0.117427           35
+validation_selected(h=rolling_14)  0.354280 0.112048 0.770228          42000.0         0.117427           35
+                        rolling_7  0.368106 0.117202 0.744926          21000.0         0.067855           35
+                        rolling_3  0.423648 0.134929 0.677911           9000.0         0.036339           35
+                        decay_hl7  0.440302 0.140646 0.767824         306000.0         0.441361           35
+                        expanding  0.469131 0.153493 0.583561         306000.0         0.560766           35
+                        decay_hl3  0.490927 0.159652 0.737395         306000.0         0.421095           35
+                        decay_hl1  0.550120 0.182719 0.645764         306000.0         0.446227           35
+                        rolling_1  0.670596 0.190267 0.524887           3000.0         0.008423           35
+
+=== Findings ===
+- Prediction days: 116 total (81 dev, 35 locked test).
+- Best baseline on locked test by mean log loss: rolling_14 (log loss 0.3543).
+- Validation-selected window on dev period: h=rolling_14.
+- Hindsight best fixed window took 1 distinct value(s) across the 35 test days: ['rolling_14'].
+- One fixed horizon dominated every test day -- no empirical motivation yet for adaptive memory from this diagnostic alone (see PDF section 5, 10).
+
+All outputs written to results_synthetic_gradual/
+Generating synthetic data: 120 days, 3000 rows/day, drift=gradual (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.243
+Dev days: [np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22), np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30), np.int64(31), np.int64(32), np.int64(33), np.int64(34), np.int64(35), np.int64(36), np.int64(37), np.int64(38), np.int64(39), np.int64(40), np.int64(41), np.int64(42), np.int64(43), np.int64(44), np.int64(45), np.int64(46), np.int64(47), np.int64(48), np.int64(49), np.int64(50), np.int64(51), np.int64(52), np.int64(53), np.int64(54), np.int64(55), np.int64(56), np.int64(57), np.int64(58), np.int64(59), np.int64(60), np.int64(61), np.int64(62), np.int64(63), np.int64(64), np.int64(65), np.int64(66), np.int64(67), np.int64(68), np.int64(69), np.int64(70), np.int64(71), np.int64(72), np.int64(73), np.int64(74), np.int64(75), np.int64(76), np.int64(77), np.int64(78), np.int64(79), np.int64(80), np.int64(81), np.int64(82), np.int64(83), np.int64(84)]
+Test days (locked): [np.int64(85), np.int64(86), np.int64(87), np.int64(88), np.int64(89), np.int64(90), np.int64(91), np.int64(92), np.int64(93), np.int64(94), np.int64(95), np.int64(96), np.int64(97), np.int64(98), np.int64(99), np.int64(100), np.int64(101), np.int64(102), np.int64(103), np.int64(104), np.int64(105), np.int64(106), np.int64(107), np.int64(108), np.int64(109), np.int64(110), np.int64(111), np.int64(112), np.int64(113), np.int64(114), np.int64(115), np.int64(116), np.int64(117), np.int64(118), np.int64(119)]
+Building window-family candidate bank (shared by Han ARW & AdaMoE) ...
+  done in 51.9s
+Running Han ARW tournament ...
+  done in 1.5s (113 prediction days)
+Running AdaMoE ...
+  done in 0.0s (116 prediction days)
+Running Differentiable Forgetting (2 parallel workers) ...
+  done in 338.2s (114 prediction days)
+
+=== Locked-test comparison table (all methods) ===
+                           method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+                       rolling_14  0.354280 0.112048 0.770228          42000.0         0.117427           35
+validation_selected(h=rolling_14)  0.354280 0.112048 0.770228          42000.0         0.117427           35
+                          han_arw  0.354280 0.112048 0.770228          42000.0         0.154266           35
+                        rolling_7  0.368106 0.117202 0.744926          21000.0         0.067855           35
+                           adamoe  0.381538 0.121503 0.735130          76200.0         1.163409           35
+                  diff_forgetting  0.410592 0.131311 0.735915         306000.0        10.175084           35
+                        rolling_3  0.423648 0.134929 0.677911           9000.0         0.036339           35
+                        decay_hl7  0.440302 0.140646 0.767824         306000.0         0.441361           35
+                        expanding  0.469131 0.153493 0.583561         306000.0         0.560766           35
+                        decay_hl3  0.490927 0.159652 0.737395         306000.0         0.421095           35
+                        decay_hl1  0.550120 0.182719 0.645764         306000.0         0.446227           35
+                        rolling_1  0.670596 0.190267 0.524887           3000.0         0.008423           35
+
+=== Findings ===
+- P1/P2 methods: han_arw (Han et al. adaptive rolling window, PDF 3.5), diff_forgetting (Differentiable Forgetting, PDF 3.6), adamoe (AdaMoE-style closed-form mixture-of-experts, PDF 3.7).
+- Best method overall on locked test by mean log loss: rolling_14 (log loss 0.3543).
+- Best P1/P2 method: han_arw (log loss 0.3543).
+- Han ARW selected windows used across prediction days: ['expanding', 'rolling_14'].
+- Differentiable Forgetting learned half-life ranged 7.63-102.17 days (mean 42.17).
+
+All outputs written to results_synthetic_gradual/
+=== recurring -> results_synthetic_recurring ===
+Generating synthetic data: 120 days, 3000 rows/day, drift=recurring (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.251
+Dev days: [np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22), np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30), np.int64(31), np.int64(32), np.int64(33), np.int64(34), np.int64(35), np.int64(36), np.int64(37), np.int64(38), np.int64(39), np.int64(40), np.int64(41), np.int64(42), np.int64(43), np.int64(44), np.int64(45), np.int64(46), np.int64(47), np.int64(48), np.int64(49), np.int64(50), np.int64(51), np.int64(52), np.int64(53), np.int64(54), np.int64(55), np.int64(56), np.int64(57), np.int64(58), np.int64(59), np.int64(60), np.int64(61), np.int64(62), np.int64(63), np.int64(64), np.int64(65), np.int64(66), np.int64(67), np.int64(68), np.int64(69), np.int64(70), np.int64(71), np.int64(72), np.int64(73), np.int64(74), np.int64(75), np.int64(76), np.int64(77), np.int64(78), np.int64(79), np.int64(80), np.int64(81), np.int64(82), np.int64(83), np.int64(84)]
+Test days (locked): [np.int64(85), np.int64(86), np.int64(87), np.int64(88), np.int64(89), np.int64(90), np.int64(91), np.int64(92), np.int64(93), np.int64(94), np.int64(95), np.int64(96), np.int64(97), np.int64(98), np.int64(99), np.int64(100), np.int64(101), np.int64(102), np.int64(103), np.int64(104), np.int64(105), np.int64(106), np.int64(107), np.int64(108), np.int64(109), np.int64(110), np.int64(111), np.int64(112), np.int64(113), np.int64(114), np.int64(115), np.int64(116), np.int64(117), np.int64(118), np.int64(119)]
+Running 8 P0 methods over 116 prediction days ...
+  day 4: done
+  day 5: done
+  day 6: done
+  day 7: done
+  day 8: done
+  day 9: done
+  day 10: done
+  day 11: done
+  day 12: done
+  day 13: done
+  day 14: done
+  day 15: done
+  day 16: done
+  day 17: done
+  day 18: done
+  day 19: done
+  day 20: done
+  day 21: done
+  day 22: done
+  day 23: done
+  day 24: done
+  day 25: done
+  day 26: done
+  day 27: done
+  day 28: done
+  day 29: done
+  day 30: done
+  day 31: done
+  day 32: done
+  day 33: done
+  day 34: done
+  day 35: done
+  day 36: done
+  day 37: done
+  day 38: done
+  day 39: done
+  day 40: done
+  day 41: done
+  day 42: done
+  day 43: done
+  day 44: done
+  day 45: done
+  day 46: done
+  day 47: done
+  day 48: done
+  day 49: done
+  day 50: done
+  day 51: done
+  day 52: done
+  day 53: done
+  day 54: done
+  day 55: done
+  day 56: done
+  day 57: done
+  day 58: done
+  day 59: done
+  day 60: done
+  day 61: done
+  day 62: done
+  day 63: done
+  day 64: done
+  day 65: done
+  day 66: done
+  day 67: done
+  day 68: done
+  day 69: done
+  day 70: done
+  day 71: done
+  day 72: done
+  day 73: done
+  day 74: done
+  day 75: done
+  day 76: done
+  day 77: done
+  day 78: done
+  day 79: done
+  day 80: done
+  day 81: done
+  day 82: done
+  day 83: done
+  day 84: done
+  day 85: done
+  day 86: done
+  day 87: done
+  day 88: done
+  day 89: done
+  day 90: done
+  day 91: done
+  day 92: done
+  day 93: done
+  day 94: done
+  day 95: done
+  day 96: done
+  day 97: done
+  day 98: done
+  day 99: done
+  day 100: done
+  day 101: done
+  day 102: done
+  day 103: done
+  day 104: done
+  day 105: done
+  day 106: done
+  day 107: done
+  day 108: done
+  day 109: done
+  day 110: done
+  day 111: done
+  day 112: done
+  day 113: done
+  day 114: done
+  day 115: done
+  day 116: done
+  day 117: done
+  day 118: done
+  day 119: done
+Done in 189.0s
+
+=== Locked-test comparison table ===
+                          method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+                       expanding  0.421458 0.135773 0.643322         306000.0         0.664270           35
+validation_selected(h=expanding)  0.421458 0.135773 0.643322         306000.0         0.664270           35
+                      rolling_14  0.436393 0.141573 0.609051          42000.0         0.126141           35
+                       decay_hl7  0.474834 0.153959 0.610737         306000.0         0.511554           35
+                       rolling_3  0.482171 0.152683 0.585020           9000.0         0.036256           35
+                       rolling_7  0.504978 0.162930 0.526999          21000.0         0.072163           35
+                       decay_hl3  0.506643 0.165747 0.587749         306000.0         0.495114           35
+                       decay_hl1  0.544223 0.179867 0.567589         306000.0         0.505118           35
+                       rolling_1  0.675146 0.190471 0.493341           3000.0         0.008330           35
+
+=== Findings ===
+- Prediction days: 116 total (81 dev, 35 locked test).
+- Best baseline on locked test by mean log loss: expanding (log loss 0.4215).
+- Validation-selected window on dev period: h=expanding.
+- Hindsight best fixed window took 3 distinct value(s) across the 35 test days: ['expanding', 'rolling_3', 'rolling_7'].
+- The best horizon changed across test days -- motivates checking whether the adaptive baselines (Han ARW, Differentiable Forgetting) track that variation (see PDF section 5, 10).
+
+All outputs written to results_synthetic_recurring/
+Generating synthetic data: 120 days, 3000 rows/day, drift=recurring (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.251
+Dev days: [np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22), np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30), np.int64(31), np.int64(32), np.int64(33), np.int64(34), np.int64(35), np.int64(36), np.int64(37), np.int64(38), np.int64(39), np.int64(40), np.int64(41), np.int64(42), np.int64(43), np.int64(44), np.int64(45), np.int64(46), np.int64(47), np.int64(48), np.int64(49), np.int64(50), np.int64(51), np.int64(52), np.int64(53), np.int64(54), np.int64(55), np.int64(56), np.int64(57), np.int64(58), np.int64(59), np.int64(60), np.int64(61), np.int64(62), np.int64(63), np.int64(64), np.int64(65), np.int64(66), np.int64(67), np.int64(68), np.int64(69), np.int64(70), np.int64(71), np.int64(72), np.int64(73), np.int64(74), np.int64(75), np.int64(76), np.int64(77), np.int64(78), np.int64(79), np.int64(80), np.int64(81), np.int64(82), np.int64(83), np.int64(84)]
+Test days (locked): [np.int64(85), np.int64(86), np.int64(87), np.int64(88), np.int64(89), np.int64(90), np.int64(91), np.int64(92), np.int64(93), np.int64(94), np.int64(95), np.int64(96), np.int64(97), np.int64(98), np.int64(99), np.int64(100), np.int64(101), np.int64(102), np.int64(103), np.int64(104), np.int64(105), np.int64(106), np.int64(107), np.int64(108), np.int64(109), np.int64(110), np.int64(111), np.int64(112), np.int64(113), np.int64(114), np.int64(115), np.int64(116), np.int64(117), np.int64(118), np.int64(119)]
+Building window-family candidate bank (shared by Han ARW & AdaMoE) ...
+  done in 58.7s
+Running Han ARW tournament ...
+  done in 1.6s (113 prediction days)
+Running AdaMoE ...
+  done in 0.0s (116 prediction days)
+Running Differentiable Forgetting (2 parallel workers) ...
+  done in 391.3s (114 prediction days)
+
+=== Locked-test comparison table (all methods) ===
+                          method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+                       expanding  0.421458 0.135773 0.643322         306000.0         0.664270           35
+validation_selected(h=expanding)  0.421458 0.135773 0.643322         306000.0         0.664270           35
+                         han_arw  0.421458 0.135773 0.643322         306000.0         0.991715           35
+                          adamoe  0.423917 0.137160 0.631915          76200.0         1.334021           35
+                 diff_forgetting  0.425645 0.137027 0.641330         306000.0        11.334917           35
+                      rolling_14  0.436393 0.141573 0.609051          42000.0         0.126141           35
+                       decay_hl7  0.474834 0.153959 0.610737         306000.0         0.511554           35
+                       rolling_3  0.482171 0.152683 0.585020           9000.0         0.036256           35
+                       rolling_7  0.504978 0.162930 0.526999          21000.0         0.072163           35
+                       decay_hl3  0.506643 0.165747 0.587749         306000.0         0.495114           35
+                       decay_hl1  0.544223 0.179867 0.567589         306000.0         0.505118           35
+                       rolling_1  0.675146 0.190471 0.493341           3000.0         0.008330           35
+
+=== Findings ===
+- P1/P2 methods: han_arw (Han et al. adaptive rolling window, PDF 3.5), diff_forgetting (Differentiable Forgetting, PDF 3.6), adamoe (AdaMoE-style closed-form mixture-of-experts, PDF 3.7).
+- Best method overall on locked test by mean log loss: expanding (log loss 0.4215).
+- Best P1/P2 method: han_arw (log loss 0.4215).
+- Han ARW selected windows used across prediction days: ['expanding', 'rolling_14', 'rolling_3', 'rolling_7'].
+- Differentiable Forgetting learned half-life ranged 1.75-90.46 days (mean 62.75).
+
+All outputs written to results_synthetic_recurring/
+ALL DONE

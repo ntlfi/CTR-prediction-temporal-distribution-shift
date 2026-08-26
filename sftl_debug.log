@@ -1,0 +1,34 @@
+Stage 2/3: instrumented run on the production abrupt config (lambda=0.05, the reported result)...
+  done in 1468.9s
+Stage 4: EMA half-life sweep H=(10, 30, 100, 1000) (proxy config, lambda=0.05) ...
+  H=10 (alpha=0.9330): pre-shift=0.653, peak=3.589, recovery=2d, overall=0.714  [151s]
+  H=30 (alpha=0.9772): pre-shift=0.582, peak=2.879, recovery=4d, overall=0.658  [151s]
+  H=100 (alpha=0.9931): pre-shift=0.528, peak=2.108, recovery=7d, overall=0.622  [155s]
+  H=1000 (alpha=0.9993): pre-shift=0.602, peak=0.693, recovery=0d, overall=0.615  [152s]
+Stage 5: ablation A(BCE-only) / B(slow-only) / C(fast-only) / D(full) (proxy config) ...
+  A_bce_only: done in 148s (fast log_loss=0.583, auc=0.656)
+  B_slow_only: done in 150s (fast log_loss=0.648, auc=0.656)
+  C_fast_only: done in 150s (fast log_loss=0.657, auc=0.658)
+  D_full_sftl: done in 151s (fast log_loss=0.963, auc=0.658)
+Stage 6: measuring gradient contribution ratios, then tuning lambda by target contribution ...
+Traceback (most recent call last):
+  File "/insomnia001/home/tn2447/projects/CTR-prediction-temporal-distribution-shift/debug_sftl.py", line 316, in <module>
+    main()
+    ~~~~^^
+  File "/insomnia001/home/tn2447/projects/CTR-prediction-temporal-distribution-shift/debug_sftl.py", line 310, in main
+    stage6_gradient_ratio(out_dir)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/insomnia001/home/tn2447/projects/CTR-prediction-temporal-distribution-shift/debug_sftl.py", line 267, in stage6_gradient_ratio
+    (out_dir / "stage6_gradient_snapshot.json").write_text(json.dumps(probe, indent=2))
+                                                           ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/insomnia001/home/tn2447/software/miniconda3/lib/python3.13/json/__init__.py", line 242, in dumps
+    **kw).encode(obj)
+          ~~~~~~^^^^^
+  File "/insomnia001/home/tn2447/software/miniconda3/lib/python3.13/json/encoder.py", line 202, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+  File "/insomnia001/home/tn2447/software/miniconda3/lib/python3.13/json/encoder.py", line 263, in iterencode
+    return _iterencode(o, 0)
+  File "/insomnia001/home/tn2447/software/miniconda3/lib/python3.13/json/encoder.py", line 182, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+                    f'is not JSON serializable')
+TypeError: Object of type int64 is not JSON serializable

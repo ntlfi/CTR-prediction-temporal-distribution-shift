@@ -1,0 +1,54 @@
+Loading data from data/criteo_attribution_dataset.tsv.gz (sample_frac=1.0) ...
+Loaded 16468027 rows, 31 days, click rate 0.361
+Dev days: [np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22)]
+Test days (locked): [np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30)]
+Running 8 P0 methods over 27 prediction days ...
+  day 4: done
+  day 5: done
+  day 6: done
+  day 7: done
+  day 8: done
+  day 9: done
+  day 10: done
+  day 11: done
+  day 12: done
+  day 13: done
+  day 14: done
+  day 15: done
+  day 16: done
+  day 17: done
+  day 18: done
+  day 19: done
+  day 20: done
+  day 21: done
+  day 22: done
+  day 23: done
+  day 24: done
+  day 25: done
+  day 26: done
+  day 27: done
+  day 28: done
+  day 29: done
+  day 30: done
+Done in 3653.3s
+
+=== Locked-test comparison table ===
+                          method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+                       rolling_7  0.607159 0.209675 0.557043      3644246.250         9.306708            8
+validation_selected(h=rolling_7)  0.607159 0.209675 0.557043      3644246.250         9.306708            8
+                      rolling_14  0.607275 0.209720 0.556963      7319243.875        18.427064            8
+                       rolling_3  0.607318 0.209761 0.556888      1540650.750         3.781827            8
+                       expanding  0.608001 0.210046 0.556312     14245599.750        38.322597            8
+                       rolling_1  0.608261 0.210162 0.555481       503962.500         0.976036            8
+                       decay_hl7  0.608764 0.210344 0.554819     14245599.750        38.237988            8
+                       decay_hl3  0.610612 0.211116 0.551505     14245599.750        38.230718            8
+                       decay_hl1  0.616302 0.213552 0.542250     14245599.750        36.834432            8
+
+=== Findings ===
+- Prediction days: 27 total (19 dev, 8 locked test).
+- Best baseline on locked test by mean log loss: rolling_7 (log loss 0.6072).
+- Validation-selected window on dev period: h=rolling_7.
+- Hindsight best fixed window took 3 distinct value(s) across the 8 test days: ['rolling_14', 'rolling_3', 'rolling_7'].
+- The best horizon changed across test days -- motivates checking whether the adaptive baselines (Han ARW, Differentiable Forgetting) track that variation (see PDF section 5, 10).
+
+All outputs written to results/

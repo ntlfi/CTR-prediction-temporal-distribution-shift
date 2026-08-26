@@ -211,6 +211,32 @@ own stop criterion applies. Full analysis in
 staged diagnosis in
 [`results/sftl_debug_findings.md`](results/sftl_debug_findings.md).
 
+## M1/M2/M5b and the M2+M5b ensemble: combining short- and long-term memory
+
+The project's own proposed methods (`adaptive-training-methods-implementation-
+plan.md`), evaluated on the same synthetic drift suite plus real Criteo:
+**M1** (`m1_global_mix.py`, one global blend weight between a short/rolling_3
+and long/expanding candidate), **M2** (`m2_context_gate.py`, the same
+short/long blend but with a per-example weight from a small online gate),
+**M5b** (`m5_multiscale_gate.py`, M2's gate generalized to all 5
+window-family candidates so it can reach `rolling_14`), and a follow-up
+**M2+M5b ensemble** (`ensemble_m2_m5.py`, a meta-gate blending M2's and
+M5b's final predictions per example):
+
+```bash
+python run_new_methods.py --source synthetic --synthetic-days 120 \
+    --synthetic-drift abrupt --synthetic-shift-day 95 --out results_synthetic_abrupt
+python run_new_methods.py --sample-frac 1.0 --out results   # real Criteo
+```
+
+Headline: **M2 wins under recurring/cyclical drift; M5b wins under abrupt,
+gradual, and local/subpopulation drift; the ensemble lands within 0.2–0.5%
+relative log loss of whichever one wins, in every regime tested** — without
+ever being told which regime is active, since its meta-gate only sees
+per-example M2/M5b disagreement and each method's recent loss. Full findings,
+per-regime tables, and the meta-gate's learned trust weights in
+[`results/m5_analysis.md`](results/m5_analysis.md).
+
 ## Notes / limitations
 
 - Dev/test split is a simple last-N-days holdout, not full rolling-origin

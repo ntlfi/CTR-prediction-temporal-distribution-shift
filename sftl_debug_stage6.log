@@ -1,0 +1,10 @@
+Stage 6: measuring gradient contribution ratios (early vs. pre-shift), then tuning lambda ...
+  [early, day 3] bce_grad=0.05935, traj_s_grad=0.1781 (ratio at lambda=1: 3.00x BCE), traj_f_grad=0.1651 (ratio at lambda=1: 2.78x BCE)
+  [pre_shift, day 47] bce_grad=4.561, traj_s_grad=20.6 (ratio at lambda=1: 4.52x BCE), traj_f_grad=12.05 (ratio at lambda=1: 2.64x BCE)
+  target=1%: lambda_s=0.0033, lambda_f=0.0036 -> log_loss=0.587, auc=0.653  [154s]
+  target=5%: lambda_s=0.0167, lambda_f=0.0180 -> log_loss=0.615, auc=0.654  [155s]
+  target=10%: lambda_s=0.0333, lambda_f=0.0359 -> log_loss=0.740, auc=0.658  [157s]
+  target=25%: lambda_s=0.0833, lambda_f=0.0898 -> log_loss=1.575, auc=0.656  [153s]
+  target=50%: lambda_s=0.1666, lambda_f=0.1797 -> log_loss=3.277, auc=0.665  [153s]
+
+All requested stages done. Outputs in results/sftl_debug/

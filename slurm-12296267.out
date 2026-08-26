@@ -1,0 +1,40 @@
+Loading data from data/criteo_attribution_dataset.tsv.gz (sample_frac=1.0) ...
+Loaded 16468027 rows, 31 days, click rate 0.361
+Dev days: [np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22)]
+Test days (locked): [np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30)]
+Building window-family candidate bank (short=rolling_3, long=expanding) ...
+  done in 412.7s
+Running M1 (global adaptive mixing) ...
+  done in 8.7s (26 prediction days)
+Running M2 (context-dependent gating) ...
+  done in 12.1s (27 prediction days)
+Running M5b (context-dependent gating over the full window family) ...
+  done in 9.5s (27 prediction days)
+Merging with existing all_methods_per_day_metrics.csv / all_methods_comparison_table.csv
+
+=== Locked-test comparison table (all methods + M1/M2/M5b) ===
+                          method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+              m5_multiscale_gate  0.606967 0.209595 0.557627      5450740.375        72.477834            8
+                          adamoe  0.606974 0.209598 0.557621      5450740.375        82.103664            8
+                         han_arw  0.607159 0.209675 0.557043      3644246.250        10.615312            8
+                       rolling_7  0.607159 0.209675 0.557043      3644246.250         9.306708            8
+validation_selected(h=rolling_7)  0.607159 0.209675 0.557043      3644246.250         9.306708            8
+                   m1_global_mix  0.607172 0.209693 0.557299     15786250.500        42.766172            8
+                 m2_context_gate  0.607188 0.209699 0.557372     15786250.500        42.766172            8
+                      rolling_14  0.607275 0.209720 0.556963      7319243.875        18.427064            8
+                       rolling_3  0.607318 0.209761 0.556888      1540650.750         3.781827            8
+                       expanding  0.608001 0.210046 0.556312     14245599.750        38.322597            8
+                 diff_forgetting  0.608018 0.210051 0.556270     14245599.750       552.680258            8
+                       rolling_1  0.608261 0.210162 0.555481       503962.500         0.976036            8
+                       decay_hl7  0.608764 0.210344 0.554819     14245599.750        38.237988            8
+                       decay_hl3  0.610612 0.211116 0.551505     14245599.750        38.230718            8
+                       decay_hl1  0.616302 0.213552 0.542250     14245599.750        36.834432            8
+
+=== Findings ===
+- M1 (global adaptive mixing, val_window=3) and M2 (context-dependent gating) mix the shared rolling_3 (short) / expanding (long) candidate-bank predictions; M5b (context-dependent gating) mixes all 5 WINDOW_FAMILY candidates.
+- M1 locked-test log loss 0.6072; deployed alpha ranged 0.60-0.80 (mean 0.69); mean oracle headroom 0.0000.
+- M2 locked-test log loss 0.6072; mean gate weight ranged 0.54-0.58.
+- M5b locked-test log loss 0.6070; final-day mean weights [('expanding', 0.17), ('rolling_1', 0.19), ('rolling_3', 0.19), ('rolling_7', 0.21), ('rolling_14', 0.23)], top expert rolling_14.
+- Best method overall on locked test: m5_multiscale_gate (log loss 0.6070).
+
+All outputs written to results/

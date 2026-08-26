@@ -1,0 +1,44 @@
+Generating synthetic data: 120 days, 3000 rows/day, drift=local (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.267
+Dev days: [np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22), np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30), np.int64(31), np.int64(32), np.int64(33), np.int64(34), np.int64(35), np.int64(36), np.int64(37), np.int64(38), np.int64(39), np.int64(40), np.int64(41), np.int64(42), np.int64(43), np.int64(44), np.int64(45), np.int64(46), np.int64(47), np.int64(48), np.int64(49), np.int64(50), np.int64(51), np.int64(52), np.int64(53), np.int64(54), np.int64(55), np.int64(56), np.int64(57), np.int64(58), np.int64(59), np.int64(60), np.int64(61), np.int64(62), np.int64(63), np.int64(64), np.int64(65), np.int64(66), np.int64(67), np.int64(68), np.int64(69), np.int64(70), np.int64(71), np.int64(72), np.int64(73), np.int64(74), np.int64(75), np.int64(76), np.int64(77), np.int64(78), np.int64(79), np.int64(80), np.int64(81), np.int64(82), np.int64(83), np.int64(84)]
+Test days (locked): [np.int64(85), np.int64(86), np.int64(87), np.int64(88), np.int64(89), np.int64(90), np.int64(91), np.int64(92), np.int64(93), np.int64(94), np.int64(95), np.int64(96), np.int64(97), np.int64(98), np.int64(99), np.int64(100), np.int64(101), np.int64(102), np.int64(103), np.int64(104), np.int64(105), np.int64(106), np.int64(107), np.int64(108), np.int64(109), np.int64(110), np.int64(111), np.int64(112), np.int64(113), np.int64(114), np.int64(115), np.int64(116), np.int64(117), np.int64(118), np.int64(119)]
+Building window-family candidate bank (short=rolling_3, long=expanding) ...
+  done in 26.8s
+Running M1 (global adaptive mixing) ...
+  done in 0.2s (115 prediction days)
+Running M2 (context-dependent gating) ...
+  done in 1.8s (116 prediction days)
+Merging with existing all_methods_per_day_metrics.csv / all_methods_comparison_table.csv
+
+=== Locked-test comparison table (all methods + M1/M2) ===
+                          method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+                 m2_context_gate  0.443718 0.142015 0.648077    315000.000000         1.031057           35
+                      rolling_14  0.454324 0.146588 0.630622     42000.000000         0.110367           35
+                         han_arw  0.454407 0.145704 0.636010    142285.714286         0.626680           35
+                          adamoe  0.457271 0.149067 0.615815     76200.000000         1.693778           35
+                 diff_forgetting  0.458269 0.148258 0.626266    306000.000000        15.495269           35
+                   m1_global_mix  0.458752 0.147804 0.621853    315000.000000         1.031057           35
+                       rolling_7  0.464906 0.150904 0.614755     21000.000000         0.064280           35
+                       decay_hl7  0.486732 0.158580 0.631013    306000.000000         1.088380           35
+                       expanding  0.504120 0.157337 0.594418    306000.000000         1.340422           35
+validation_selected(h=expanding)  0.504120 0.157337 0.594418    306000.000000         1.340422           35
+                       decay_hl3  0.522115 0.172279 0.613312    306000.000000         1.080689           35
+                       rolling_3  0.526604 0.169462 0.559027      9000.000000         0.033674           35
+                       decay_hl1  0.566627 0.189989 0.542365    306000.000000         1.102311           35
+                       rolling_1  0.851904 0.231927 0.441224      3000.000000         0.009023           35
+
+=== Group breakdown (locked test, mean log loss) ===
+         method        A        B  overall
+      expanding 0.692362 0.315498 0.504120
+  m1_global_mix 0.558879 0.358424 0.458752
+m2_context_gate 0.542508 0.344728 0.443718
+      rolling_3 0.547948 0.505218 0.526604
+
+=== Findings ===
+- M1 (global adaptive mixing, val_window=3) and M2 (context-dependent gating) mix the shared rolling_3 (short) / expanding (long) candidate-bank predictions.
+- M1 locked-test log loss 0.4588; deployed alpha ranged 0.00-0.60 (mean 0.31); mean oracle headroom 0.0020.
+- M2 locked-test log loss 0.4437; mean gate weight ranged 0.06-0.79.
+- Best method overall on locked test: m2_context_gate (log loss 0.4437).
+- Group breakdown (locked-test mean log loss, A=drifted subpopulation, B=stable): see group_breakdown_summary.csv.
+
+All outputs written to results_synthetic_local/

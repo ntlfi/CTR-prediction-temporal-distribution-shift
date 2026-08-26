@@ -1,0 +1,36 @@
+Loading data from data/criteo_attribution_dataset.tsv.gz (sample_frac=1.0) ...
+Loaded 16468027 rows, 31 days, click rate 0.361
+Dev days: [np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22)]
+Test days (locked): [np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30)]
+Building window-family candidate bank (shared by Han ARW & AdaMoE) ...
+  done in 470.5s
+Running Han ARW tournament ...
+  done in 10.2s (24 prediction days)
+Running AdaMoE ...
+  done in 1.9s (27 prediction days)
+Running Differentiable Forgetting (4 parallel workers) ...
+  done in 2451.7s (25 prediction days)
+
+=== Locked-test comparison table (all methods) ===
+                          method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+                          adamoe  0.606974 0.209598 0.557621      5450740.375        82.103664            8
+                       rolling_7  0.607159 0.209675 0.557043      3644246.250         9.306708            8
+                         han_arw  0.607159 0.209675 0.557043      3644246.250        10.615312            8
+validation_selected(h=rolling_7)  0.607159 0.209675 0.557043      3644246.250         9.306708            8
+                      rolling_14  0.607275 0.209720 0.556963      7319243.875        18.427064            8
+                       rolling_3  0.607318 0.209761 0.556888      1540650.750         3.781827            8
+                       expanding  0.608001 0.210046 0.556312     14245599.750        38.322597            8
+                 diff_forgetting  0.608018 0.210051 0.556270     14245599.750       552.680258            8
+                       rolling_1  0.608261 0.210162 0.555481       503962.500         0.976036            8
+                       decay_hl7  0.608764 0.210344 0.554819     14245599.750        38.237988            8
+                       decay_hl3  0.610612 0.211116 0.551505     14245599.750        38.230718            8
+                       decay_hl1  0.616302 0.213552 0.542250     14245599.750        36.834432            8
+
+=== Findings ===
+- P1/P2 methods: han_arw (Han et al. adaptive rolling window, PDF 3.5), diff_forgetting (Differentiable Forgetting, PDF 3.6), adamoe (AdaMoE-style closed-form mixture-of-experts, PDF 3.7).
+- Best method overall on locked test by mean log loss: adamoe (log loss 0.6070).
+- Best P1/P2 method: adamoe (log loss 0.6070).
+- Han ARW selected windows used across prediction days: ['expanding', 'rolling_7'].
+- Differentiable Forgetting learned half-life ranged 48.37-74.40 days (mean 72.74).
+
+All outputs written to results/
