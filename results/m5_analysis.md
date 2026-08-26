@@ -106,6 +106,63 @@ M5b, and the meta-gate's mean β stays correctly on the "trust M2" side
 abrupt/gradual/local/none/real-Criteo rows above are still single-seed and
 should be treated as indicative until similarly re-run.
 
+## M5c: does an explicit periodicity feature fix M5b's recurring blind spot? A negative result
+
+The natural next idea from "what the ensemble does not do" above: give M5b's
+gate an explicit "where in the cycle are we" signal
+(`periodicity.py` + `m5c_periodic_gate.py`, run via `run_m5c.py`) — sin/cos
+phase features from a period estimated causally (autocorrelation of the
+`expanding` candidate's per-day loss, using only days < t, calibrated to a
+~2.3% false-positive rate on white noise), plus an oracle variant using the
+true period directly (diagnostic only, synthetic recurring data only, never
+a deployed prediction — quantifies the ceiling if detection were perfect).
+
+**It doesn't work.** Locked-test log loss, M5c vs. plain M5b:
+
+| regime | M5b | M5c (deployed) | relative Δ |
+|---|---|---|---|
+| none | 0.3119 | 0.3119 | 0.00% |
+| abrupt | 0.3731 | 0.3833 | **+2.73%** |
+| gradual | 0.3554 | 0.3555 | +0.03% |
+| recurring (main seed) | 0.4258 | 0.4228 | −0.70% |
+| local | 0.4250 | 0.4321 | **+1.67%** |
+
+And on recurring drift specifically — M5b's one weak regime, the whole
+motivation for trying this — across the same 5 seeds used throughout this
+project:
+
+| seed | M5b | M5c (deployed) | M5c (oracle, true period) |
+|---|---|---|---|
+| 0 (main) | 0.4258 | 0.4228 (−0.70%) | 0.4239 (−0.45%) |
+| 1 | 0.4284 | 0.4319 (+0.82%) | 0.4284 (0.00%) |
+| 2 | 0.4271 | 0.4280 (+0.21%) | 0.4308 (+0.87%) |
+| 3 | 0.4404 | 0.4406 (+0.05%) | 0.4407 (+0.07%) |
+| 4 | 0.4387 | 0.4476 (+2.03%) | 0.4401 (+0.32%) |
+
+The deployed variant only beats plain M5b in 1 of 5 seeds; the **oracle**
+variant — with the true period handed to it directly, no detection error
+possible — never beats M5b at all (best case a tie). Since giving the gate
+the *exact* answer doesn't help, this isn't a detection-accuracy problem:
+appending phase features to M5b's linear softmax gate just doesn't turn
+into a better expert mixture in this architecture and training regime — and
+even where it helps recurring, it comes nowhere close to M2's 0.4180.
+Worse, on `abrupt` and `local` the causal detector produces real, if
+spurious, downside: a single sharp regime change or subpopulation shift
+looks periodic-ish to an autocorrelation test at some lag even though there
+is no actual cycle, and the gate ends up conditioning on that noise. This
+introduces exactly the kind of downside M5b alone never had.
+
+**Conclusion**: the periodicity-feature idea, in this form, should not be
+adopted. It doesn't close M5b's recurring gap, doesn't help even with a
+perfect oracle period, and actively hurts two regimes that were previously
+clean. The M2+M5b ensemble (previous section) remains the better answer to
+the recurring-drift blind spot — it sidesteps the problem instead of trying
+to solve it, by leaning on M2's already-working mechanism rather than
+patching M5b's. A different periodicity-feature attempt (e.g. a gate with a
+hidden layer instead of a single linear layer, or the feature applied to
+M2's 2-expert gate instead of M5b's 5-expert one) might behave differently,
+but that is future work, not a result established here.
+
 ## Bottom line
 
 Neither M2 nor M5b dominates: M2's tight 2-expert mixture wins when the
@@ -118,6 +175,10 @@ predictions recovers nearly all of the winning specialist's advantage in
 every regime tested, at a small, bounded cost when it guesses the "wrong"
 specialist's regime slightly early or late. This is the strongest evidence
 so far in this project for combining short- and long-term memory through
-*multiple, specialized* adaptive mechanisms rather than a single one — the
-next natural step being to fold an explicit periodicity feature into the
-mix so recurring drift stops being every method's shared blind spot.
+*multiple, specialized* adaptive mechanisms rather than a single one.
+Trying to instead fix recurring drift directly, by giving M5b's gate an
+explicit periodicity feature (M5c, above), did not work — it didn't
+reliably beat plain M5b even with the true period given directly, and it
+introduced real downside on abrupt/local drift that M5b never had. Sidestepping
+the blind spot (the ensemble) has clearly outperformed trying to patch it
+(M5c) so far.

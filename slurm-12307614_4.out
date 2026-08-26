@@ -1,0 +1,41 @@
+Generating synthetic data: 120 days, 3000 rows/day, drift=recurring (magnitude=1.0) ...
+Loaded 360000 rows, 120 days, click rate 0.270
+Dev days: [np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22), np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30), np.int64(31), np.int64(32), np.int64(33), np.int64(34), np.int64(35), np.int64(36), np.int64(37), np.int64(38), np.int64(39), np.int64(40), np.int64(41), np.int64(42), np.int64(43), np.int64(44), np.int64(45), np.int64(46), np.int64(47), np.int64(48), np.int64(49), np.int64(50), np.int64(51), np.int64(52), np.int64(53), np.int64(54), np.int64(55), np.int64(56), np.int64(57), np.int64(58), np.int64(59), np.int64(60), np.int64(61), np.int64(62), np.int64(63), np.int64(64), np.int64(65), np.int64(66), np.int64(67), np.int64(68), np.int64(69), np.int64(70), np.int64(71), np.int64(72), np.int64(73), np.int64(74), np.int64(75), np.int64(76), np.int64(77), np.int64(78), np.int64(79), np.int64(80), np.int64(81), np.int64(82), np.int64(83), np.int64(84)]
+Test days (locked): [np.int64(85), np.int64(86), np.int64(87), np.int64(88), np.int64(89), np.int64(90), np.int64(91), np.int64(92), np.int64(93), np.int64(94), np.int64(95), np.int64(96), np.int64(97), np.int64(98), np.int64(99), np.int64(100), np.int64(101), np.int64(102), np.int64(103), np.int64(104), np.int64(105), np.int64(106), np.int64(107), np.int64(108), np.int64(109), np.int64(110), np.int64(111), np.int64(112), np.int64(113), np.int64(114), np.int64(115), np.int64(116), np.int64(117), np.int64(118), np.int64(119)]
+Building window-family candidate bank (short=rolling_3, long=expanding) ...
+  done in 25.2s
+Causal period detection: 66/116 days had a detected period, most recent estimate 14 days (day 119)
+Running M5c (M5b + causally-detected periodicity features) ...
+  done in 9.2s (116 prediction days)
+Running M5c-oracle (M5b + true period=14d phase features, diagnostic only, never a deployed prediction) ...
+  done in 0.7s (116 prediction days)
+Merging with existing all_methods_with_new_methods_per_day_metrics.csv / all_methods_with_new_methods_comparison_table.csv
+
+=== Locked-test comparison table (all methods + M5c) ===
+                          method  log_loss    brier   pr_auc  mean_train_rows  mean_fit_time_s  n_test_days
+                 m2_context_gate  0.436573 0.141640 0.656619    315000.000000         0.698334           35
+                  m2_m5_ensemble  0.437529 0.141973 0.654895    391200.000000         1.600997           35
+                   m1_global_mix  0.437641 0.142445 0.649769    315000.000000         0.698334           35
+              m5_multiscale_gate  0.438699 0.142148 0.654557     76200.000000         0.902663           35
+                       expanding  0.439096 0.142088 0.655508    306000.000000         0.531137           35
+validation_selected(h=expanding)  0.439096 0.142088 0.655508    306000.000000         0.531137           35
+             m5c_periodic_oracle  0.440109 0.142775 0.651104     76200.000000         1.058766           35
+                          adamoe  0.442090 0.143624 0.643054     76200.000000         0.923763           35
+                 diff_forgetting  0.442938 0.143247 0.653872    306000.000000         7.827359           35
+                         han_arw  0.443549 0.143618 0.650086    288685.714286         0.653965           35
+                    m5c_periodic  0.447608 0.145574 0.638049     76200.000000         1.058766           35
+                      rolling_14  0.454533 0.147978 0.624034     42000.000000         0.130930           35
+                       decay_hl7  0.490594 0.160007 0.627057    306000.000000         0.428439           35
+                       rolling_3  0.501852 0.159474 0.597663      9000.000000         0.038650           35
+                       decay_hl3  0.522763 0.172400 0.604677    306000.000000         0.413306           35
+                       rolling_7  0.523740 0.169859 0.545272     21000.000000         0.075145           35
+                       decay_hl1  0.560812 0.187335 0.582541    306000.000000         0.419563           35
+                       rolling_1  0.712669 0.201028 0.508591      3000.000000         0.008688           35
+
+=== Findings ===
+- M5c is M5b (context-dependent gating over the full WINDOW_FAMILY, see m5_multiscale_gate.py) plus sin/cos periodicity phase features (periodicity.py), testing whether an explicit 'where in the cycle are we' signal closes the recurring-drift gap shared by every other method in this project.
+- M5c (deployed, causally-detected period) locked-test log loss 0.4476; 66/116 eligible days had a detected period.
+- M5c-oracle (diagnostic, true period=14d, never a deployed prediction) locked-test log loss 0.4401 -- quantifies the ceiling if period detection were perfect.
+- Best method overall on locked test (including M5c): m2_context_gate (log loss 0.4366).
+
+All outputs written to results_synthetic_recurring_seed4/
