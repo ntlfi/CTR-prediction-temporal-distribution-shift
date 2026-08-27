@@ -139,4 +139,4 @@ Negative = method-under-test better. CI is a 5000-sample paired bootstrap; p is 
 **Statistical tie with Han ARW:** criteo (-0.0002, 3/3 seeds, p=nan).
 **Stationary downside vs expanding ERM (S0):** +0.0014 log loss (+0.4% approx) -- no meaningful downside.
 
-Against the PDF's decision table (section 9): this is a **partial success** for `m5b_smooth0.1` as a fixed configuration -- it replaces the hand-tuned high-persistence specialist on the regimes where persistence helps, but does not dominate the abrupt/gradual/mixed regimes where Han ARW's fast global window still wins. The `oracle persistence='high' frac` column shows why: the optimal persistence regime is not fixed, which is the motivation for the adaptive-beta_t method in Stage 2.
+Against the PDF's decision table (section 9): **partial success** -- `m5b_smooth0.1` as a fixed configuration replaces the hand-tuned high-persistence specialist where persistence helps but does not dominate the sharp-shift regimes where Han ARW's fast global window wins; the `oracle persistence='high' frac` column shows the optimal persistence regime is not fixed, motivating Stage 2's adaptive beta_t.

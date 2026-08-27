@@ -190,6 +190,64 @@ def fig_oracle_vs_han(cells, regime, out_path):
     fig.tight_layout(); fig.savefig(out_path, dpi=140); plt.close(fig)
 
 
+ABLATION_LADDER = [
+    ("A0 expanding only", "expanding"),
+    ("A1 no persistence (beta=0)", "amgtp_fixed_beta0"),
+    ("A2 fixed low persistence", "m5b_smooth0.001"),
+    ("A3 fixed high persistence", "m5b_smooth0.1"),
+    ("A4 adaptive beta, global q", "amgtp_global_q"),
+    ("A5 adaptive beta, uniform q", "amgtp_uniform_q"),
+    ("A6 full AMG-TP", "amgtp"),
+    ("A7 adaptive beta, no state feats", "amgtp_no_state"),
+    ("A8a 2-expert gate (M2)", "m2_context_gate"),
+    ("A8b 5-expert gate (M5b)", "m5b_smooth0.001"),
+    ("A9 static uniform-5", "uniform5"),
+]
+
+
+def ablation_table(cells, stage):
+    rows = []
+    for regime, by_seed in cells.items():
+        if regime == "criteo":
+            continue
+        cs = [s for s in CONFIRM_SEEDS if s in by_seed] or [s for s in DEV_SEEDS if s in by_seed]
+        if not cs:
+            continue
+        for label, method in ABLATION_LADDER:
+            vals = [by_seed[s]["summary"]["methods"].get(method, {}).get("log_loss") for s in cs]
+            m, se, n = _agg(vals)
+            rows.append({"regime": regime, "ablation": label, "method": method,
+                         "log_loss": m, "se": se, "n_seeds": n})
+    df = pd.DataFrame(rows)
+    df.to_csv(stage / "tables" / "ablation_amgtp.csv", index=False)
+    return df
+
+
+def fig_beta_trace(cells, regime, out_path):
+    seeds = cells.get(regime, {})
+    if not seeds:
+        return
+    seed = sorted(seeds)[0]
+    sdir = None
+    for cand in (CONFIRM_SEEDS + DEV_SEEDS):
+        p = Path(str(out_path)).parents[1] / regime / f"seed{cand}" / "amgtp_beta_trace.csv"
+        if p.exists():
+            sdir, seed = p, cand
+            break
+    if sdir is None:
+        return
+    bt = pd.read_csv(sdir)
+    fig, ax = plt.subplots(figsize=(10, 4))
+    ax.plot(bt["day"], bt["beta"], marker="o", markersize=3, color="crimson")
+    ax.set_ylim(-0.02, 1.02)
+    ax.set_xlabel("prediction day"); ax.set_ylabel("deployed beta_t (0=raw gate, 1=persistent state)")
+    ax.set_title(f"AMG-TP deployed persistence beta_t -- {regime} (seed {seed})")
+    sd = seeds[seed]["summary"]["config"].get("shift_days") or [] if seed in seeds else []
+    for s in sd:
+        ax.axvline(s, color="black", ls=":", lw=1)
+    fig.tight_layout(); fig.savefig(out_path, dpi=140); plt.close(fig)
+
+
 def fig_regime_summary(headline: pd.DataFrame, mut, out_path):
     regimes = [r for r in headline["regime"].unique()]
     methods = ["expanding", "han_arw", "m2_context_gate", "m5b_smooth0.001", mut, "ensemble3"]
@@ -331,13 +389,41 @@ def build_report(stage, cells, headline, paired_by_regime, mut):
                      f"({100 * s0_dn / 0.33:+.1f}% approx) -- "
                      + ("no meaningful downside." if abs(s0_dn) < 0.005 else "note this."))
     lines.append("")
-    lines.append("Against the PDF's decision table (section 9): this is a **partial success** for "
-                 "`m5b_smooth0.1` as a fixed configuration -- it replaces the hand-tuned "
-                 "high-persistence specialist on the regimes where persistence helps, but does "
-                 "not dominate the abrupt/gradual/mixed regimes where Han ARW's fast global "
-                 "window still wins. The `oracle persistence='high' frac` column shows why: the "
-                 "optimal persistence regime is not fixed, which is the motivation for the "
-                 "adaptive-beta_t method in Stage 2.")
+
+    if mut.startswith("amgtp"):
+        lines.append("## AMG-TP vs the fixed-persistence specialists it aims to unify")
+        lines.append("H2 asks whether a single learned `beta_t` matches low-persistence "
+                     "(`m5b_smooth0.001`) under abrupt/local drift *and* high-persistence "
+                     "(`m5b_smooth0.1`) under recurring, with no regime label.")
+        lines.append("")
+        lines.append("| regime | AMG-TP - m5b_smooth0.001 | AMG-TP - m5b_smooth0.1 | reading |")
+        lines.append("|---|---:|---:|---|")
+        for regime, pt in paired_by_regime.items():
+            lo = pt[pt["baseline"] == "m5b_smooth0.001"]
+            hi = pt[pt["baseline"] == "m5b_smooth0.1"]
+            if lo.empty or hi.empty:
+                continue
+            dlo, dhi = lo["mean_diff_logloss"].iloc[0], hi["mean_diff_logloss"].iloc[0]
+            reading = ("matches/beats both" if dlo < 0.002 and dhi < 0.002
+                       else "between them" if (dlo > 0) != (dhi > 0)
+                       else "worse than both")
+            lines.append(f"| {regime} | {dlo:+.4f} | {dhi:+.4f} | {reading} |")
+        lines.append("")
+        lines.append("See `tables/ablation_amgtp.csv` for the A1/A3/A4/A5/A7 ablation ladder "
+                     "and `figures/beta_trace_*.png` / `amgtp_beta_trace.csv` for the deployed "
+                     "beta_t trajectory around each shift.")
+        lines.append("")
+
+    lines.append(f"Against the PDF's decision table (section 9): "
+                 + ("**partial success** -- `m5b_smooth0.1` as a fixed configuration replaces the "
+                    "hand-tuned high-persistence specialist where persistence helps but does not "
+                    "dominate the sharp-shift regimes where Han ARW's fast global window wins; "
+                    "the `oracle persistence='high' frac` column shows the optimal persistence "
+                    "regime is not fixed, motivating Stage 2's adaptive beta_t."
+                    if mut == "m5b_smooth0.1" else
+                    "see the AMG-TP-vs-specialists table and the ablation ladder above for whether "
+                    "H1/H2/H3 hold; `beta_t` should emerge low on S1/S4 and high on S3 with no "
+                    "regime label."))
     (stage / "REPORT.md").write_text("\n".join(lines))
 
 
@@ -385,8 +471,12 @@ def main():
         fig_per_day_curves(cells, regime, mut, stage / "figures" / f"per_day_{regime}.png")
         fig_gate_trajectory(cells, regime, mut, stage / "figures" / f"gate_{regime}.png")
         fig_oracle_vs_han(cells, regime, stage / "figures" / f"oracle_vs_han_{regime}.png")
+        if mut.startswith("amgtp"):
+            fig_beta_trace(cells, regime, stage / "figures" / f"beta_trace_{regime}.png")
     if not headline.empty:
         fig_regime_summary(headline, mut, stage / "figures" / "regime_summary.png")
+    if mut.startswith("amgtp"):
+        ablation_table(cells, stage)
 
     build_report(stage, cells, headline, paired_by_regime, mut)
     print(f"wrote {stage}/tables/, {stage}/figures/, {stage}/REPORT.md")
