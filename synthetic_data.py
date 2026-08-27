@@ -25,7 +25,56 @@ import pandas as pd
 
 from data import hash_features
 
-DRIFT_MODES = ["none", "gradual", "abrupt", "recurring", "local"]
+DRIFT_MODES = ["none", "gradual", "abrupt", "recurring", "local", "opposing_local", "mixed"]
+
+# AMG-TP plan (AMG-TP_Academic_LaTeX.pdf, Table 2) adds two regimes beyond the
+# original five:
+#   S5 "opposing_local"  -- two subpopulations drift at *different times and in
+#                           different directions*: group A swaps w0->w1 abruptly
+#                           at n_days//3, group B swaps w0->w2 (an independent
+#                           regime) abruptly at 2*n_days//3. Stress-tests the
+#                           assumption behind a single global persistence/memory
+#                           knob, since no one global schedule fits both groups.
+#   S6 "mixed"           -- a per-seed random sequence of shift events (stationary
+#                           stretches, abrupt jumps to freshly drawn regimes, and
+#                           linear ramps), so a method must generalise across
+#                           shift types within one run without any regime label.
+_MIXED_N_REGIMES = 4
+
+
+def _mixed_schedule(n_days: int, n_regimes: int, rng: np.random.Generator) -> dict:
+    """Random piecewise ground-truth schedule for drift_mode='mixed' (S6).
+
+    The horizon is cut into 4-8 contiguous segments. The process starts in the
+    base regime (index 0 = w0); at each segment boundary it transitions -- either
+    abruptly (jump on the segment's first day) or as a linear ramp over the first
+    third of the segment -- to a regime index drawn uniformly from
+    [0, n_regimes] (0 = w0, 1..n_regimes = the extra regime bank). Returns
+    per-day int arrays `from_idx`, `to_idx` and a float array `frac` in [0, 1]:
+    day t's true weight vector is (1-frac[t]) * W[from_idx[t]] + frac[t] * W[to_idx[t]].
+    """
+    n_seg = int(rng.integers(4, 9))
+    bounds = np.linspace(0, n_days, n_seg + 1).astype(int)
+    regime_seq = [0]
+    for _ in range(n_seg):
+        regime_seq.append(int(rng.integers(0, n_regimes + 1)))
+
+    from_idx = np.zeros(n_days, dtype=int)
+    to_idx = np.zeros(n_days, dtype=int)
+    frac = np.zeros(n_days, dtype=float)
+    for s in range(n_seg):
+        lo, hi = int(bounds[s]), int(bounds[s + 1])
+        if hi <= lo:
+            continue
+        prev_regime, cur_regime = regime_seq[s], regime_seq[s + 1]
+        gradual = bool(rng.integers(0, 2))
+        ramp = max(1, (hi - lo) // 3) if gradual else 1
+        for i, t in enumerate(range(lo, hi)):
+            from_idx[t] = prev_regime
+            to_idx[t] = cur_regime
+            frac[t] = min(1.0, (i + 1) / ramp) if gradual else 1.0
+    return {"from_idx": from_idx, "to_idx": to_idx, "frac": frac,
+            "n_seg": n_seg, "regime_seq": regime_seq, "bounds": bounds.tolist()}
 
 
 def _drift_alpha(t: int, n_days: int, drift_mode: str, shift_day: int, period_days: int) -> float:
@@ -96,6 +145,20 @@ def generate_synthetic_raw(n_days: int = 180, rows_per_day: int = 5000, n_cat_fe
     w1 = rng.normal(0, 1.0, size=n_true_features)
     col_offsets = np.arange(n_cat_features) * cardinality
 
+    # Extra ground-truth regimes for the multi-regime modes. Drawn only when
+    # needed and *after* w0/w1, so the RNG stream (hence the exact data) for the
+    # original five modes is byte-for-byte unchanged.
+    w2 = None
+    mixed_sched = None
+    W_mixed = None
+    if drift_mode == "opposing_local":
+        w2 = rng.normal(0, 1.0, size=n_true_features)
+        shift_day_a = n_days // 3
+        shift_day_b = (2 * n_days) // 3
+    elif drift_mode == "mixed":
+        W_mixed = [rng.normal(0, 1.0, size=n_true_features) for _ in range(_MIXED_N_REGIMES)]
+        mixed_sched = _mixed_schedule(n_days, _MIXED_N_REGIMES, rng)
+
     frames = []
     for t in range(n_days):
         cat_vals = rng.integers(0, cardinality, size=(rows_per_day, n_cat_features))
@@ -104,13 +167,30 @@ def generate_synthetic_raw(n_days: int = 180, rows_per_day: int = 5000, n_cat_fe
         logits1 = w1[true_idx].sum(axis=1)
         is_group_a = group_membership(cat_vals, cardinality)
 
-        if drift_mode == "local":
-            row_alpha = np.where(is_group_a, _drift_alpha(t, n_days, "local", shift_day, period_days), 0.0)
+        if drift_mode == "opposing_local":
+            logits2 = w2[true_idx].sum(axis=1)
+            a_a = _drift_alpha(t, n_days, "abrupt", shift_day_a, period_days) * drift_magnitude
+            a_b = _drift_alpha(t, n_days, "abrupt", shift_day_b, period_days) * drift_magnitude
+            logits = np.where(is_group_a,
+                              (1 - a_a) * logits0 + a_a * logits1,
+                              (1 - a_b) * logits0 + a_b * logits2) + intercept
+            row_alpha = np.where(is_group_a, a_a, a_b)  # bookkeeping only
+        elif drift_mode == "mixed":
+            j_from = int(mixed_sched["from_idx"][t])
+            j_to = int(mixed_sched["to_idx"][t])
+            f = float(mixed_sched["frac"][t]) * drift_magnitude
+            lf = logits0 if j_from == 0 else W_mixed[j_from - 1][true_idx].sum(axis=1)
+            lt = logits0 if j_to == 0 else W_mixed[j_to - 1][true_idx].sum(axis=1)
+            logits = (1 - f) * lf + f * lt + intercept
+            row_alpha = np.full(rows_per_day, f)  # bookkeeping only
         else:
-            row_alpha = np.full(rows_per_day, _drift_alpha(t, n_days, drift_mode, shift_day, period_days))
-        row_alpha = row_alpha * drift_magnitude
+            if drift_mode == "local":
+                row_alpha = np.where(is_group_a, _drift_alpha(t, n_days, "local", shift_day, period_days), 0.0)
+            else:
+                row_alpha = np.full(rows_per_day, _drift_alpha(t, n_days, drift_mode, shift_day, period_days))
+            row_alpha = row_alpha * drift_magnitude
+            logits = (1 - row_alpha) * logits0 + row_alpha * logits1 + intercept
 
-        logits = (1 - row_alpha) * logits0 + row_alpha * logits1 + intercept
         p = 1 / (1 + np.exp(-logits))
         y_t = rng.binomial(1, p)
 

@@ -5,3 +5,9 @@ data/*.tsv.gz
 data/*.zip
 data/*.csv
 .ipynb_checkpoints/
+amgtp_experiments/logs/
+slurm-*.out
+# large regenerable per-day metric dumps -- summary.json + comparison_table.csv
+# + oracle_per_day.csv + gate_dynamics.csv keep the distilled results
+amgtp_experiments/**/per_day_metrics.csv
+amgtp_experiments/**/group_per_day_metrics.csv
