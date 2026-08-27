@@ -15,6 +15,9 @@ Synthetic horizon 120 days, 5 dev seeds [0, 1, 2, 3, 4] (hyperparameters frozen 
 | s4_local | 0.5190 ±0.0045 | 0.4885 ±0.0043 | 0.5017 ±0.0043 | 0.4913 ±0.0041 | 0.4879 ±0.0040 | **0.4589** ±0.0038 | 0.4671 ±0.0040 | 0.4600 ±0.0038 | 0.4885 ±0.0043 |
 | s5_opposing_local | 0.6110 ±0.0037 | 0.4947 ±0.0030 | 0.5138 ±0.0029 | 0.5165 ±0.0029 | 0.5354 ±0.0029 | 0.4921 ±0.0029 | 0.4966 ±0.0028 | 0.4933 ±0.0029 | 0.4947 ±0.0030 |
 | s6_mixed | 0.5460 ±0.0137 | **0.3919** ±0.0082 | 0.4091 ±0.0055 | 0.4751 ±0.0085 | 0.4300 ±0.0090 | 0.3998 ±0.0104 | 0.4019 ±0.0088 | 0.4000 ±0.0104 | 0.4298 ±0.0149 |
+| criteo | 0.6080 ±<0.0001 | 0.6072 ±<0.0001 | 0.6069 ±<0.0001 | 0.6080 ±<0.0001 | 0.6072 ±<0.0001 | **0.6069** ±<0.0001 | 0.6070 ±<0.0001 | 0.6070 ±<0.0001 | 0.6073 ±<0.0001 |
+
+_Criteo rows: 3 seeds, near-identical (the full dataset is not subsampled, so only the SGD seed varies) -- treat as a single no-downside observation, per PDF section 5.3. All methods sit within ~0.001 log loss / overlapping bootstrap CIs; natural drift over 31 days is shallow._
 
 ## Paired comparison: `m5b_smooth0.1` minus baseline (mean test log loss, confirmation seeds)
 Negative = method-under-test better. CI is a 5000-sample paired bootstrap; p is a Wilcoxon signed-rank test across seeds.
@@ -103,6 +106,18 @@ Negative = method-under-test better. CI is a 5000-sample paired bootstrap; p is 
 | m5b_smooth0.001 | +0.0021 | [-0.0057, +0.0097] | +0.52% | 3/12 | 0.424 |
 | han_arw | +0.0100 | [+0.0033, +0.0181] | +2.56% | 3/12 | 0.0269 |
 
+### criteo
+| baseline | mean Δ log loss | 95% CI | rel % | better in | Wilcoxon p |
+|---|---:|---|---:|---:|---:|
+| diff_forgetting | -0.0010 | [-0.0010, -0.0010] | -0.17% | 3/3 | nan |
+| expanding | -0.0010 | [-0.0010, -0.0010] | -0.17% | 3/3 | nan |
+| rolling_14 | -0.0003 | [-0.0003, -0.0003] | -0.05% | 3/3 | nan |
+| m2_context_gate | -0.0002 | [-0.0003, -0.0002] | -0.04% | 3/3 | nan |
+| han_arw | -0.0002 | [-0.0003, -0.0002] | -0.04% | 3/3 | nan |
+| ensemble3 | +0.0000 | [-0.0000, +0.0001] | +0.00% | 2/3 | nan |
+| adamoe | +0.0000 | [+0.0000, +0.0001] | +0.01% | 0/3 | nan |
+| m5b_smooth0.001 | +0.0001 | [+0.0000, +0.0001] | +0.01% | 0/3 | nan |
+
 ## Adaptation & oracle diagnostics (method under test, confirmation seeds)
 `recovery` / `peak post-shift excess` are only defined for regimes with an explicit change point (S1, S4, S5). `oracle persistence = 'high' frac` is the fraction of test days on which fixed `smooth_reg=0.1` beat `1e-3` in hindsight -- how often the optimal persistence regime flips, i.e. the headroom an adaptive beta_t targets.
 
@@ -121,7 +136,7 @@ Negative = method-under-test better. CI is a 5000-sample paired bootstrap; p is 
 
 **Beats Han ARW (reproducibly):** s3_recurring (-0.0092, 12/12 seeds, p=0.000488); s4_local (-0.0214, 12/12 seeds, p=0.000488).
 **Loses to Han ARW:** s0_none (+0.0014, 0/12 seeds, p=0.000488); s1_abrupt (+0.0078, 0/12 seeds, p=0.000488); s2_gradual (+0.0037, 0/12 seeds, p=0.000488); s5_opposing_local (+0.0019, 1/12 seeds, p=0.00146); s6_mixed (+0.0100, 3/12 seeds, p=0.0269).
-**Statistical tie with Han ARW:** none.
+**Statistical tie with Han ARW:** criteo (-0.0002, 3/3 seeds, p=nan).
 **Stationary downside vs expanding ERM (S0):** +0.0014 log loss (+0.4% approx) -- no meaningful downside.
 
 Against the PDF's decision table (section 9): this is a **partial success** for `m5b_smooth0.1` as a fixed configuration -- it replaces the hand-tuned high-persistence specialist on the regimes where persistence helps, but does not dominate the abrupt/gradual/mixed regimes where Han ARW's fast global window still wins. The `oracle persistence='high' frac` column shows why: the optimal persistence regime is not fixed, which is the motivation for the adaptive-beta_t method in Stage 2.

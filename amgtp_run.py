@@ -60,6 +60,12 @@ M5B_DEFAULT_SMOOTH = 1e-3
 M5B_HIGH_SMOOTH = 1e-1
 METHOD_UNDER_TEST = "m5b_smooth0.1"
 
+# Stage 2: AMG-TP persistence-model config frozen on the dev seeds by
+# amgtp_stage2_sweep.py (see amgtp_experiments/stage2_amgtp/_sweep/). Filled
+# after that sweep completes; the default here is the architectural default.
+AMGTP_CONFIG = {"init_bias": -1.0, "rho": 0.3, "beta_entropy_reg": 0.0}
+AMGTP_FIXED_BETA_HIGH = 0.7
+
 # nominal-horizon fallback expert set for M2 (2-expert short/long gate)
 M2_EXPERTS = ["rolling_3", "expanding"]
 
@@ -168,6 +174,8 @@ def main():
     ap.add_argument("--no-diff-forgetting", action="store_true",
                     help="Skip Differentiable Forgetting (the slow per-day bilevel baseline).")
     ap.add_argument("--recovery-horizon", type=int, default=30)
+    ap.add_argument("--stage2", action="store_true",
+                    help="Also run AMG-TP (adaptive global beta_t) and its ablations A4-A7.")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
@@ -249,6 +257,28 @@ def main():
                               T=T, context=context, day=day, seed=args.seed)
     methods["ensemble3"] = [{k: r[k] for k in ("day", "y_true", "y_pred", "n_train", "fit_time")} for r in ens3_rows]
     weights["ensemble3"] = ([{"day": r["day"], "mean_weights": r["mean_weights"]} for r in ens3_rows], list(ENS3_EXPERTS))
+
+    if args.stage2:
+        from amgtp_method import run_amgtp
+        amgtp_variants = {
+            "amgtp": dict(**AMGTP_CONFIG),                                    # A6 full
+            "amgtp_global_q": dict(context_gate=False, **AMGTP_CONFIG),       # A4 no context in q
+            "amgtp_uniform_q": dict(uniform_q=True, **AMGTP_CONFIG),          # A5 persistence alone
+            "amgtp_no_state": dict(state_features="time_only", **AMGTP_CONFIG),  # A7 strip state
+            "amgtp_fixed_beta0": dict(adaptive_beta=False, fixed_beta=0.0),   # A1/A2 no persistence
+            "amgtp_fixed_beta_hi": dict(adaptive_beta=False, fixed_beta=AMGTP_FIXED_BETA_HIGH),  # A3
+        }
+        amgtp_rows_by_name = {}
+        for name, kw in amgtp_variants.items():
+            print(f"{name} ...", flush=True)
+            r = run_amgtp(bank, eligible_days, T=T, context=context, day=day, seed=args.seed, **kw)
+            amgtp_rows_by_name[name] = r
+            methods[name] = [{k: rr[k] for k in ("day", "y_true", "y_pred", "n_train", "fit_time")} for rr in r]
+            weights[name] = ([{"day": rr["day"], "mean_weights": rr["mean_weights"]} for rr in r], list(WINDOW_FAMILY))
+        pd.DataFrame([{"day": rr["day"], "beta": rr["beta"],
+                       **{f"q_{k}": v for k, v in rr["mean_q"].items()},
+                       **{f"m_{k}": v for k, v in rr["m_state"].items()}}
+                      for rr in amgtp_rows_by_name["amgtp"]]).to_csv(out / "amgtp_beta_trace.csv", index=False)
 
     # ---- per-day metrics (computed once; all aggregation reads these) ----
     per_day = []

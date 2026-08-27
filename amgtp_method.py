@@ -28,7 +28,8 @@ from han_arw import per_sample_log_loss
 from m5_multiscale_gate import MultiExpertGate, _entropy, gate_feature_matrix, multi_days
 
 PERSIST_STATE_NAMES = (["recent_loss_" + n for n in WINDOW_FAMILY]
-                       + ["recent_disagreement", "recent_ctr", "recent_gate_move", "norm_time"])
+                       + ["recent_disagreement", "recent_ctr", "recent_gate_move", "norm_time",
+                          "loss_jump", "q_vs_m_div"])
 
 
 class PersistenceNet(nn.Module):
@@ -45,8 +46,19 @@ class PersistenceNet(nn.Module):
         return torch.sigmoid(self.linear(s)).squeeze(-1)
 
 
+def _expert_mean_loss(bank: dict, d: int) -> np.ndarray:
+    return np.array([per_sample_log_loss(bank[n][d]["y_true"], bank[n][d]["y_pred"]).mean()
+                     for n in WINDOW_FAMILY])
+
+
 def _persist_state(bank: dict, day_list: list, t: int, T: int, prev_gate_move: float,
-                   mode: str = "full") -> np.ndarray:
+                   prev_mean_q: np.ndarray, m_state: np.ndarray, mode: str = "full") -> np.ndarray:
+    """r_psi input, all from days < t: per-expert recent loss, short/long
+    disagreement, recent CTR, recent deployed gate movement, normalized time,
+    a loss-jump shift detector (max |Δ per-expert loss| between the two most
+    recent matured days), and the L1 divergence between the last raw gate
+    mean and the persistent state m_{t-1} (large -> m is stale, beta should
+    drop)."""
     norm_t = t / max(T, 1)
     if mode == "time_only":
         return np.array([norm_t], dtype=np.float32)
@@ -54,21 +66,22 @@ def _persist_state(bank: dict, day_list: list, t: int, T: int, prev_gate_move: f
     if not past:
         return np.zeros(len(PERSIST_STATE_NAMES), dtype=np.float32)
     prev = past[-1]
-    recent_loss = np.array([per_sample_log_loss(bank[n][prev]["y_true"], bank[n][prev]["y_pred"]).mean()
-                            for n in WINDOW_FAMILY])
+    recent_loss = _expert_mean_loss(bank, prev)
+    loss_jump = float(np.abs(recent_loss - _expert_mean_loss(bank, past[-2])).max()) if len(past) >= 2 else 0.0
     p_short = bank["rolling_3"][prev]["y_pred"]
     p_long = bank["expanding"][prev]["y_pred"]
     disagreement = float(np.abs(p_short - p_long).mean())
     recent_ctr = float(bank[WINDOW_FAMILY[0]][prev]["y_true"].mean())
-    norm_t = t / max(T, 1)
-    return np.concatenate([recent_loss, [disagreement, recent_ctr, prev_gate_move, norm_t]]).astype(np.float32)
+    q_vs_m = float(np.abs(np.asarray(prev_mean_q) - np.asarray(m_state)).sum()) if prev_mean_q is not None else 0.0
+    return np.concatenate([recent_loss,
+                           [disagreement, recent_ctr, prev_gate_move, norm_t, loss_jump, q_vs_m]]).astype(np.float32)
 
 
 def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1e-3,
               entropy_reg: float = 1e-3, rho: float = 0.3, beta_entropy_reg: float = 0.0,
               epochs_per_day: int = 3, seed: int = 0,
               context: np.ndarray = None, day: np.ndarray = None,
-              adaptive_beta: bool = True, fixed_beta: float = 0.0,
+              adaptive_beta: bool = True, fixed_beta: float = 0.0, init_bias: float = -1.0,
               context_gate: bool = True, uniform_q: bool = False,
               state_features: str = "full"):
     """Returns rows: {day, y_true, y_pred, n_train, fit_time, weights,
@@ -94,13 +107,14 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
     n_gate_features = K + 2 + K + n_context  # preds, [spread, norm_time], recent per-expert loss, context
     gate = MultiExpertGate(n_gate_features, K)
     n_state = len(PERSIST_STATE_NAMES) if state_features == "full" else 1
-    persist = PersistenceNet(n_state)
+    persist = PersistenceNet(n_state, init_bias=init_bias)
     trainable = list(gate.parameters()) + (list(persist.parameters()) if adaptive_beta else [])
     opt = torch.optim.Adam(trainable, lr=lr) if trainable else None
 
     m_state = torch.full((K,), 1.0 / K)          # m_{t-1}
     prev_gate_move = 0.0
     prev_deployed_mean = None
+    prev_mean_q = None
 
     rows = []
     for t in days:
@@ -109,7 +123,8 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
         feats_t = torch.tensor(feats, dtype=torch.float32)
         preds_t = torch.tensor(preds, dtype=torch.float32)
         y_t = torch.tensor(y_true, dtype=torch.float32)
-        s_prev = torch.tensor(_persist_state(bank, days, t, T, prev_gate_move, state_features),
+        s_prev = torch.tensor(_persist_state(bank, days, t, T, prev_gate_move, prev_mean_q,
+                                             m_state.numpy(), state_features),
                               dtype=torch.float32)
 
         with torch.no_grad():
@@ -160,6 +175,7 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
             pi_new = ((1 - beta_new) * q_new + beta_new * m_state.unsqueeze(0)).mean(dim=0)
             m_state = (1 - rho) * m_state + rho * pi_new.detach()
             prev_gate_move = 0.0 if np.isnan(gate_move) else gate_move
+            prev_mean_q = mean_q
             prev_deployed_mean = mean_pi
 
     return rows

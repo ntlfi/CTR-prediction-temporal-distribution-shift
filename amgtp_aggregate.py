@@ -33,7 +33,8 @@ from scipy import stats
 from amgtp_config import (CONFIRM_SEEDS, DEV_SEEDS, SYNTH_REGIMES, SYNTH_DAYS)
 
 KEY_REFERENCES = ["expanding", "han_arw", "adamoe", "diff_forgetting",
-                  "m2_context_gate", "m5b_smooth0.001", "m5b_smooth0.1", "ensemble3", "rolling_14"]
+                  "m2_context_gate", "m5b_smooth0.001", "m5b_smooth0.1", "ensemble3", "rolling_14",
+                  "amgtp", "amgtp_fixed_beta0", "amgtp_uniform_q", "amgtp_global_q", "amgtp_no_state"]
 PRED_METRICS = ["log_loss", "brier", "pr_auc", "roc_auc", "ece"]
 
 
@@ -217,16 +218,17 @@ def build_report(stage, cells, headline, paired_by_regime, mut):
                  "All numbers below are confirmation-seed mean +/- SE unless noted.")
     lines.append("")
 
+    refs = [m for m in KEY_REFERENCES if not headline.empty and m in set(headline["method"])]
     lines.append("## Headline: locked-test log loss by regime")
     lines.append("")
-    lines.append("| regime | " + " | ".join(KEY_REFERENCES) + " |")
-    lines.append("|" + "---|" * (len(KEY_REFERENCES) + 1))
+    lines.append("| regime | " + " | ".join(refs) + " |")
+    lines.append("|" + "---|" * (len(refs) + 1))
     for regime in list(SYNTH_REGIMES) + (["criteo"] if "criteo" in cells else []):
         sub = headline[headline["regime"] == regime]
         if sub.empty:
             continue
         cellvals = []
-        for m in KEY_REFERENCES:
+        for m in refs:
             row = sub[sub["method"] == m]
             if row.empty:
                 cellvals.append("--")
@@ -234,9 +236,16 @@ def build_report(stage, cells, headline, paired_by_regime, mut):
             v = row["log_loss"].iloc[0]
             se = row["log_loss_se"].iloc[0]
             best = v <= sub["log_loss"].min() + 1e-9
-            cellvals.append((f"**{v:.4f}**" if best else f"{v:.4f}") + (f" ±{se:.4f}" if se == se and se > 0 else ""))
+            setxt = "" if not (se == se and se > 0) else (" ±<0.0001" if se < 5e-5 else f" ±{se:.4f}")
+            cellvals.append((f"**{v:.4f}**" if best else f"{v:.4f}") + setxt)
         lines.append(f"| {regime} | " + " | ".join(cellvals) + " |")
     lines.append("")
+    if "criteo" in cells:
+        lines.append("_Criteo rows: 3 seeds, near-identical (the full dataset is not subsampled, so "
+                     "only the SGD seed varies) -- treat as a single no-downside observation, per "
+                     "PDF section 5.3. All methods sit within ~0.001 log loss / overlapping bootstrap "
+                     "CIs; natural drift over 31 days is shallow._")
+        lines.append("")
 
     lines.append("## Paired comparison: `%s` minus baseline (mean test log loss, confirmation seeds)" % mut)
     lines.append("Negative = method-under-test better. CI is a 5000-sample paired bootstrap; "
