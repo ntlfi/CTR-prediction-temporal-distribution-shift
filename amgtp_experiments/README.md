@@ -38,7 +38,33 @@ group_per_day_metrics.csv,gate_dynamics.csv,oracle_per_day.csv,comparison_table.
 
 ## Stage 2 — `stage2_amgtp/`
 
-Builds **AMG-TP** itself (adaptive global persistence `β_t` on top of M5b's
-5-expert gate, PDF §2–3) and re-runs the same battery plus the AMG-TP-specific
-ablations A4–A7, with M5b-high-smooth as the fixed-high-persistence reference
-(A3). Started only after Stage 1 is complete and reviewed.
+Builds **AMG-TP** (`amgtp_method.run_amgtp`): adaptive global persistence
+`β_t = σ(r_ψ(s_{t-1}))`, `π_t(x) = (1-β_t) q_t(x) + β_t m_{t-1}` on top of
+M5b's 5-expert gate `q_t` and an EMA state `m_t` of deployed weights
+(PDF §2–3). Persistence hyperparameters are frozen on the dev seeds by
+`amgtp_stage2_sweep.py` — see `_sweep/FROZEN.md`.
+
+Same battery as Stage 1 (`amgtp_run.py --stage2`) plus the ablation ladder:
+
+| PDF Table 3 | method label |
+|---|---|
+| A0 expanding only | `expanding` |
+| A1 no persistence (β=0) | `amgtp_fixed_beta0` |
+| A2 fixed low persistence | `m5b_smooth0.001` |
+| A3 fixed high persistence | `m5b_smooth0.1` / `amgtp_fixed_beta_hi` |
+| A4 adaptive β, global (non-context) q | `amgtp_global_q` |
+| A5 adaptive β, no q (persistence alone) | `amgtp_uniform_q` |
+| A6 full AMG-TP | `amgtp` |
+| A7 adaptive β, state features stripped | `amgtp_no_state` |
+| A8 2 vs 5 experts | `m2_context_gate` vs `m5b_smooth0.001` |
+| A9 static uniform-5 | `uniform5` |
+
+```
+sbatch amgtp_stage2_sweep.slurm                       # freeze persistence hyperparams (dev seeds)
+sbatch amgtp_stage2_synthetic.slurm                   # 119 cells with --stage2
+.venv/bin/python amgtp_aggregate.py \
+    --stage amgtp_experiments/stage2_amgtp --method-under-test amgtp
+```
+
+Extra outputs: `amgtp_beta_trace.csv` per cell, `tables/ablation_amgtp.csv`,
+`figures/beta_trace_<regime>.png`.

@@ -1,0 +1,78 @@
+regime,ablation,method,log_loss,se,n_seeds
+s0_none,A0 expanding only,expanding,0.32703213426206446,0.0038260971897643866,12
+s0_none,A1 no persistence (beta=0),amgtp_fixed_beta0,0.32818811358250694,0.003818350075719618,12
+s0_none,A2 fixed low persistence,m5b_smooth0.001,0.3281700681025004,0.0038176671141201307,12
+s0_none,A3 fixed high persistence,m5b_smooth0.1,0.3284759629194652,0.003726434667156662,12
+s0_none,"A4 adaptive beta, global q",amgtp_global_q,0.3299080994519115,0.0037999194647964653,12
+s0_none,"A5 adaptive beta, uniform q",amgtp_uniform_q,0.3563905313999449,0.004009286435471317,12
+s0_none,A6 full AMG-TP,amgtp,0.32927732998363074,0.003813240419376752,12
+s0_none,"A7 adaptive beta, no state feats",amgtp_no_state,0.32936140576269385,0.003815378806117384,12
+s0_none,A8a 2-expert gate (M2),m2_context_gate,0.3280648847758287,0.0038260214435988497,12
+s0_none,A8b 5-expert gate (M5b),m5b_smooth0.001,0.3281700681025004,0.0038176671141201307,12
+s0_none,A9 static uniform-5,uniform5,0.3563905338307591,0.00400928648191698,12
+s1_abrupt,A0 expanding only,expanding,0.5376306287325131,0.0036974739649522506,12
+s1_abrupt,A1 no persistence (beta=0),amgtp_fixed_beta0,0.3382423265414373,0.0015684347629311784,12
+s1_abrupt,A2 fixed low persistence,m5b_smooth0.001,0.3382131486790787,0.0015622114314935228,12
+s1_abrupt,A3 fixed high persistence,m5b_smooth0.1,0.3467151025168003,0.0017853450284373562,12
+s1_abrupt,"A4 adaptive beta, global q",amgtp_global_q,0.3400552285175274,0.001541486884175821,12
+s1_abrupt,"A5 adaptive beta, uniform q",amgtp_uniform_q,0.3816595018437395,0.0018795077882657917,12
+s1_abrupt,A6 full AMG-TP,amgtp,0.33893319373566194,0.0015595228086774187,12
+s1_abrupt,"A7 adaptive beta, no state feats",amgtp_no_state,0.33876271141751024,0.0015527901817805347,12
+s1_abrupt,A8a 2-expert gate (M2),m2_context_gate,0.39834604709705307,0.0018438924485429352,12
+s1_abrupt,A8b 5-expert gate (M5b),m5b_smooth0.001,0.3382131486790787,0.0015622114314935228,12
+s1_abrupt,A9 static uniform-5,uniform5,0.3816595049195701,0.0018795078431941296,12
+s2_gradual,A0 expanding only,expanding,0.472613978881048,0.0036467427396612686,12
+s2_gradual,A1 no persistence (beta=0),amgtp_fixed_beta0,0.359236632222044,0.002056887710070808,12
+s2_gradual,A2 fixed low persistence,m5b_smooth0.001,0.359217547749534,0.0020542756803149332,12
+s2_gradual,A3 fixed high persistence,m5b_smooth0.1,0.3617871672248911,0.0020241396259747654,12
+s2_gradual,"A4 adaptive beta, global q",amgtp_global_q,0.3610979182487954,0.0020469772022144042,12
+s2_gradual,"A5 adaptive beta, uniform q",amgtp_uniform_q,0.3877745793229556,0.002322336924919297,12
+s2_gradual,A6 full AMG-TP,amgtp,0.3602993052638213,0.0020521872250439284,12
+s2_gradual,"A7 adaptive beta, no state feats",amgtp_no_state,0.3603649229440505,0.0020533598317084463,12
+s2_gradual,A8a 2-expert gate (M2),m2_context_gate,0.4045073369482697,0.0023512891346923076,12
+s2_gradual,A8b 5-expert gate (M5b),m5b_smooth0.001,0.359217547749534,0.0020542756803149332,12
+s2_gradual,A9 static uniform-5,uniform5,0.38777458168993384,0.0023223369584399784,12
+s3_recurring,A0 expanding only,expanding,0.43570129853743716,0.00388696033463853,12
+s3_recurring,A1 no persistence (beta=0),amgtp_fixed_beta0,0.44036548002600423,0.004167786177588206,12
+s3_recurring,A2 fixed low persistence,m5b_smooth0.001,0.4378101070675857,0.0036835395830152533,12
+s3_recurring,A3 fixed high persistence,m5b_smooth0.1,0.4275071766688821,0.0037457028807743493,12
+s3_recurring,"A4 adaptive beta, global q",amgtp_global_q,0.43120066568237286,0.0036983384805228665,12
+s3_recurring,"A5 adaptive beta, uniform q",amgtp_uniform_q,0.43927475187944465,0.003757328324909524,12
+s3_recurring,A6 full AMG-TP,amgtp,0.4297591128940425,0.0036879653058022,12
+s3_recurring,"A7 adaptive beta, no state feats",amgtp_no_state,0.4309508461515224,0.003604319185109038,12
+s3_recurring,A8a 2-expert gate (M2),m2_context_gate,0.4333313895574646,0.003839252669179644,12
+s3_recurring,A8b 5-expert gate (M5b),m5b_smooth0.001,0.4378101070675857,0.0036835395830152533,12
+s3_recurring,A9 static uniform-5,uniform5,0.43927475254268394,0.0037573283276652967,12
+s4_local,A0 expanding only,expanding,0.5190154917448452,0.004476642060459544,12
+s4_local,A1 no persistence (beta=0),amgtp_fixed_beta0,0.4589564610901115,0.0038114886205986333,12
+s4_local,A2 fixed low persistence,m5b_smooth0.001,0.45890181536253416,0.003821695237953958,12
+s4_local,A3 fixed high persistence,m5b_smooth0.1,0.4670802185885537,0.00398399995915339,12
+s4_local,"A4 adaptive beta, global q",amgtp_global_q,0.4843053924825809,0.004279933792642009,12
+s4_local,"A5 adaptive beta, uniform q",amgtp_uniform_q,0.5039710637137261,0.004329390690526957,12
+s4_local,A6 full AMG-TP,amgtp,0.46120230419382224,0.0038237172285018766,12
+s4_local,"A7 adaptive beta, no state feats",amgtp_no_state,0.46285042772770146,0.003828436252787439,12
+s4_local,A8a 2-expert gate (M2),m2_context_gate,0.48786038706874185,0.004029676945348643,12
+s4_local,A8b 5-expert gate (M5b),m5b_smooth0.001,0.45890181536253416,0.003821695237953958,12
+s4_local,A9 static uniform-5,uniform5,0.5039710637595238,0.0043293906615932696,12
+s5_opposing_local,A0 expanding only,expanding,0.6110425147489539,0.0037001596026654242,12
+s5_opposing_local,A1 no persistence (beta=0),amgtp_fixed_beta0,0.49223441104692695,0.002913798616180615,12
+s5_opposing_local,A2 fixed low persistence,m5b_smooth0.001,0.49210160944438464,0.0029119051854768633,12
+s5_opposing_local,A3 fixed high persistence,m5b_smooth0.1,0.496615247206404,0.002812228681233347,12
+s5_opposing_local,"A4 adaptive beta, global q",amgtp_global_q,0.4940038820013877,0.0029700857348199405,12
+s5_opposing_local,"A5 adaptive beta, uniform q",amgtp_uniform_q,0.5155041977953538,0.002914128342302881,12
+s5_opposing_local,A6 full AMG-TP,amgtp,0.49360715588829857,0.002981459817529081,12
+s5_opposing_local,"A7 adaptive beta, no state feats",amgtp_no_state,0.493690625790875,0.003011858562427897,12
+s5_opposing_local,A8a 2-expert gate (M2),m2_context_gate,0.53537015993162,0.0029352751476604206,12
+s5_opposing_local,A8b 5-expert gate (M5b),m5b_smooth0.001,0.49210160944438464,0.0029119051854768633,12
+s5_opposing_local,A9 static uniform-5,uniform5,0.5155041981795585,0.0029141283569869116,12
+s6_mixed,A0 expanding only,expanding,0.546019103516695,0.013704298946312582,12
+s6_mixed,A1 no persistence (beta=0),amgtp_fixed_beta0,0.4003162406020126,0.010851505756063801,12
+s6_mixed,A2 fixed low persistence,m5b_smooth0.001,0.3998407272628352,0.010447319822000796,12
+s6_mixed,A3 fixed high persistence,m5b_smooth0.1,0.40190095995765923,0.008809638068002142,12
+s6_mixed,"A4 adaptive beta, global q",amgtp_global_q,0.39921007992589,0.009864612592270967,12
+s6_mixed,"A5 adaptive beta, uniform q",amgtp_uniform_q,0.4120711198743467,0.005491102560545237,12
+s6_mixed,A6 full AMG-TP,amgtp,0.3974709709099727,0.009863290720809744,12
+s6_mixed,"A7 adaptive beta, no state feats",amgtp_no_state,0.39599991527766293,0.009627646475869002,12
+s6_mixed,A8a 2-expert gate (M2),m2_context_gate,0.42997873496146405,0.009046450702099052,12
+s6_mixed,A8b 5-expert gate (M5b),m5b_smooth0.001,0.3998407272628352,0.010447319822000796,12
+s6_mixed,A9 static uniform-5,uniform5,0.4120711216423915,0.005491102450553956,12
