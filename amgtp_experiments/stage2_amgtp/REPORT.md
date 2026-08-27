@@ -15,6 +15,9 @@ Synthetic horizon 120 days, 5 dev seeds [0, 1, 2, 3, 4] (hyperparameters frozen 
 | s4_local | 0.5190 ±0.0045 | 0.4885 ±0.0043 | 0.5017 ±0.0043 | 0.4913 ±0.0041 | 0.4879 ±0.0040 | **0.4589** ±0.0038 | 0.4671 ±0.0040 | 0.4600 ±0.0038 | 0.4885 ±0.0043 | 0.4612 ±0.0038 | 0.4590 ±0.0038 | 0.5040 ±0.0043 | 0.4843 ±0.0043 | 0.4629 ±0.0038 |
 | s5_opposing_local | 0.6110 ±0.0037 | 0.4947 ±0.0030 | 0.5138 ±0.0029 | 0.5165 ±0.0029 | 0.5354 ±0.0029 | 0.4921 ±0.0029 | 0.4966 ±0.0028 | 0.4933 ±0.0029 | 0.4947 ±0.0030 | 0.4936 ±0.0030 | 0.4922 ±0.0029 | 0.5155 ±0.0029 | 0.4940 ±0.0030 | 0.4937 ±0.0030 |
 | s6_mixed | 0.5460 ±0.0137 | **0.3919** ±0.0082 | 0.4091 ±0.0055 | 0.4751 ±0.0085 | 0.4300 ±0.0090 | 0.3998 ±0.0104 | 0.4019 ±0.0088 | 0.4000 ±0.0104 | 0.4298 ±0.0149 | 0.3975 ±0.0099 | 0.4003 ±0.0109 | 0.4121 ±0.0055 | 0.3992 ±0.0099 | 0.3960 ±0.0096 |
+| criteo | 0.6080 ±<0.0001 | 0.6072 ±<0.0001 | 0.6069 ±<0.0001 | 0.6080 ±<0.0001 | 0.6072 ±<0.0001 | **0.6069** ±<0.0001 | 0.6070 ±<0.0001 | 0.6070 ±<0.0001 | 0.6073 ±<0.0001 | 0.6069 ±<0.0001 | 0.6069 ±<0.0001 | 0.6069 ±<0.0001 | 0.6069 ±<0.0001 | 0.6069 ±<0.0001 |
+
+_Criteo rows: 3 seeds, near-identical (the full dataset is not subsampled, so only the SGD seed varies) -- treat as a single no-downside observation, per PDF section 5.3. All methods sit within ~0.001 log loss / overlapping bootstrap CIs; natural drift over 31 days is shallow._
 
 ## Paired comparison: `amgtp` minus baseline (mean test log loss, confirmation seeds)
 Negative = method-under-test better. CI is a 5000-sample paired bootstrap; p is a Wilcoxon signed-rank test across seeds.
@@ -138,6 +141,23 @@ Negative = method-under-test better. CI is a 5000-sample paired bootstrap; p is 
 | amgtp_no_state | +0.0015 | [-0.0020, +0.0054] | +0.37% | 6/12 | 0.791 |
 | han_arw | +0.0056 | [-0.0025, +0.0147] | +1.43% | 5/12 | 0.38 |
 
+### criteo
+| baseline | mean Δ log loss | 95% CI | rel % | better in | Wilcoxon p |
+|---|---:|---|---:|---:|---:|
+| diff_forgetting | -0.0011 | [-0.0011, -0.0010] | -0.18% | 3/3 | nan |
+| expanding | -0.0011 | [-0.0011, -0.0010] | -0.17% | 3/3 | nan |
+| rolling_14 | -0.0003 | [-0.0004, -0.0003] | -0.06% | 3/3 | nan |
+| m2_context_gate | -0.0003 | [-0.0003, -0.0002] | -0.05% | 3/3 | nan |
+| han_arw | -0.0003 | [-0.0003, -0.0002] | -0.04% | 3/3 | nan |
+| m5b_smooth0.1 | -0.0000 | [-0.0001, -0.0000] | -0.01% | 3/3 | nan |
+| ensemble3 | -0.0000 | [-0.0001, -0.0000] | -0.01% | 3/3 | nan |
+| amgtp_uniform_q | -0.0000 | [-0.0000, -0.0000] | -0.00% | 3/3 | nan |
+| adamoe | -0.0000 | [-0.0000, -0.0000] | -0.00% | 3/3 | nan |
+| amgtp_global_q | -0.0000 | [-0.0000, +0.0000] | -0.00% | 2/3 | nan |
+| amgtp_no_state | -0.0000 | [-0.0000, +0.0000] | -0.00% | 1/3 | nan |
+| amgtp_fixed_beta0 | +0.0000 | [-0.0000, +0.0000] | +0.00% | 1/3 | nan |
+| m5b_smooth0.001 | +0.0000 | [+0.0000, +0.0000] | +0.00% | 0/3 | nan |
+
 ## Adaptation & oracle diagnostics (method under test, confirmation seeds)
 `recovery` / `peak post-shift excess` are only defined for regimes with an explicit change point (S1, S4, S5). `oracle persistence = 'high' frac` is the fraction of test days on which fixed `smooth_reg=0.1` beat `1e-3` in hindsight -- how often the optimal persistence regime flips, i.e. the headroom an adaptive beta_t targets.
 
@@ -156,7 +176,7 @@ Negative = method-under-test better. CI is a 5000-sample paired bootstrap; p is 
 
 **Beats Han ARW (reproducibly):** s3_recurring (-0.0070, 12/12 seeds, p=0.000488); s4_local (-0.0273, 12/12 seeds, p=0.000488); s5_opposing_local (-0.0011, 11/12 seeds, p=0.0161).
 **Loses to Han ARW:** s0_none (+0.0022, 0/12 seeds, p=0.000488); s2_gradual (+0.0022, 0/12 seeds, p=0.000488).
-**Statistical tie with Han ARW:** s1_abrupt (+0.0001, 5/12 seeds, p=0.791); s6_mixed (+0.0056, 5/12 seeds, p=0.38).
+**Statistical tie with Han ARW:** s1_abrupt (+0.0001, 5/12 seeds, p=0.791); s6_mixed (+0.0056, 5/12 seeds, p=0.38); criteo (-0.0003, 3/3 seeds, p=nan).
 **Stationary downside vs expanding ERM (S0):** +0.0022 log loss (+0.7% approx) -- no meaningful downside.
 
 ## Does beta_t emerge correctly with no regime label? (H2)
@@ -186,6 +206,7 @@ H2 asks whether a single learned `beta_t` matches low-persistence (`m5b_smooth0.
 | s4_local | +0.0023 | -0.0059 | between them |
 | s5_opposing_local | +0.0015 | -0.0030 | matches/beats both |
 | s6_mixed | -0.0024 | -0.0044 | matches/beats both |
+| criteo | +0.0000 | -0.0000 | matches/beats both |
 
 See `tables/ablation_amgtp.csv` for the A1/A3/A4/A5/A7 ablation ladder and `figures/beta_trace_*.png` / `amgtp_beta_trace.csv` for the deployed beta_t trajectory around each shift.
 
