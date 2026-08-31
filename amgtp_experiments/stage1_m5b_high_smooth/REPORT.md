@@ -6,18 +6,21 @@ Synthetic horizon 120 days, 5 dev seeds [0, 1, 2, 3, 4] (hyperparameters frozen 
 
 ## Headline: locked-test log loss by regime
 
-| regime | expanding | han_arw | adamoe | diff_forgetting | m2_context_gate | m5b_smooth0.001 | m5b_smooth0.1 | ensemble3 | rolling_14 |
-|---|---|---|---|---|---|---|---|---|---|
-| s0_none | **0.3270** ±0.0038 | **0.3270** ±0.0038 | 0.3543 ±0.0040 | 0.3385 ±0.0038 | 0.3281 ±0.0038 | 0.3282 ±0.0038 | 0.3285 ±0.0037 | 0.3281 ±0.0038 | 0.3384 ±0.0039 |
-| s1_abrupt | 0.5376 ±0.0037 | 0.3389 ±0.0015 | 0.3785 ±0.0018 | 0.4141 ±0.0020 | 0.3983 ±0.0018 | 0.3382 ±0.0016 | 0.3467 ±0.0018 | 0.3392 ±0.0016 | **0.3369** ±0.0016 |
-| s2_gradual | 0.4726 ±0.0036 | **0.3581** ±0.0020 | 0.3861 ±0.0023 | 0.4144 ±0.0026 | 0.4045 ±0.0024 | 0.3592 ±0.0021 | 0.3618 ±0.0020 | 0.3603 ±0.0021 | **0.3581** ±0.0020 |
-| s3_recurring | 0.4357 ±0.0039 | 0.4368 ±0.0041 | 0.4384 ±0.0037 | 0.4398 ±0.0039 | 0.4333 ±0.0038 | 0.4378 ±0.0037 | **0.4275** ±0.0037 | 0.4306 ±0.0038 | 0.4509 ±0.0040 |
-| s4_local | 0.5190 ±0.0045 | 0.4885 ±0.0043 | 0.5017 ±0.0043 | 0.4913 ±0.0041 | 0.4879 ±0.0040 | **0.4589** ±0.0038 | 0.4671 ±0.0040 | 0.4600 ±0.0038 | 0.4885 ±0.0043 |
-| s5_opposing_local | 0.6110 ±0.0037 | 0.4947 ±0.0030 | 0.5138 ±0.0029 | 0.5165 ±0.0029 | 0.5354 ±0.0029 | 0.4921 ±0.0029 | 0.4966 ±0.0028 | 0.4933 ±0.0029 | 0.4947 ±0.0030 |
-| s6_mixed | 0.5460 ±0.0137 | **0.3919** ±0.0082 | 0.4091 ±0.0055 | 0.4751 ±0.0085 | 0.4300 ±0.0090 | 0.3998 ±0.0104 | 0.4019 ±0.0088 | 0.4000 ±0.0104 | 0.4298 ±0.0149 |
-| criteo | 0.6080 ±<0.0001 | 0.6072 ±<0.0001 | 0.6069 ±<0.0001 | 0.6080 ±<0.0001 | 0.6072 ±<0.0001 | **0.6069** ±<0.0001 | 0.6070 ±<0.0001 | 0.6070 ±<0.0001 | 0.6073 ±<0.0001 |
+| regime | expanding | han_arw | adamoe | diff_forgetting | m2_context_gate | m5b_smooth0.001 | m5b_smooth0.1 | ensemble3 | rolling_14 | amgtp | amgtp_fixed_beta0 | amgtp_uniform_q | amgtp_global_q | amgtp_no_state |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| s0_none | **0.3270** ±0.0038 | **0.3270** ±0.0038 | 0.3543 ±0.0040 | 0.3385 ±0.0038 | 0.3281 ±0.0038 | 0.3282 ±0.0038 | 0.3285 ±0.0037 | 0.3281 ±0.0038 | 0.3384 ±0.0039 | -- | -- | -- | -- | -- |
+| s1_abrupt | 0.5376 ±0.0037 | 0.3389 ±0.0015 | 0.3785 ±0.0018 | 0.4141 ±0.0020 | 0.3983 ±0.0018 | 0.3382 ±0.0016 | 0.3467 ±0.0018 | 0.3392 ±0.0016 | **0.3369** ±0.0016 | -- | -- | -- | -- | -- |
+| s2_gradual | 0.4726 ±0.0036 | **0.3581** ±0.0020 | 0.3861 ±0.0023 | 0.4144 ±0.0026 | 0.4045 ±0.0024 | 0.3592 ±0.0021 | 0.3618 ±0.0020 | 0.3603 ±0.0021 | **0.3581** ±0.0020 | -- | -- | -- | -- | -- |
+| s3_recurring | 0.4357 ±0.0039 | 0.4368 ±0.0041 | 0.4384 ±0.0037 | 0.4398 ±0.0039 | 0.4333 ±0.0038 | 0.4378 ±0.0037 | **0.4275** ±0.0037 | 0.4306 ±0.0038 | 0.4509 ±0.0040 | -- | -- | -- | -- | -- |
+| s4_local | 0.5190 ±0.0045 | 0.4885 ±0.0043 | 0.5017 ±0.0043 | 0.4913 ±0.0041 | 0.4879 ±0.0040 | **0.4589** ±0.0038 | 0.4671 ±0.0040 | 0.4600 ±0.0038 | 0.4885 ±0.0043 | -- | -- | -- | -- | -- |
+| s5_opposing_local | 0.6110 ±0.0037 | 0.4947 ±0.0030 | 0.5138 ±0.0029 | 0.5165 ±0.0029 | 0.5354 ±0.0029 | 0.4921 ±0.0029 | 0.4966 ±0.0028 | 0.4933 ±0.0029 | 0.4947 ±0.0030 | -- | -- | -- | -- | -- |
+| s6_mixed | 0.5460 ±0.0137 | **0.3919** ±0.0082 | 0.4091 ±0.0055 | 0.4751 ±0.0085 | 0.4300 ±0.0090 | 0.3998 ±0.0104 | 0.4019 ±0.0088 | 0.4000 ±0.0104 | 0.4298 ±0.0149 | -- | -- | -- | -- | -- |
+| criteo | 0.6080 ±<0.0001 | 0.6072 ±<0.0001 | 0.6069 ±<0.0001 | 0.6080 ±<0.0001 | 0.6072 ±<0.0001 | **0.6069** ±<0.0001 | 0.6070 ±<0.0001 | 0.6070 ±<0.0001 | 0.6073 ±<0.0001 | -- | -- | -- | -- | -- |
+| avazu | 0.3844 ±0.0002 | 0.3838 ±0.0002 | 0.3826 ±0.0001 | 0.3900 ±0.0002 | 0.3830 ±0.0001 | 0.3826 ±0.0001 | 0.3827 ±0.0002 | 0.3826 ±0.0002 | 0.3838 ±0.0002 | 0.3825 ±0.0001 | 0.3826 ±0.0002 | 0.3826 ±0.0001 | 0.3825 ±0.0001 | **0.3825** ±0.0001 |
 
 _Criteo rows: 3 seeds, near-identical (the full dataset is not subsampled, so only the SGD seed varies) -- treat as a single no-downside observation, per PDF section 5.3. All methods sit within ~0.001 log loss / overlapping bootstrap CIs; natural drift over 31 days is shallow._
+
+_Avazu rows: 8 seeds, real 10-day mobile-ad click logs indexed in 2-hour blocks (120-block horizon, matching the synthetic suite), each seed drawing a disjoint 20% row subsample so seeds vary genuinely. This is the second real temporal benchmark (PDF section 5.3): a no-downside check plus a real-data test of the recurring-drift claim, since the diurnal CTR cycle (~12 blocks) is inside the window family's reach._
 
 ## Paired comparison: `m5b_smooth0.1` minus baseline (mean test log loss, confirmation seeds)
 Negative = method-under-test better. CI is a 5000-sample paired bootstrap; p is a Wilcoxon signed-rank test across seeds.
@@ -118,6 +121,23 @@ Negative = method-under-test better. CI is a 5000-sample paired bootstrap; p is 
 | adamoe | +0.0000 | [+0.0000, +0.0001] | +0.01% | 0/3 | nan |
 | m5b_smooth0.001 | +0.0001 | [+0.0000, +0.0001] | +0.01% | 0/3 | nan |
 
+### avazu
+| baseline | mean Δ log loss | 95% CI | rel % | better in | Wilcoxon p |
+|---|---:|---|---:|---:|---:|
+| diff_forgetting | -0.0073 | [-0.0074, -0.0071] | -1.87% | 8/8 | 0.00781 |
+| expanding | -0.0017 | [-0.0018, -0.0015] | -0.44% | 8/8 | 0.00781 |
+| han_arw | -0.0011 | [-0.0013, -0.0009] | -0.28% | 8/8 | 0.00781 |
+| rolling_14 | -0.0011 | [-0.0013, -0.0009] | -0.28% | 8/8 | 0.00781 |
+| m2_context_gate | -0.0004 | [-0.0004, -0.0002] | -0.09% | 7/8 | 0.0156 |
+| amgtp_uniform_q | +0.0001 | [-0.0000, +0.0002] | +0.02% | 3/8 | 0.25 |
+| adamoe | +0.0001 | [-0.0000, +0.0002] | +0.02% | 3/8 | 0.25 |
+| amgtp_fixed_beta0 | +0.0001 | [+0.0000, +0.0002] | +0.03% | 1/8 | 0.0781 |
+| m5b_smooth0.001 | +0.0001 | [+0.0000, +0.0003] | +0.03% | 1/8 | 0.0781 |
+| ensemble3 | +0.0001 | [+0.0000, +0.0003] | +0.04% | 1/8 | 0.0156 |
+| amgtp_global_q | +0.0002 | [+0.0001, +0.0003] | +0.04% | 1/8 | 0.0156 |
+| amgtp | +0.0002 | [+0.0001, +0.0003] | +0.04% | 1/8 | 0.0234 |
+| amgtp_no_state | +0.0002 | [+0.0001, +0.0003] | +0.04% | 1/8 | 0.0234 |
+
 ## Adaptation & oracle diagnostics (method under test, confirmation seeds)
 `recovery` / `peak post-shift excess` are only defined for regimes with an explicit change point (S1, S4, S5). `oracle persistence = 'high' frac` is the fraction of test days on which fixed `smooth_reg=0.1` beat `1e-3` in hindsight -- how often the optimal persistence regime flips, i.e. the headroom an adaptive beta_t targets.
 
@@ -134,7 +154,7 @@ Negative = method-under-test better. CI is a 5000-sample paired bootstrap; p is 
 ## Central question
 > Is there reproducible evidence that adaptive combination of short- and long-term information outperforms strong recency-based temporal adaptation (Han ARW), and under what shift?
 
-**Beats Han ARW (reproducibly):** s3_recurring (-0.0092, 12/12 seeds, p=0.000488); s4_local (-0.0214, 12/12 seeds, p=0.000488).
+**Beats Han ARW (reproducibly):** s3_recurring (-0.0092, 12/12 seeds, p=0.000488); s4_local (-0.0214, 12/12 seeds, p=0.000488); avazu (-0.0011, 8/8 seeds, p=0.00781).
 **Loses to Han ARW:** s0_none (+0.0014, 0/12 seeds, p=0.000488); s1_abrupt (+0.0078, 0/12 seeds, p=0.000488); s2_gradual (+0.0037, 0/12 seeds, p=0.000488); s5_opposing_local (+0.0019, 1/12 seeds, p=0.00146); s6_mixed (+0.0100, 3/12 seeds, p=0.0269).
 **Statistical tie with Han ARW:** criteo (-0.0002, 3/3 seeds, p=nan).
 **Stationary downside vs expanding ERM (S0):** +0.0014 log loss (+0.4% approx) -- no meaningful downside.

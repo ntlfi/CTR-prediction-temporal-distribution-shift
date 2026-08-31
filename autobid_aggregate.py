@@ -27,6 +27,22 @@ REFS = ["han_arw", "expanding", "ensemble3", "m5b_smooth0.1"]
 SPEND_POINTS = ["10pct", "25pct", "50pct", "75pct"]
 
 
+def _md(df, index=True, floatfmt="{:.1f}"):
+    """Minimal markdown table (no tabulate dependency, matching amgtp_aggregate)."""
+    df = df.copy()
+    if index:
+        df = df.reset_index()
+    cols = [str(c) for c in df.columns]
+    def cell(v):
+        if isinstance(v, float):
+            return "" if pd.isna(v) else floatfmt.format(v)
+        return str(v)
+    out = ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols)]
+    for _, row in df.iterrows():
+        out.append("| " + " | ".join(cell(v) for v in row) + " |")
+    return "\n".join(out)
+
+
 def load_cells(stage: Path):
     """{regime: {seed: {'summary': dict, 'matched': DataFrame}}}"""
     out = {}
@@ -104,7 +120,14 @@ def build_report(stage, cells):
              "(`autobid.py`). Primary metric: **value at matched spend** "
              "(clicks; and conversions, which on the synthetic source equal "
              "clicks). `_oracle` / `_noskill` / `_shuffled_amgtp` are "
-             "non-deployable frontier anchors.", ""]
+             "non-deployable frontier anchors.", "",
+             "_Criteo uses the log's recorded display `cost`. Synthetic has no "
+             "cost column, so `autobid.synthetic_cost` builds a second-price "
+             "landscape from the **true** click probability (not from any model "
+             "under test) -- clicked-likely impressions are genuinely more "
+             "expensive, the regime where prediction skill pays off. The "
+             "synthetic numbers therefore test whether a prediction gain "
+             "*translates* to bidding value, not the absolute value level._", ""]
 
     hl = headline_table(cells)
     hl.to_csv(stage / "tables" / "headline.csv", index=False)
@@ -115,7 +138,7 @@ def build_report(stage, cells):
            .pivot_table(index="regime", columns="method", values="mean"))
     cols = [c for c in DEPLOYABLE + ANCHORS if c in piv.columns]
     piv = piv[cols]
-    lines.append(piv.round(1).to_markdown())
+    lines.append(_md(piv.round(1)))
     lines.append("")
 
     paired_all = []
@@ -134,10 +157,10 @@ def build_report(stage, cells):
     lines.append("")
     show = paired_df[(paired_df.metric == "clicks") & (paired_df.spend == "25pct")]
     if not show.empty:
-        lines.append(show[["regime", "ref", "n_seed", "amgtp_mean", "ref_mean",
-                           "rel_pct", "n_amgtp_wins", "wilcoxon_p"]]
-                     .round({"amgtp_mean": 1, "ref_mean": 1, "rel_pct": 2, "wilcoxon_p": 4})
-                     .to_markdown(index=False))
+        lines.append(_md(show[["regime", "ref", "n_seed", "amgtp_mean", "ref_mean",
+                               "rel_pct", "n_amgtp_wins", "wilcoxon_p"]]
+                         .round({"amgtp_mean": 1, "ref_mean": 1, "rel_pct": 2, "wilcoxon_p": 4}),
+                         index=False, floatfmt="{:.3f}"))
     lines.append("")
 
     # verdict per PDF section 9

@@ -8,7 +8,33 @@ the narrative of what was done, what is running, and what is next.
 
 ## 2026-08-31 — Downstream autobidding eval (PDF §8, step 8)
 
-**Status: built + tested + smoke-run; batteries not yet submitted.**
+**Status: DONE. 56 synthetic cells + 5 Criteo seeds, all COMPLETED (job
+12455401 / 12455402). `amgtp_experiments/stage3_autobid/REPORT.md`.**
+
+### RESULT — the prediction wins translate to bidding value
+
+Value at matched spend (clicks won at 25% of historical budget), AMG-TP vs
+Han ARW, paired over 8 seeds:
+
+| regime | rel % | seeds | Wilcoxon p | verdict |
+|---|---|---|---|---|
+| S3 recurring | **+1.53%** | 8/8 | 0.008 | **AMG-TP wins** |
+| S4 local | **+2.09%** | 8/8 | 0.008 | **AMG-TP wins** |
+| S1 abrupt | +0.17% | 7/8 | 0.016 | marginal edge (beats m5b_smooth0.1 +2.1%) |
+| S5 opposing | +0.12% | 5/8 | 0.38 | tie |
+| S0 / S2 | −0.3% / −0.25% | 0/8 | 0.008 | small loss |
+| S6 mixed | −1.02% | 0/8 | 0.008 | **loss** |
+| Criteo (real) | +0.01% | 4/5 | 0.125 | flat, no separation |
+
+- vs `ensemble3`: within ±0.25% everywhere — one model matches the 3-way
+  ensemble downstream too.
+- Anchors sane: `_oracle` ~+45% over no-skill, `_shuffled` well below.
+- **The causal chain (PDF eq. 9) holds on synthetic: a CTR-prediction gain
+  under recurring/local drift → more clicks per dollar at matched spend.** On
+  real Criteo nothing separates from a cheapest-first bidder (PDF §9
+  "insufficient real evidence" carries downstream).
+- Caveat: synthetic `cost` is tied to *true* CTR, so the eval measures
+  whether a prediction gain *translates*, not the absolute value level.
 
 New "new experiment" chosen by the user. PDF §8: freeze the CTR models, feed
 each into the *same* auction + pacing policy, compare realised value at
@@ -68,7 +94,30 @@ matched spend.
 
 ## 2026-08-31 — Avazu (second real dataset, PDF §5.3)
 
-**Status: multi-seed battery running.**
+**Status: DONE. 8 seeds, all COMPLETED (jobs 12453463_0 + 12455275_[1-7]).
+Both stage REPORTs regenerated.**
+
+### RESULT — first real-data signal that AMG-TP > Han ARW
+
+8-seed paired (Wilcoxon), locked-test log loss:
+- **AMG-TP beats Han ARW: −0.32%, 8/8 seeds, p=0.0078** (the min p for n=8);
+  CI [−0.0014, −0.0011] excludes 0.
+- **AMG-TP beats expanding ERM: −0.49%, 8/8, p=0.0078**; beats rolling_7/14 too.
+- Absolute: amgtp **0.3825** vs han_arw 0.3838 vs expanding 0.3844.
+- Does *not* separate from the other mixture methods — adamoe / m5b_smooth* /
+  ensemble3 / amgtp_no_state all cluster 0.3825–0.3827. It's the
+  *multi-timescale family as a whole* that edges out the single-horizon
+  methods, exploiting the real diurnal cycle (~12 blocks, inside the window
+  family's reach).
+- Effect is small in absolute log loss (~0.0012–0.0019) but statistically
+  clean — better than Criteo's dead-flat. Weakly satisfies PDF H4 ("improves
+  at least one real CTR benchmark over the best fixed- and adaptive-window
+  baselines").
+
+### Fixed at write-up
+- `amgtp_aggregate.py`: stale "hourly blocks (~240)" boilerplate → "2-hour
+  blocks (120-block horizon)"; grammar; and real regimes (criteo/avazu) now
+  pair over *all* present seeds (were being truncated to DEV_SEEDS [0-4]).
 
 ### Done
 - **Avazu integration** (`avazu_data.py`, `data_source.py`, `download_data.py`,

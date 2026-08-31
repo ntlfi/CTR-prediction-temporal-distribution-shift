@@ -310,11 +310,13 @@ def build_report(stage, cells, headline, paired_by_regime, mut):
         lines.append("")
     if "avazu" in cells:
         n_av = len(cells["avazu"])
-        lines.append(f"_Avazu rows: {n_av} seeds, real 10-day mobile-ad click logs indexed in hourly "
-                     "blocks (~240), row-subsampled per seed so seeds vary genuinely. This is the "
-                     "second real temporal benchmark (PDF section 5.3): a no-downside check plus a "
-                     "real-data test of the recurring-drift claim, since hourly CTR carries a strong "
-                     "diurnal cycle._")
+        s = "seed" if n_av == 1 else "seeds"
+        lines.append(f"_Avazu rows: {n_av} {s}, real 10-day mobile-ad click logs indexed in 2-hour "
+                     "blocks (120-block horizon, matching the synthetic suite), each seed drawing a "
+                     "disjoint 20% row subsample so seeds vary genuinely. This is the second real "
+                     "temporal benchmark (PDF section 5.3): a no-downside check plus a real-data test "
+                     "of the recurring-drift claim, since the diurnal CTR cycle (~12 blocks) is inside "
+                     "the window family's reach._")
         lines.append("")
 
     lines.append("## Paired comparison: `%s` minus baseline (mean test log loss, confirmation seeds)" % mut)
@@ -496,7 +498,9 @@ def main():
     for regime, by_seed in cells.items():
         if not by_seed:
             continue
-        for label, seedset in [("dev", DEV_SEEDS), ("confirm", CONFIRM_SEEDS)]:
+        seed_sets = ([("all", sorted(by_seed))] if regime in REAL_REGIMES
+                     else [("dev", DEV_SEEDS), ("confirm", CONFIRM_SEEDS)])
+        for label, seedset in seed_sets:
             present = [s for s in seedset if s in by_seed]
             if not present:
                 continue
@@ -504,9 +508,14 @@ def main():
             tbl.insert(0, "seed_set", label)
             tbl.insert(0, "regime", regime)
             tbl.to_csv(stage / "tables" / f"consolidated_{regime}_{label}.csv", index=False)
-            if label == "confirm" or (label == "dev" and not [s for s in CONFIRM_SEEDS if s in by_seed]):
+            if label in ("confirm", "all") or (label == "dev" and not [s for s in CONFIRM_SEEDS if s in by_seed]):
                 headline_rows.append(tbl)
-        conf_present = [s for s in CONFIRM_SEEDS if s in by_seed] or [s for s in DEV_SEEDS if s in by_seed]
+        # real datasets (criteo/avazu) have their own seed lists, disjoint from
+        # the synthetic dev/confirm sets -- pair over whatever seeds are present.
+        if regime in REAL_REGIMES:
+            conf_present = sorted(by_seed)
+        else:
+            conf_present = [s for s in CONFIRM_SEEDS if s in by_seed] or [s for s in DEV_SEEDS if s in by_seed]
         if len(conf_present) >= 3 and mut in by_seed[conf_present[0]]["summary"]["methods"]:
             pt = paired_table(by_seed, conf_present, mut)
             pt.to_csv(stage / "tables" / f"paired_{regime}.csv", index=False)

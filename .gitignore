@@ -14,3 +14,9 @@ slurm-*.out
 # + oracle_per_day.csv + gate_dynamics.csv keep the distilled results
 amgtp_experiments/**/per_day_metrics.csv
 amgtp_experiments/**/group_per_day_metrics.csv
+# stage3 autobid: keep summary.json + the stage-level tables/figures/REPORT;
+# the per-cell frontier/paced dumps are large and regenerable from a re-run.
+amgtp_experiments/**/autobid_frontier.csv
+amgtp_experiments/**/autobid_matched_spend.csv
+amgtp_experiments/**/autobid_paced.csv
+amgtp_experiments/stage3_autobid/*/*/autobid_frontier.png

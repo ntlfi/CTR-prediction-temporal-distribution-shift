@@ -16,8 +16,11 @@ Synthetic horizon 120 days, 5 dev seeds [0, 1, 2, 3, 4] (hyperparameters frozen 
 | s5_opposing_local | 0.6110 ±0.0037 | 0.4947 ±0.0030 | 0.5138 ±0.0029 | 0.5165 ±0.0029 | 0.5354 ±0.0029 | 0.4921 ±0.0029 | 0.4966 ±0.0028 | 0.4933 ±0.0029 | 0.4947 ±0.0030 | 0.4936 ±0.0030 | 0.4922 ±0.0029 | 0.5155 ±0.0029 | 0.4940 ±0.0030 | 0.4937 ±0.0030 |
 | s6_mixed | 0.5460 ±0.0137 | **0.3919** ±0.0082 | 0.4091 ±0.0055 | 0.4751 ±0.0085 | 0.4300 ±0.0090 | 0.3998 ±0.0104 | 0.4019 ±0.0088 | 0.4000 ±0.0104 | 0.4298 ±0.0149 | 0.3975 ±0.0099 | 0.4003 ±0.0109 | 0.4121 ±0.0055 | 0.3992 ±0.0099 | 0.3960 ±0.0096 |
 | criteo | 0.6080 ±<0.0001 | 0.6072 ±<0.0001 | 0.6069 ±<0.0001 | 0.6080 ±<0.0001 | 0.6072 ±<0.0001 | **0.6069** ±<0.0001 | 0.6070 ±<0.0001 | 0.6070 ±<0.0001 | 0.6073 ±<0.0001 | 0.6069 ±<0.0001 | 0.6069 ±<0.0001 | 0.6069 ±<0.0001 | 0.6069 ±<0.0001 | 0.6069 ±<0.0001 |
+| avazu | 0.3844 ±0.0002 | 0.3838 ±0.0002 | 0.3826 ±0.0001 | 0.3900 ±0.0002 | 0.3830 ±0.0001 | 0.3826 ±0.0001 | 0.3827 ±0.0002 | 0.3826 ±0.0002 | 0.3838 ±0.0002 | 0.3825 ±0.0001 | 0.3826 ±0.0002 | 0.3826 ±0.0001 | 0.3825 ±0.0001 | **0.3825** ±0.0001 |
 
 _Criteo rows: 3 seeds, near-identical (the full dataset is not subsampled, so only the SGD seed varies) -- treat as a single no-downside observation, per PDF section 5.3. All methods sit within ~0.001 log loss / overlapping bootstrap CIs; natural drift over 31 days is shallow._
+
+_Avazu rows: 8 seeds, real 10-day mobile-ad click logs indexed in 2-hour blocks (120-block horizon, matching the synthetic suite), each seed drawing a disjoint 20% row subsample so seeds vary genuinely. This is the second real temporal benchmark (PDF section 5.3): a no-downside check plus a real-data test of the recurring-drift claim, since the diurnal CTR cycle (~12 blocks) is inside the window family's reach._
 
 ## Paired comparison: `amgtp` minus baseline (mean test log loss, confirmation seeds)
 Negative = method-under-test better. CI is a 5000-sample paired bootstrap; p is a Wilcoxon signed-rank test across seeds.
@@ -158,6 +161,23 @@ Negative = method-under-test better. CI is a 5000-sample paired bootstrap; p is 
 | amgtp_fixed_beta0 | +0.0000 | [-0.0000, +0.0000] | +0.00% | 1/3 | nan |
 | m5b_smooth0.001 | +0.0000 | [+0.0000, +0.0000] | +0.00% | 0/3 | nan |
 
+### avazu
+| baseline | mean Δ log loss | 95% CI | rel % | better in | Wilcoxon p |
+|---|---:|---|---:|---:|---:|
+| diff_forgetting | -0.0074 | [-0.0075, -0.0074] | -1.91% | 8/8 | 0.00781 |
+| expanding | -0.0019 | [-0.0019, -0.0018] | -0.49% | 8/8 | 0.00781 |
+| han_arw | -0.0012 | [-0.0014, -0.0011] | -0.32% | 8/8 | 0.00781 |
+| rolling_14 | -0.0012 | [-0.0014, -0.0011] | -0.32% | 8/8 | 0.00781 |
+| m2_context_gate | -0.0005 | [-0.0006, -0.0004] | -0.13% | 8/8 | 0.00781 |
+| m5b_smooth0.1 | -0.0002 | [-0.0003, -0.0001] | -0.04% | 7/8 | 0.0234 |
+| amgtp_uniform_q | -0.0001 | [-0.0001, -0.0001] | -0.02% | 8/8 | 0.00781 |
+| adamoe | -0.0001 | [-0.0001, -0.0001] | -0.02% | 8/8 | 0.00781 |
+| amgtp_fixed_beta0 | -0.0001 | [-0.0001, -0.0000] | -0.02% | 5/8 | 0.195 |
+| m5b_smooth0.001 | -0.0000 | [-0.0001, -0.0000] | -0.01% | 6/8 | 0.0781 |
+| ensemble3 | -0.0000 | [-0.0001, +0.0000] | -0.01% | 6/8 | 0.25 |
+| amgtp_global_q | -0.0000 | [-0.0000, +0.0000] | -0.00% | 5/8 | 0.25 |
+| amgtp_no_state | +0.0000 | [+0.0000, +0.0000] | +0.00% | 2/8 | 0.0391 |
+
 ## Adaptation & oracle diagnostics (method under test, confirmation seeds)
 `recovery` / `peak post-shift excess` are only defined for regimes with an explicit change point (S1, S4, S5). `oracle persistence = 'high' frac` is the fraction of test days on which fixed `smooth_reg=0.1` beat `1e-3` in hindsight -- how often the optimal persistence regime flips, i.e. the headroom an adaptive beta_t targets.
 
@@ -174,7 +194,7 @@ Negative = method-under-test better. CI is a 5000-sample paired bootstrap; p is 
 ## Central question
 > Is there reproducible evidence that adaptive combination of short- and long-term information outperforms strong recency-based temporal adaptation (Han ARW), and under what shift?
 
-**Beats Han ARW (reproducibly):** s3_recurring (-0.0070, 12/12 seeds, p=0.000488); s4_local (-0.0273, 12/12 seeds, p=0.000488); s5_opposing_local (-0.0011, 11/12 seeds, p=0.0161).
+**Beats Han ARW (reproducibly):** s3_recurring (-0.0070, 12/12 seeds, p=0.000488); s4_local (-0.0273, 12/12 seeds, p=0.000488); s5_opposing_local (-0.0011, 11/12 seeds, p=0.0161); avazu (-0.0012, 8/8 seeds, p=0.00781).
 **Loses to Han ARW:** s0_none (+0.0022, 0/12 seeds, p=0.000488); s2_gradual (+0.0022, 0/12 seeds, p=0.000488).
 **Statistical tie with Han ARW:** s1_abrupt (+0.0001, 5/12 seeds, p=0.791); s6_mixed (+0.0056, 5/12 seeds, p=0.38); criteo (-0.0003, 3/3 seeds, p=nan).
 **Stationary downside vs expanding ERM (S0):** +0.0022 log loss (+0.7% approx) -- no meaningful downside.
@@ -207,6 +227,7 @@ H2 asks whether a single learned `beta_t` matches low-persistence (`m5b_smooth0.
 | s5_opposing_local | +0.0015 | -0.0030 | matches/beats both |
 | s6_mixed | -0.0024 | -0.0044 | matches/beats both |
 | criteo | +0.0000 | -0.0000 | matches/beats both |
+| avazu | -0.0000 | -0.0002 | matches/beats both |
 
 See `tables/ablation_amgtp.csv` for the A1/A3/A4/A5/A7 ablation ladder and `figures/beta_trace_*.png` / `amgtp_beta_trace.csv` for the deployed beta_t trajectory around each shift.
 

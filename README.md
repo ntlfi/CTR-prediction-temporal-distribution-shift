@@ -268,11 +268,40 @@ most clearly on recurring (a 1.1–1.7% relative improvement, reproduced
 across 5 seeds). Full findings, per-regime tables, and the smooth_reg sweep
 in [`results/m5_analysis.md`](results/m5_analysis.md).
 
+## AMG-TP — adaptive persistence (current best single model)
+
+[`AMG-TP_Academic_LaTeX.pdf`](AMG-TP_Academic_LaTeX.pdf) /
+[`amgtp_experiments/`](amgtp_experiments/): **AMG-TP** replaces M5b's fixed
+`smooth_reg` with a *learned* global persistence `β_t = σ(r_ψ(s_{t-1}))`,
+`π_t(x) = (1-β_t) q_t(x) + β_t m_{t-1}` over an EMA `m_t` of deployed gate
+weights. One causally-deployed model, no regime label.
+
+Confirmation battery (12 fresh seeds, `amgtp_experiments/stage2_amgtp/REPORT.md`):
+AMG-TP **beats Han ARW** on recurring (−1.6%, 12/12), local (−5.6%, 12/12) and
+opposing-local (−0.2%, 11/12); **ties** on abrupt (p=0.79 — it closes
+M5b-high-smooth's +2.3% abrupt regression) and mixed; small loss on
+stationary (+0.7%) and gradual. It matches or beats both M5b specialists in
+5/7 regimes and matches `ensemble3` within ±0.3% — **one adaptive model
+replaces the hand-tuned specialist pair and the 3-way ensemble.** `β_t`
+emerges correctly: ~0.82 under recurring drift, collapsing to ~0.05 within
+~8 days of an abrupt/local shift.
+
+Second real dataset (`--source avazu`, 8 seeds): AMG-TP beats Han ARW −0.3%
+and expanding ERM −0.5%, **8/8 seeds** (p=0.008) — small but the first clean
+real-data signal, exploiting Avazu's real diurnal cycle.
+
+Downstream autobidding (`run_autobid.py`, PDF §8,
+`amgtp_experiments/stage3_autobid/REPORT.md`): frozen models fed into one
+fixed auction + pacing policy. The recurring/local prediction wins **do**
+translate to more clicks won at matched spend (+1.5% / +2.1% vs Han ARW,
+8/8 seeds); real Criteo stays flat (nothing beats a cheapest-first bidder).
+
 ## Notes / limitations
 
 - Dev/test split is a simple last-N-days holdout, not full rolling-origin
   cross-validation within development.
-- No leakage/reproducibility test suite yet (PDF section 8 acceptance
-  tests) — the day-based masks are the only leakage guard so far.
-- The autobidding stage (PDF section 11) is out of scope until this
-  prediction benchmark is frozen.
+- Leakage / edge-case / reproducibility tests: `amgtp_tests.py` and
+  `autobid_tests.py` (all pass).
+- Autobidding (PDF §8) has now been run as a diagnostic — see the AMG-TP
+  section above. A live bidding *deployment* remains out of scope: on real
+  data no method yet separates from a cheapest-first bidder.

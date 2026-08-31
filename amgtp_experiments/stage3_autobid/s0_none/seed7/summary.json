@@ -1,0 +1,388 @@
+{
+  "config": {
+    "source": "synthetic",
+    "data": "data/criteo_attribution_dataset.tsv.gz",
+    "sample_frac": 1.0,
+    "synthetic_drift": "none",
+    "synthetic_days": 120,
+    "synthetic_rows_per_day": 4000,
+    "synthetic_shift_day": null,
+    "synthetic_period_days": 14,
+    "competitiveness": 1.0,
+    "n_features": 262144,
+    "warmup_days": 3,
+    "test_frac": 0.3,
+    "alpha": 0.0001,
+    "seed": 7,
+    "n_jobs": 4,
+    "out": "amgtp_experiments/stage3_autobid/s0_none/seed7"
+  },
+  "test_impressions": 140000,
+  "test_days": 35,
+  "total_historical_spend": 35112.841120738114,
+  "total_clicks_available": 35010,
+  "total_conversions_available": 35010,
+  "clicks_at_matched_spend": {
+    "10pct": {
+      "expanding": 7878.6012966088565,
+      "rolling_7": 7499.443251672339,
+      "han_arw": 7878.6012966088565,
+      "m2_context_gate": 7882.097481321984,
+      "m5b_smooth0.1": 7821.230949175411,
+      "ensemble3": 7864.514218466866,
+      "amgtp": 7848.206665809084,
+      "_oracle": 14838.594207791286,
+      "_noskill": 5381.73843810084,
+      "_shuffled_amgtp": 5168.984809538163
+    },
+    "25pct": {
+      "expanding": 15616.774711005393,
+      "rolling_7": 15068.8869827115,
+      "han_arw": 15616.774711005393,
+      "m2_context_gate": 15629.548451388611,
+      "m5b_smooth0.1": 15555.98779951242,
+      "ensemble3": 15630.33941047264,
+      "amgtp": 15574.690053143182,
+      "_oracle": 23879.290661606425,
+      "_noskill": 13072.195949585112,
+      "_shuffled_amgtp": 11413.17287506688
+    },
+    "50pct": {
+      "expanding": 24761.36125009501,
+      "rolling_7": 24226.796626236308,
+      "han_arw": 24761.36125009501,
+      "m2_context_gate": 24737.097489204334,
+      "m5b_smooth0.1": 24665.843440561457,
+      "ensemble3": 24712.265855664085,
+      "amgtp": 24696.079497332037,
+      "_oracle": 32194.447723088415,
+      "_noskill": 23309.535405761988,
+      "_shuffled_amgtp": 19984.926907025154
+    },
+    "75pct": {
+      "expanding": 31302.982416376246,
+      "rolling_7": 30937.865108689133,
+      "han_arw": 31302.982416376246,
+      "m2_context_gate": 31290.51078868548,
+      "m5b_smooth0.1": 31284.458695517795,
+      "ensemble3": 31291.70332839924,
+      "amgtp": 31297.24427718962,
+      "_oracle": 35010.0,
+      "_noskill": 30849.37301026626,
+      "_shuffled_amgtp": 28197.714682185226
+    }
+  },
+  "conversions_at_matched_spend": {
+    "10pct": {
+      "expanding": 7878.6012966088565,
+      "rolling_7": 7499.443251672339,
+      "han_arw": 7878.6012966088565,
+      "m2_context_gate": 7882.097481321984,
+      "m5b_smooth0.1": 7821.230949175411,
+      "ensemble3": 7864.514218466866,
+      "amgtp": 7848.206665809084,
+      "_oracle": 14838.594207791286,
+      "_noskill": 5381.73843810084,
+      "_shuffled_amgtp": 5168.984809538163
+    },
+    "25pct": {
+      "expanding": 15616.774711005393,
+      "rolling_7": 15068.8869827115,
+      "han_arw": 15616.774711005393,
+      "m2_context_gate": 15629.548451388611,
+      "m5b_smooth0.1": 15555.98779951242,
+      "ensemble3": 15630.33941047264,
+      "amgtp": 15574.690053143182,
+      "_oracle": 23879.290661606425,
+      "_noskill": 13072.195949585112,
+      "_shuffled_amgtp": 11413.17287506688
+    },
+    "50pct": {
+      "expanding": 24761.36125009501,
+      "rolling_7": 24226.796626236308,
+      "han_arw": 24761.36125009501,
+      "m2_context_gate": 24737.097489204334,
+      "m5b_smooth0.1": 24665.843440561457,
+      "ensemble3": 24712.265855664085,
+      "amgtp": 24696.079497332037,
+      "_oracle": 32194.447723088415,
+      "_noskill": 23309.535405761988,
+      "_shuffled_amgtp": 19984.926907025154
+    },
+    "75pct": {
+      "expanding": 31302.982416376246,
+      "rolling_7": 30937.865108689133,
+      "han_arw": 31302.982416376246,
+      "m2_context_gate": 31290.51078868548,
+      "m5b_smooth0.1": 31284.458695517795,
+      "ensemble3": 31291.70332839924,
+      "amgtp": 31297.24427718962,
+      "_oracle": 35010.0,
+      "_noskill": 30849.37301026626,
+      "_shuffled_amgtp": 28197.714682185226
+    }
+  },
+  "paced_by_budget": {
+    "10pct": {
+      "expanding": {
+        "clicks": 7799,
+        "conversions": 7799,
+        "spend": 3511.0086995793945
+      },
+      "rolling_7": {
+        "clicks": 7430,
+        "conversions": 7430,
+        "spend": 3511.2322899184446
+      },
+      "han_arw": {
+        "clicks": 7799,
+        "conversions": 7799,
+        "spend": 3511.0086995793945
+      },
+      "m2_context_gate": {
+        "clicks": 7789,
+        "conversions": 7789,
+        "spend": 3511.1095227864303
+      },
+      "m5b_smooth0.1": {
+        "clicks": 7760,
+        "conversions": 7760,
+        "spend": 3511.134010184808
+      },
+      "ensemble3": {
+        "clicks": 7774,
+        "conversions": 7774,
+        "spend": 3511.226284591855
+      },
+      "amgtp": {
+        "clicks": 7755,
+        "conversions": 7755,
+        "spend": 3510.95053608746
+      },
+      "_oracle": {
+        "clicks": 14989,
+        "conversions": 14989,
+        "spend": 3510.872049055545
+      },
+      "_noskill": {
+        "clicks": 5287,
+        "conversions": 5287,
+        "spend": 3511.265137832727
+      },
+      "_shuffled_amgtp": {
+        "clicks": 5112,
+        "conversions": 5112,
+        "spend": 3510.878146136446
+      }
+    },
+    "25pct": {
+      "expanding": {
+        "clicks": 15752,
+        "conversions": 15752,
+        "spend": 8777.760428546304
+      },
+      "rolling_7": {
+        "clicks": 15176,
+        "conversions": 15176,
+        "spend": 8777.75151819401
+      },
+      "han_arw": {
+        "clicks": 15752,
+        "conversions": 15752,
+        "spend": 8777.760428546304
+      },
+      "m2_context_gate": {
+        "clicks": 15735,
+        "conversions": 15735,
+        "spend": 8778.096709140238
+      },
+      "m5b_smooth0.1": {
+        "clicks": 15674,
+        "conversions": 15674,
+        "spend": 8778.126569743825
+      },
+      "ensemble3": {
+        "clicks": 15739,
+        "conversions": 15739,
+        "spend": 8778.036362507548
+      },
+      "amgtp": {
+        "clicks": 15701,
+        "conversions": 15701,
+        "spend": 8778.18943923239
+      },
+      "_oracle": {
+        "clicks": 24095,
+        "conversions": 24095,
+        "spend": 8777.597920509477
+      },
+      "_noskill": {
+        "clicks": 13185,
+        "conversions": 13185,
+        "spend": 8778.061190333367
+      },
+      "_shuffled_amgtp": {
+        "clicks": 11508,
+        "conversions": 11508,
+        "spend": 8777.826053701247
+      }
+    },
+    "50pct": {
+      "expanding": {
+        "clicks": 25012,
+        "conversions": 25012,
+        "spend": 17555.791825732405
+      },
+      "rolling_7": {
+        "clicks": 24490,
+        "conversions": 24490,
+        "spend": 17556.222535727076
+      },
+      "han_arw": {
+        "clicks": 25012,
+        "conversions": 25012,
+        "spend": 17555.791825732405
+      },
+      "m2_context_gate": {
+        "clicks": 24983,
+        "conversions": 24983,
+        "spend": 17556.394642539177
+      },
+      "m5b_smooth0.1": {
+        "clicks": 24948,
+        "conversions": 24948,
+        "spend": 17555.8835480845
+      },
+      "ensemble3": {
+        "clicks": 24981,
+        "conversions": 24981,
+        "spend": 17555.52709290219
+      },
+      "amgtp": {
+        "clicks": 24954,
+        "conversions": 24954,
+        "spend": 17556.17651997671
+      },
+      "_oracle": {
+        "clicks": 32570,
+        "conversions": 32570,
+        "spend": 17555.89366423881
+      },
+      "_noskill": {
+        "clicks": 23665,
+        "conversions": 23665,
+        "spend": 17556.3599920892
+      },
+      "_shuffled_amgtp": {
+        "clicks": 20265,
+        "conversions": 20265,
+        "spend": 17555.32693356001
+      }
+    },
+    "75pct": {
+      "expanding": {
+        "clicks": 31252,
+        "conversions": 31252,
+        "spend": 26334.337977651994
+      },
+      "rolling_7": {
+        "clicks": 30889,
+        "conversions": 30889,
+        "spend": 26332.979861272102
+      },
+      "han_arw": {
+        "clicks": 31252,
+        "conversions": 31252,
+        "spend": 26334.337977651994
+      },
+      "m2_context_gate": {
+        "clicks": 31243,
+        "conversions": 31243,
+        "spend": 26332.846114163316
+      },
+      "m5b_smooth0.1": {
+        "clicks": 31233,
+        "conversions": 31233,
+        "spend": 26334.135543132463
+      },
+      "ensemble3": {
+        "clicks": 31251,
+        "conversions": 31251,
+        "spend": 26334.58595182937
+      },
+      "amgtp": {
+        "clicks": 31245,
+        "conversions": 31245,
+        "spend": 26333.966690994712
+      },
+      "_oracle": {
+        "clicks": 35010,
+        "conversions": 35010,
+        "spend": 26334.59277292006
+      },
+      "_noskill": {
+        "clicks": 30837,
+        "conversions": 30837,
+        "spend": 26333.851441454426
+      },
+      "_shuffled_amgtp": {
+        "clicks": 28142,
+        "conversions": 28142,
+        "spend": 26334.033633072755
+      }
+    },
+    "100pct": {
+      "expanding": {
+        "clicks": 34996,
+        "conversions": 34996,
+        "spend": 35047.71662440644
+      },
+      "rolling_7": {
+        "clicks": 34990,
+        "conversions": 34990,
+        "spend": 35049.08332174808
+      },
+      "han_arw": {
+        "clicks": 34996,
+        "conversions": 34996,
+        "spend": 35047.71662440644
+      },
+      "m2_context_gate": {
+        "clicks": 34996,
+        "conversions": 34996,
+        "spend": 35049.24613046119
+      },
+      "m5b_smooth0.1": {
+        "clicks": 34992,
+        "conversions": 34992,
+        "spend": 35047.75121031081
+      },
+      "ensemble3": {
+        "clicks": 34995,
+        "conversions": 34995,
+        "spend": 35048.734028981125
+      },
+      "amgtp": {
+        "clicks": 34994,
+        "conversions": 34994,
+        "spend": 35047.76055954079
+      },
+      "_oracle": {
+        "clicks": 35010,
+        "conversions": 35010,
+        "spend": 35049.31883904721
+      },
+      "_noskill": {
+        "clicks": 34995,
+        "conversions": 34995,
+        "spend": 35046.27897877882
+      },
+      "_shuffled_amgtp": {
+        "clicks": 34973,
+        "conversions": 34973,
+        "spend": 35049.13316735843
+      }
+    }
+  },
+  "runtime_s": 72.71352696418762
+}
