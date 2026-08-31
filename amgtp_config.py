@@ -43,6 +43,17 @@ AVAZU_SAMPLE_FRAC = 0.2
 STAGE1_DIR = "amgtp_experiments/stage1_m5b_high_smooth"
 STAGE2_DIR = "amgtp_experiments/stage2_amgtp"
 
+# Downstream autobidding eval (PDF section 8 / step 8). Same synthetic regimes
+# and seed grid as the prediction battery; a separate dev seed set is enough
+# for a Wilcoxon on the value-at-matched-spend gap.
+AUTOBID_DIR = "amgtp_experiments/stage3_autobid"
+AUTOBID_SEEDS = [0, 1, 2, 3, 4, 5, 6, 7]
+AUTOBID_SYNTH_ROWS_PER_DAY = 4000
+
+
+def autobid_synth_grid():
+    return [(rk, s) for rk in SYNTH_REGIMES for s in AUTOBID_SEEDS]
+
 
 def synth_run_args(regime_key: str) -> list:
     r = SYNTH_REGIMES[regime_key]
@@ -73,5 +84,18 @@ if __name__ == "__main__":
         regime, seed = synth_grid()[i]
         out = f"{stage_dir}/{regime}/seed{seed}"
         print("\t".join([regime, str(seed), out, " ".join(synth_run_args(regime))]))
+    elif sys.argv[1] == "autobid-ncells":
+        print(len(autobid_synth_grid()))
+    elif sys.argv[1] == "autobid-cell":
+        i = int(sys.argv[2])
+        regime, seed = autobid_synth_grid()[i]
+        r = SYNTH_REGIMES[regime]
+        args = ["--source", "synthetic", "--synthetic-drift", r["drift"],
+                "--synthetic-days", str(SYNTH_DAYS),
+                "--synthetic-rows-per-day", str(AUTOBID_SYNTH_ROWS_PER_DAY),
+                "--synthetic-period-days", str(SYNTH_PERIOD_DAYS)]
+        if "shift_day" in r:
+            args += ["--synthetic-shift-day", str(r["shift_day"])]
+        print("\t".join([regime, str(seed), f"{AUTOBID_DIR}/{regime}/seed{seed}", " ".join(args)]))
     else:
         raise SystemExit(f"unknown command {sys.argv[1]!r}")

@@ -6,6 +6,66 @@ the narrative of what was done, what is running, and what is next.
 
 ---
 
+## 2026-08-31 — Downstream autobidding eval (PDF §8, step 8)
+
+**Status: built + tested + smoke-run; batteries not yet submitted.**
+
+New "new experiment" chosen by the user. PDF §8: freeze the CTR models, feed
+each into the *same* auction + pacing policy, compare realised value at
+matched spend.
+
+### Code (all committed)
+- **`autobid.py`** — the simulator (pure, `autobid_tests.py` = 7 groups, all pass):
+  - `linear_frontier` — global bid-scale sweep → the value–spend frontier.
+  - `paced_auction` — fixed budget, per-block pacing (take impressions by
+    decreasing `pctr/cost` until the block allowance is spent; unspent
+    carries over). Deterministic, controller-tuning-free.
+  - `value_at_matched_spend` — interpolate value onto a common spend grid.
+  - `synthetic_cost` — a documented synthetic second-price landscape:
+    `cost_i = floor + scale·p_true_i·lognormal`, tied to the *true* CTR (not
+    to any model under test), so clicked-likely impressions are genuinely
+    more expensive — the regime where prediction skill pays off.
+  - `load_criteo_bidding` — Criteo log keeping `cost`/`conversion`/`cpo`.
+  - reference bidders: `_oracle` (pctr = realised click), `_noskill`
+    (constant pctr → cheapest-first), `_shuffled_amgtp`.
+- **`run_autobid.py`** — driver. `--source {criteo, synthetic}`. Runs the
+  frozen battery (expanding, rolling_7, han_arw, m2, m5b_smooth0.1,
+  ensemble3, amgtp@AMGTP_CONFIG) → per-impression test preds → both policies.
+  Writes `autobid_frontier.csv`, `autobid_matched_spend.csv`,
+  `autobid_paced.csv`, `autobid_frontier.png`, `summary.json`.
+- **`synthetic_data.py`** — added `return_p` to `generate_synthetic_ctr` and a
+  `p_true` column to `generate_synthetic_raw` (backward compatible; RNG stream
+  unchanged, `amgtp_tests.py` reproducibility test still passes).
+- **`amgtp_config.py`** — `AUTOBID_DIR = stage3_autobid`, `AUTOBID_SEEDS 0-7`,
+  `autobid-cell` / `autobid-ncells` (56 synthetic cells = 7 regimes × 8 seeds).
+- **`autobid_synthetic.slurm`** (array 0-55%32), **`autobid_criteo.slurm`**
+  (array 0-4, full dataset).
+- **`autobid_aggregate.py`** — per-regime paired AMG-TP vs {han_arw, expanding,
+  ensemble3, m5b_smooth0.1} on value-at-matched-spend, Wilcoxon over seeds →
+  `stage3_autobid/REPORT.md` + tables + figure.
+
+### Smoke findings (single seed, small — NOT the real result)
+- **Criteo** (sample_frac 0.02): every deployable method ≈ `_noskill` at
+  matched spend; only `_oracle` pulls clearly ahead. At *low* budget (2-10%
+  spend) the CTR models beat `_noskill`/`_shuffled` by a few %, but the
+  expanding/amgtp/m2/ensemble3 spread is <0.5% — i.e. the shallow-drift
+  Criteo log-loss differences do **not** translate into bidding-value
+  separation. Consistent with PDF §9 "insufficient real evidence".
+- **Synthetic abrupt** (60d×2000): real separation — `ensemble3`/`han_arw`/
+  `m5b_smooth0.1`/`amgtp` all ~4200 clicks @25% spend vs `expanding`/
+  `_noskill` ~3830 vs `_shuffled` ~3325; `_oracle` ~6395. So better CTR
+  prediction under drift **does** convert to value at matched spend. AMG-TP ≈
+  Han ARW on abrupt (matches the Stage 2 prediction result).
+
+### Next
+1. Submit `autobid_synthetic.slurm` + `autobid_criteo.slurm` (after a
+   full-size 120d×4000 timing check — running now, task bh1vc7xvp).
+2. `autobid_aggregate.py` → does AMG-TP's S3/S4 *prediction* win show up as a
+   *bidding-value* win? That's the headline question.
+3. Fold into REPORT + README + push.
+
+---
+
 ## 2026-08-31 — Avazu (second real dataset, PDF §5.3)
 
 **Status: multi-seed battery running.**

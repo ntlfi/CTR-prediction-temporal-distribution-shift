@@ -198,6 +198,7 @@ def generate_synthetic_raw(n_days: int = 180, rows_per_day: int = 5000, n_cat_fe
         df_t["click"] = y_t
         df_t["day"] = t
         df_t["group"] = is_group_a
+        df_t["p_true"] = p          # ground-truth click probability (for oracle / cost models)
         frames.append(df_t)
 
     df = pd.concat(frames, ignore_index=True)
@@ -208,13 +209,16 @@ def generate_synthetic_ctr(n_days: int = 180, rows_per_day: int = 5000, n_cat_fe
                             cardinality: int = 200, drift_mode: str = "gradual",
                             drift_magnitude: float = 1.0, shift_day: int = None, period_days: int = 14,
                             intercept: float = -2.0, n_features: int = 2**18, seed: int = 0,
-                            return_group: bool = False):
+                            return_group: bool = False, return_p: bool = False):
     """Same drift-schedule generator as generate_synthetic_raw, hashed into
     (X, y, day) ready for the SGDClassifier-based P0/P1/P2 methods. With
     return_group=True also returns the S4 group-A/B split (bool array),
     for evaluating local-drift methods' shifted-vs-stable subgroup loss
-    (plan section 15's "local adaptation gap") -- backward compatible,
-    existing callers get the same (X, y, day) 3-tuple as before."""
+    (plan section 15's "local adaptation gap"); with return_p=True also
+    returns the ground-truth per-row click probability (used by the
+    autobidding eval's oracle bidder and synthetic cost landscape) --
+    backward compatible, existing callers get the same (X, y, day) 3-tuple.
+    When both flags are set the order is (X, y, day, group, p)."""
     df, columns = generate_synthetic_raw(
         n_days=n_days, rows_per_day=rows_per_day, n_cat_features=n_cat_features, cardinality=cardinality,
         drift_mode=drift_mode, drift_magnitude=drift_magnitude, shift_day=shift_day, period_days=period_days,
@@ -222,6 +226,9 @@ def generate_synthetic_ctr(n_days: int = 180, rows_per_day: int = 5000, n_cat_fe
     X = hash_features(df, columns=columns, n_features=n_features)
     y = df["click"].to_numpy()
     day = df["day"].to_numpy()
+    out = [X, y, day]
     if return_group:
-        return X, y, day, df["group"].to_numpy()
-    return X, y, day
+        out.append(df["group"].to_numpy())
+    if return_p:
+        out.append(df["p_true"].to_numpy())
+    return tuple(out) if len(out) > 3 else (X, y, day)
