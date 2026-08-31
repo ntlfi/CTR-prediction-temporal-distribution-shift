@@ -315,7 +315,7 @@ def main():
     o1_name, o1_loss, o1_scores = best_fixed_horizon(bank, test_days)
 
     # ---- summary --------------------------------------------------------
-    drift = args.synthetic_drift if args.source == "synthetic" else "criteo"
+    drift = args.synthetic_drift if args.source == "synthetic" else args.source
     sdays = shift_days_for(drift, args.synthetic_days, args.synthetic_shift_day)
 
     static_baselines = list(WINDOW_FAMILY) + [k for k in methods if k.startswith("decay_hl")]

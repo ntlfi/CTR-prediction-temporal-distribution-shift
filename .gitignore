@@ -4,6 +4,9 @@ __pycache__/
 data/*.tsv.gz
 data/*.zip
 data/*.csv
+data/**/*.zip
+data/**/*.csv
+data/**/*.tsv.gz
 .ipynb_checkpoints/
 amgtp_experiments/logs/
 slurm-*.out

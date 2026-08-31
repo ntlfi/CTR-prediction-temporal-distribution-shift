@@ -33,6 +33,13 @@ ALL_SEEDS = DEV_SEEDS + CONFIRM_SEEDS
 CRITEO_SEEDS = [0, 1, 2]
 CRITEO_DATA = "/insomnia001/home/tn2447/data/criteo/criteo_attribution_dataset.tsv.gz"
 
+# Avazu: the second real temporal dataset (PDF section 5.3). 10-day mobile-ad
+# click logs, indexed in 2-hour blocks (120-block horizon), each seed drawing
+# a disjoint 20% row-subsample so seeds are a genuine source of variation.
+AVAZU_SEEDS = [0, 1, 2, 3, 4, 5, 6, 7]
+AVAZU_DATA = "/insomnia001/home/tn2447/data/avazu/Avazu_x4.zip"
+AVAZU_SAMPLE_FRAC = 0.2
+
 STAGE1_DIR = "amgtp_experiments/stage1_m5b_high_smooth"
 STAGE2_DIR = "amgtp_experiments/stage2_amgtp"
 

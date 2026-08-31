@@ -16,8 +16,11 @@ source .venv/bin/activate
 ## Get the data
 
 ```bash
-python download_data.py            # downloads to data/criteo_attribution_dataset.tsv.gz
+python download_data.py                   # Criteo -> data/criteo_attribution_dataset.tsv.gz
+python download_data.py --dataset avazu    # Avazu  -> data/avazu/Avazu_x4.zip
 ```
+
+### Criteo (primary real dataset)
 
 Source: [Criteo Attribution Modeling for Bidding Dataset](https://ailab.criteo.com/criteo-attribution-modeling-bidding-dataset/)
 (30 days of impressions, click label, campaign + 9 anonymized contextual
@@ -32,6 +35,22 @@ sharatsachin) and place it at `data/criteo_attribution_dataset.tsv.gz`
 yourself; the script checksums whatever is there
 (sha256 `94ac7a46...2391a98`, 653,015,824 bytes) and tells you if it doesn't
 match the known-good copy.
+
+### Avazu (second real dataset — PDF §5.3)
+
+Source: the Kaggle [avazu-ctr-prediction](https://www.kaggle.com/c/avazu-ctr-prediction/data)
+data, pulled from the [`reczoo/Avazu_x4`](https://huggingface.co/datasets/reczoo/Avazu_x4)
+BARS mirror on the Hugging Face Hub (no Kaggle auth). ~40.4M rows of 10-day
+mobile-ad click-through logs. `avazu_data.py` reassembles the chronological
+stream from the intact `hour` field (the BARS split is randomly ordered) and
+indexes time in **hourly blocks** (~240) — 10 calendar days is too few blocks
+to evaluate temporal adaptation, and hourly resolution exposes the real
+diurnal CTR cycle, making Avazu a genuine recurring-drift test on real data.
+`id` and `hour` are dropped from the features so the temporal methods must
+discover periodicity from loss dynamics, not be handed the clock. Used
+(via `--source avazu`) exactly like Criteo: a no-downside check plus a
+real-data separation test, since Criteo's natural 31-day drift is too shallow
+for any method to separate (PDF §9 "insufficient real evidence" outcome).
 
 ## Run the P0 baselines
 
@@ -122,14 +141,16 @@ Additional outputs in `results/`:
 
 The real Criteo Attribution dataset (31 days) shows only shallow drift —
 every P1/P2 method converges to roughly what a static 7-day window already
-gives (see [`results/analysis.md`](results/analysis.md)). Neither the
-papers being reproduced here nor the general CTR-benchmark literature
-(AdaMoE's own public benchmark, Ali-CCP, Criteo 1TB, Avazu) offer a public,
-CTR-native dataset with a genuinely long horizon and documented drift — the
-two papers that needed real multi-month/multi-year drift to demonstrate
-their own methods (Han et al., Differentiable Forgetting) had to leave the
-CTR domain entirely (text-topic trends, real-estate prices, equities) to
-find it.
+gives (see [`results/analysis.md`](results/analysis.md)). No public,
+CTR-native dataset offers a genuinely long horizon *with* documented
+multi-month drift — the two papers that needed real long-horizon drift to
+demonstrate their own methods (Han et al., Differentiable Forgetting) had to
+leave the CTR domain entirely (text-topic trends, real-estate prices,
+equities) to find it. The AMG-TP battery works around this on two fronts:
+the synthetic generator below (a *known* ground-truth process), and a
+**second real CTR dataset, Avazu at hourly resolution** (`--source avazu`),
+whose ~240 hourly blocks carry a real diurnal cycle — a recurring-drift
+test on genuine data rather than a synthetic one.
 
 `synthetic_data.py` follows the same workaround: a synthetic CTR generator
 with a *known* ground-truth logistic model whose weights evolve over a much

@@ -32,6 +32,10 @@ from scipy import stats
 
 from amgtp_config import (CONFIRM_SEEDS, DEV_SEEDS, SYNTH_REGIMES, SYNTH_DAYS)
 
+# real chronological datasets: aggregated like the synthetic regimes but with
+# no injected change point (drift is whatever the data naturally contains).
+REAL_REGIMES = ["criteo", "avazu"]
+
 KEY_REFERENCES = ["expanding", "han_arw", "adamoe", "diff_forgetting",
                   "m2_context_gate", "m5b_smooth0.001", "m5b_smooth0.1", "ensemble3", "rolling_14",
                   "amgtp", "amgtp_fixed_beta0", "amgtp_uniform_q", "amgtp_global_q", "amgtp_no_state"]
@@ -41,7 +45,7 @@ PRED_METRICS = ["log_loss", "brier", "pr_auc", "roc_auc", "ece"]
 def load_cells(stage: Path):
     """Return {regime: {seed: {'summary':..., 'per_day':df, 'oracle':df, 'gate':df}}}."""
     out = {}
-    for regime in list(SYNTH_REGIMES) + ["criteo"]:
+    for regime in list(SYNTH_REGIMES) + REAL_REGIMES:
         rdir = stage / regime
         if not rdir.is_dir():
             continue
@@ -208,7 +212,7 @@ ABLATION_LADDER = [
 def ablation_table(cells, stage):
     rows = []
     for regime, by_seed in cells.items():
-        if regime == "criteo":
+        if regime in REAL_REGIMES:
             continue
         cs = [s for s in CONFIRM_SEEDS if s in by_seed] or [s for s in DEV_SEEDS if s in by_seed]
         if not cs:
@@ -281,7 +285,7 @@ def build_report(stage, cells, headline, paired_by_regime, mut):
     lines.append("")
     lines.append("| regime | " + " | ".join(refs) + " |")
     lines.append("|" + "---|" * (len(refs) + 1))
-    for regime in list(SYNTH_REGIMES) + (["criteo"] if "criteo" in cells else []):
+    for regime in list(SYNTH_REGIMES) + [r for r in REAL_REGIMES if r in cells]:
         sub = headline[headline["regime"] == regime]
         if sub.empty:
             continue
@@ -303,6 +307,14 @@ def build_report(stage, cells, headline, paired_by_regime, mut):
                      "only the SGD seed varies) -- treat as a single no-downside observation, per "
                      "PDF section 5.3. All methods sit within ~0.001 log loss / overlapping bootstrap "
                      "CIs; natural drift over 31 days is shallow._")
+        lines.append("")
+    if "avazu" in cells:
+        n_av = len(cells["avazu"])
+        lines.append(f"_Avazu rows: {n_av} seeds, real 10-day mobile-ad click logs indexed in hourly "
+                     "blocks (~240), row-subsampled per seed so seeds vary genuinely. This is the "
+                     "second real temporal benchmark (PDF section 5.3): a no-downside check plus a "
+                     "real-data test of the recurring-drift claim, since hourly CTR carries a strong "
+                     "diurnal cycle._")
         lines.append("")
 
     lines.append("## Paired comparison: `%s` minus baseline (mean test log loss, confirmation seeds)" % mut)
@@ -506,6 +518,9 @@ def main():
     for regime in cells:
         if regime == "criteo":
             continue
+        # avazu is a real dataset (no injected shift) but the per-day / gate /
+        # beta-trace figures are still the key evidence for PDF section 7's
+        # "inspect per-day improvements" discipline, so it is not skipped here.
         fig_per_day_curves(cells, regime, mut, stage / "figures" / f"per_day_{regime}.png")
         fig_gate_trajectory(cells, regime, mut, stage / "figures" / f"gate_{regime}.png")
         fig_oracle_vs_han(cells, regime, stage / "figures" / f"oracle_vs_han_{regime}.png")
