@@ -1,0 +1,7 @@
+regime,seed,config,ll,persist_hidden,mean_beta
+s5_opposing_local,3,m5b_default,0.48485549963297414,,
+s5_opposing_local,3,m5b_high_smooth,0.49104480032947684,,
+s5_opposing_local,3,hidden0,0.48520444524102385,0.0,0.4255122299705233
+s5_opposing_local,3,hidden4,0.4854108108110103,4.0,0.4585976787975856
+s5_opposing_local,3,hidden8,0.48555695052690423,8.0,0.462235837323325
+s5_opposing_local,3,hidden16,0.4854200947684427,16.0,0.45216497991766247

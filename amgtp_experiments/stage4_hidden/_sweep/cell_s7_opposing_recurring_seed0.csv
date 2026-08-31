@@ -1,0 +1,7 @@
+regime,seed,config,ll,persist_hidden,mean_beta
+s7_opposing_recurring,0,m5b_default,0.42278844096890034,,
+s7_opposing_recurring,0,m5b_high_smooth,0.4193054804938028,,
+s7_opposing_recurring,0,hidden0,0.4229138145855576,0.0,0.7336758817945208
+s7_opposing_recurring,0,hidden4,0.4218020993530247,4.0,0.5832772697721209
+s7_opposing_recurring,0,hidden8,0.4218414444034894,8.0,0.5924492750849043
+s7_opposing_recurring,0,hidden16,0.4218367373819976,16.0,0.59689348084586

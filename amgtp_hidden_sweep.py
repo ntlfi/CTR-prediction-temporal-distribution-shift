@@ -133,8 +133,9 @@ def aggregate(out: Path):
         lines.append(f"| {cfg} | " + " | ".join(f"{v:+.4f}" for v in d) + " |")
     lines += ["", f"**Frozen choice: `persist_hidden={best_h}`** "
               f"({'linear net retained -- no hidden layer helps on dev' if best_h == 0 else 'nonlinear net'}).",
-              "", "Wired into `amgtp_run.py` as the `amgtp_hiddenN` variant for the "
-              "Stage 4 confirmation battery."]
+              "", "`amgtp_hidden8` / `amgtp_hidden16` still run in the Stage 4 battery "
+              "(ablation A10) so the negative result is confirmed on the disjoint seeds; "
+              "the deployed `amgtp` keeps `persist_hidden=0`."]
     (out / "FROZEN.md").write_text("\n".join(lines))
     print(f"\nwrote {out}/sweep_summary.csv + FROZEN.md")
 
