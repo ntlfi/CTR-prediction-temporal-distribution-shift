@@ -38,7 +38,8 @@ REAL_REGIMES = ["criteo", "avazu"]
 
 KEY_REFERENCES = ["expanding", "han_arw", "adamoe", "diff_forgetting",
                   "m2_context_gate", "m5b_smooth0.001", "m5b_smooth0.1", "ensemble3", "rolling_14",
-                  "amgtp", "amgtp_fixed_beta0", "amgtp_uniform_q", "amgtp_global_q", "amgtp_no_state"]
+                  "amgtp", "amgtp_fixed_beta0", "amgtp_uniform_q", "amgtp_global_q", "amgtp_no_state",
+                  "amgtp_hidden8", "amgtp_hidden16"]
 PRED_METRICS = ["log_loss", "brier", "pr_auc", "roc_auc", "ece"]
 
 
@@ -206,6 +207,8 @@ ABLATION_LADDER = [
     ("A8a 2-expert gate (M2)", "m2_context_gate"),
     ("A8b 5-expert gate (M5b)", "m5b_smooth0.001"),
     ("A9 static uniform-5", "uniform5"),
+    ("A10 nonlinear persistence net (h=8)", "amgtp_hidden8"),
+    ("A10 nonlinear persistence net (h=16)", "amgtp_hidden16"),
 ]
 
 

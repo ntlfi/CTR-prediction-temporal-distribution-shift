@@ -21,6 +21,8 @@ SYNTH_REGIMES = {
                            "shift_day": SYNTH_DAYS // 2},
     "s5_opposing_local":  {"drift": "opposing_local", "label": "S5 opposing local"},
     "s6_mixed":           {"drift": "mixed",          "label": "S6 mixed unknown"},
+    "s7_opposing_recurring": {"drift": "opposing_recurring",
+                              "label": "S7 opposing recurring"},
 }
 
 # plan section 12/17: >= 10 seeds; hyperparameters were frozen on the dev seeds

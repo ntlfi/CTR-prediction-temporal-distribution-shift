@@ -34,16 +34,34 @@ PERSIST_STATE_NAMES = (["recent_loss_" + n for n in WINDOW_FAMILY]
 
 class PersistenceNet(nn.Module):
     """r_psi: day-level state features -> scalar logit -> beta_t in [0,1].
-    Bias initialised so beta_t starts near 0 (no imposed inertia) -- AMG-TP
-    then has to *learn* to raise persistence where it helps."""
-    def __init__(self, n_features: int, init_bias: float = -1.0):
+
+    hidden=0 (default, Stage 2 architecture): a single linear layer. Weights
+    zero-initialised and bias = init_bias, so beta_t starts at
+    sigmoid(init_bias) (no imposed inertia) and AMG-TP has to *learn* to
+    raise persistence where it helps.
+
+    hidden>0 (Extension A): one tanh hidden layer of that width, for a
+    nonlinear state -> persistence map (e.g. "drop beta after a loss jump
+    *regardless* of the other features"). The *output* layer is still
+    zero-initialised (weight 0, bias init_bias), so beta_t again starts at
+    exactly sigmoid(init_bias): hidden=0 stays bit-identical to Stage 2 and
+    hidden>0 is a strict superset that must learn any curvature it uses.
+    """
+    def __init__(self, n_features: int, init_bias: float = -1.0, hidden: int = 0):
         super().__init__()
-        self.linear = nn.Linear(n_features, 1)
-        nn.init.zeros_(self.linear.weight)
-        nn.init.constant_(self.linear.bias, init_bias)
+        self.hidden = hidden
+        if hidden > 0:
+            self.h = nn.Linear(n_features, hidden)
+            self.out = nn.Linear(hidden, 1)
+        else:
+            self.out = nn.Linear(n_features, 1)
+        nn.init.zeros_(self.out.weight)
+        nn.init.constant_(self.out.bias, init_bias)
 
     def forward(self, s: torch.Tensor) -> torch.Tensor:
-        return torch.sigmoid(self.linear(s)).squeeze(-1)
+        if self.hidden > 0:
+            s = torch.tanh(self.h(s))
+        return torch.sigmoid(self.out(s)).squeeze(-1)
 
 
 def _expert_mean_loss(bank: dict, d: int) -> np.ndarray:
@@ -83,7 +101,7 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
               context: np.ndarray = None, day: np.ndarray = None,
               adaptive_beta: bool = True, fixed_beta: float = 0.0, init_bias: float = -1.0,
               context_gate: bool = True, uniform_q: bool = False,
-              state_features: str = "full"):
+              state_features: str = "full", persist_hidden: int = 0):
     """Returns rows: {day, y_true, y_pred, n_train, fit_time, weights,
     mean_weights (dict expert -> mean deployed pi), beta, mean_q (dict),
     m_state (dict)}. `y_pred` is the deployed AMG-TP mixture for day t
@@ -94,6 +112,8 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
       context_gate=False                  -> A4: q uses no per-example context
       uniform_q=True                      -> A5: q is fixed uniform; only beta/m adapt
       state_features='time_only'          -> A7: strip recent loss/shift features from r_psi
+      persist_hidden=H                     -> A10: nonlinear (H-wide tanh) persistence net
+                                             in place of the linear one (H=0, default)
     """
     torch.manual_seed(seed)
     days = multi_days(bank, eligible_days)
@@ -107,7 +127,7 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
     n_gate_features = K + 2 + K + n_context  # preds, [spread, norm_time], recent per-expert loss, context
     gate = MultiExpertGate(n_gate_features, K)
     n_state = len(PERSIST_STATE_NAMES) if state_features == "full" else 1
-    persist = PersistenceNet(n_state, init_bias=init_bias)
+    persist = PersistenceNet(n_state, init_bias=init_bias, hidden=persist_hidden)
     trainable = list(gate.parameters()) + (list(persist.parameters()) if adaptive_beta else [])
     opt = torch.optim.Adam(trainable, lr=lr) if trainable else None
 

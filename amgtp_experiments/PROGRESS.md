@@ -6,6 +6,61 @@ the narrative of what was done, what is running, and what is next.
 
 ---
 
+## 2026-09-01 — S7 opposing_recurring regime + Extension A (hidden persistence net)
+
+**Status: implemented + all unit tests pass. No battery run yet.**
+Also pushed earlier this session: `amgtp_experiments/findings_summary.tex`/`.pdf`
+(7pp, commit 873e25e) — consolidated evidence that AMG-TP beats prior methods.
+
+### S7 `opposing_recurring` — new synthetic drift mode (`synthetic_data.py`)
+Motivation: S5 `opposing_local`'s per-group differential is a one-off transient
+that lands entirely in the *dev* period (shifts at n/3, n/4 vs locked-test
+window = last 30%), so it can't test per-example persistence in the locked
+test. S7 fixes this: both subpopulations oscillate on the w0↔w1 axis with
+period `period_days`, **group B a quarter period behind group A**
+(`a_a = 0.5(1+sin ωt)`, `a_b = 0.5(1+sin(ωt+π/2))`). At every block one group
+sits near a turning point (slow local change → high persistence optimal) while
+the other is at max slope (fast → low persistence optimal); they swap over the
+cycle. A single global β_t is provably wrong for one group at all times, and
+q_t(x) alone can't fix it (routes experts, not persistence). No w2 drawn →
+RNG stream for the original 7 modes byte-for-byte unchanged (verified by test).
+- `DRIFT_MODES` += `opposing_recurring`; `SYNTH_REGIMES["s7_opposing_recurring"]`
+  in `amgtp_config.py` → `synth_grid()` now 136 cells (8 regimes × 17 seeds);
+  indices 0–118 unchanged, s7 is 119–135.
+- Sanity (120d/3000rows/seed0): group A range 0.085, B range 0.102,
+  corr(A CTR, B CTR) = −0.69 (plain recurring: +0.81), A peaks block 3 / B
+  block 0.
+
+### Extension A — hidden-layer PersistenceNet (`amgtp_method.py`)
+`PersistenceNet(n_features, init_bias, hidden=0)`. `hidden=0` = the Stage 2
+single linear layer, **bit-identical** (tested). `hidden>0` = one tanh hidden
+layer of that width; **output layer still zero-init** (weight 0, bias
+init_bias) so day-0 β = σ(init_bias) exactly and hidden>0 is a strict superset
+that must learn any curvature. `run_amgtp(..., persist_hidden=H)`. Hidden params
+get the existing L2 on `trainable`.
+- `amgtp_run.py --stage2` now also runs `amgtp_hidden8`, `amgtp_hidden16`
+  (ablation A10). `amgtp_aggregate.py`: A10 rows in `ABLATION_LADDER`,
+  `amgtp_hidden8/16` in `KEY_REFERENCES`.
+- `amgtp_tests.py`: +5 checks (hidden=0 identity, day-0 β, β∈[0,1], finite,
+  reproducible) + S7 isolation + S7 RNG-untouched fingerprint. **All 24 pass.**
+- Smoke (`amgtp_run.py` 60d/800rows/s7/stage2, 54s): full pipeline incl.
+  hidden8/16 runs end-to-end; too small to show the S7 effect (all methods
+  ~0.438, drift barely visible at that size — expected).
+
+### Next
+1. Dev-seed sweep for H ∈ {0,4,8,16} on S1/S3/S4/S5/S7 (mirror
+   `amgtp_stage2_sweep.py`); freeze H.
+2. Full Stage-4 battery: S0–S7 × 17 seeds + Avazu + Criteo (new SLURM array
+   0–135). `amgtp_aggregate.py --stage amgtp_experiments/stage4_hidden
+   --method-under-test amgtp`.
+3. Then Extension B (per-example β_t(x)) — S7 is now its test bed. Needs
+   g_ξ(c(x)) zero-init residual head + Var_x[β] penalty; new ablations
+   A11–A13 + per-group β trace + per-group oracle-persistence diagnostic.
+4. Note: `amgtp_stage1/2_synthetic.slurm` arrays are hardcoded 0-118 — a
+   Stage-4 slurm needs 0-135.
+
+---
+
 ## 2026-08-31 — Downstream autobidding eval (PDF §8, step 8)
 
 **Status: DONE. 56 synthetic cells + 5 Criteo seeds, all COMPLETED (job

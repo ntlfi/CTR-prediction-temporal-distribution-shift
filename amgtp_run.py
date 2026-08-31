@@ -267,6 +267,8 @@ def main():
             "amgtp_no_state": dict(state_features="time_only", **AMGTP_CONFIG),  # A7 strip state
             "amgtp_fixed_beta0": dict(adaptive_beta=False, fixed_beta=0.0),   # A1/A2 no persistence
             "amgtp_fixed_beta_hi": dict(adaptive_beta=False, fixed_beta=AMGTP_FIXED_BETA_HIGH),  # A3
+            "amgtp_hidden8": dict(persist_hidden=8, **AMGTP_CONFIG),          # A10 nonlinear persistence net
+            "amgtp_hidden16": dict(persist_hidden=16, **AMGTP_CONFIG),        # A10 (wider)
         }
         amgtp_rows_by_name = {}
         for name, kw in amgtp_variants.items():

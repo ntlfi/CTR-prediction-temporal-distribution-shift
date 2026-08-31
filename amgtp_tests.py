@@ -121,6 +121,84 @@ def test_opposing_local_isolation():
     check("S5: group B shifts at ~2n/3", abs(b_late - b_mid) > 0.02, f"B {b_mid:.3f}->{b_late:.3f}")
 
 
+def test_opposing_recurring_isolation():
+    """Under S7, both subpopulations oscillate on the w0<->w1 axis but a
+    quarter period out of phase, so their per-block CTR series are close to
+    uncorrelated -- unlike plain `recurring`, where every row shares one
+    schedule and the two group series are identical."""
+    from synthetic_data import generate_synthetic_raw
+    n, period = 120, 14
+    df, _ = generate_synthetic_raw(n_days=n, rows_per_day=4000, drift_mode="opposing_recurring",
+                                   period_days=period, seed=0)
+    a = df[df["group"]].groupby("day")["click"].mean().to_numpy()
+    b = df[~df["group"]].groupby("day")["click"].mean().to_numpy()
+    check("S7: group A CTR oscillates", a.max() - a.min() > 0.03, f"A range {a.max() - a.min():.3f}")
+    check("S7: group B CTR oscillates", b.max() - b.min() > 0.03, f"B range {b.max() - b.min():.3f}")
+    corr = float(np.corrcoef(a, b)[0, 1])
+    # quarter-period phase offset -> the two group CTR series are decorrelated
+    # (here mildly anti-correlated); plain `recurring` gives corr ~ +0.8.
+    check("S7: group A/B schedules are out of phase (corr < 0.4)", corr < 0.4,
+          f"corr(A CTR, B CTR) = {corr:.2f}")
+    peak_a, peak_b = int(a[:period].argmax()), int(b[:period].argmax())
+    check("S7: group A and B peak on different blocks within a period",
+          abs(peak_a - peak_b) >= 2, f"A peak block {peak_a}, B peak block {peak_b}")
+
+    df_rec, _ = generate_synthetic_raw(n_days=n, rows_per_day=4000, drift_mode="recurring",
+                                       period_days=period, seed=0)
+    ar = df_rec[df_rec["group"]].groupby("day")["click"].mean().to_numpy()
+    br = df_rec[~df_rec["group"]].groupby("day")["click"].mean().to_numpy()
+    check("S7 sanity: plain recurring keeps the two groups in phase",
+          np.corrcoef(ar, br)[0, 1] > 0.7, f"corr = {np.corrcoef(ar, br)[0, 1]:.2f}")
+
+
+def test_opposing_recurring_rng_untouched():
+    """Adding S7 must not perturb the RNG stream of the original modes: the
+    first-block clicks for `recurring` are byte-for-byte what they were."""
+    from synthetic_data import generate_synthetic_raw
+    df, _ = generate_synthetic_raw(n_days=8, rows_per_day=500, drift_mode="recurring",
+                                   period_days=14, seed=3)
+    # regression fingerprint: total clicks on block 0 and block 7 at this config
+    b0 = int(df[df["day"] == 0]["click"].sum())
+    b7 = int(df[df["day"] == 7]["click"].sum())
+    check("recurring RNG stream unchanged (block-0 / block-7 click totals)",
+          (b0, b7) == (125, 124), f"got ({b0}, {b7}), expected (125, 124)")
+
+
+def test_amgtp_hidden_persistence(d):
+    """Extension A -- the hidden-layer PersistenceNet: hidden=0 is
+    deterministic and matches the default path; hidden>0 still starts at
+    sigmoid(init_bias) (no imposed inertia at deploy) and keeps beta in
+    [0,1] with finite predictions."""
+    import math
+    from amgtp_method import run_amgtp
+    from candidate_bank import build_candidate_bank
+    bank = build_candidate_bank(d["X"], d["y"], d["day"], d["eligible"], n_jobs=4)
+
+    r_def = run_amgtp(bank, d["eligible"], T=d["T"], context=d["context"], day=d["day"], seed=0)
+    r_h0 = run_amgtp(bank, d["eligible"], T=d["T"], context=d["context"], day=d["day"], seed=0,
+                     persist_hidden=0)
+    mx = max(float(np.abs(a["y_pred"] - b["y_pred"]).max()) for a, b in zip(r_def, r_h0))
+    check("PersistenceNet: persist_hidden=0 == default linear path", mx == 0.0,
+          f"max |Δpred| = {mx:.2e}")
+
+    r_h8 = run_amgtp(bank, d["eligible"], T=d["T"], context=d["context"], day=d["day"], seed=0,
+                     persist_hidden=8)
+    b0 = r_h8[0]["beta"]
+    check("PersistenceNet(hidden=8): day-0 beta = sigmoid(init_bias)",
+          abs(b0 - 1.0 / (1.0 + math.exp(1.0))) < 1e-6, f"day-0 beta = {b0:.5f}")
+    betas = np.array([r["beta"] for r in r_h8])
+    check("PersistenceNet(hidden=8): beta_t in [0,1]", betas.min() >= 0.0 and betas.max() <= 1.0,
+          f"range [{betas.min():.3f}, {betas.max():.3f}]")
+    finite = all(np.isfinite(r["y_pred"]).all() for r in r_h8)
+    check("PersistenceNet(hidden=8): predictions finite", finite)
+
+    r_h8b = run_amgtp(bank, d["eligible"], T=d["T"], context=d["context"], day=d["day"], seed=0,
+                      persist_hidden=8)
+    mx8 = max(float(np.abs(a["y_pred"] - b["y_pred"]).max()) for a, b in zip(r_h8, r_h8b))
+    check("PersistenceNet(hidden=8): reproducible under fixed seed", mx8 < 1e-6,
+          f"max |Δpred| = {mx8:.2e}")
+
+
 def test_reproducibility(d):
     """Same seed -> identical predictions within numerical tolerance (plan 21.6)."""
     from m5_multiscale_gate import run_m5
@@ -152,8 +230,11 @@ def main():
     test_gate_range(d)
     test_mixture_identity(d)
     test_reproducibility(d)
+    test_amgtp_hidden_persistence(d)
     test_local_shift_isolation()
     test_opposing_local_isolation()
+    test_opposing_recurring_isolation()
+    test_opposing_recurring_rng_untouched()
     test_calibration_metric()
     print()
     if FAILS:

@@ -25,9 +25,10 @@ import pandas as pd
 
 from data import hash_features
 
-DRIFT_MODES = ["none", "gradual", "abrupt", "recurring", "local", "opposing_local", "mixed"]
+DRIFT_MODES = ["none", "gradual", "abrupt", "recurring", "local", "opposing_local",
+               "mixed", "opposing_recurring"]
 
-# AMG-TP plan (AMG-TP_Academic_LaTeX.pdf, Table 2) adds two regimes beyond the
+# AMG-TP plan (AMG-TP_Academic_LaTeX.pdf, Table 2) adds regimes beyond the
 # original five:
 #   S5 "opposing_local"  -- two subpopulations drift at *different times and in
 #                           different directions*: group A swaps w0->w1 abruptly
@@ -39,6 +40,19 @@ DRIFT_MODES = ["none", "gradual", "abrupt", "recurring", "local", "opposing_loca
 #                           stretches, abrupt jumps to freshly drawn regimes, and
 #                           linear ramps), so a method must generalise across
 #                           shift types within one run without any regime label.
+#   S7 "opposing_recurring" -- both subpopulations oscillate on the w0<->w1 axis
+#                           but a *quarter period* out of phase, so at every block
+#                           one group sits near a turning point (slow local change
+#                           -> high persistence optimal) while the other is at
+#                           maximum slope (fast change -> low persistence optimal),
+#                           and they swap roles over the cycle. Unlike
+#                           opposing_local the differential is present at *every*
+#                           block rather than being a one-off transient, so it
+#                           survives into any fixed locked-test window. This is the
+#                           test bed for per-example persistence beta_t(x): a single
+#                           global beta_t is provably wrong for one group at all
+#                           times, while the context gate q_t(x) alone cannot fix
+#                           it (it routes experts, not persistence).
 _MIXED_N_REGIMES = 4
 
 
@@ -125,6 +139,10 @@ def generate_synthetic_raw(n_days: int = 180, rows_per_day: int = 5000, n_cat_fe
         Tests whether context-dependent methods can shrink memory for the
         drifted subpopulation without discarding history that's still
         valid for the stable one (plan section 12, S4).
+      - "opposing_recurring": both groups oscillate w0<->w1 with period
+        `period_days`, group B a quarter period behind group A, so their
+        optimal memory length is anti-correlated at every block (S7 -- the
+        per-example persistence test bed; see module docstring).
 
     w0 and w1 are independent random coefficient vectors over
     (categorical column, value) pairs, so "abrupt"/"local" are a full
@@ -155,6 +173,12 @@ def generate_synthetic_raw(n_days: int = 180, rows_per_day: int = 5000, n_cat_fe
         w2 = rng.normal(0, 1.0, size=n_true_features)
         shift_day_a = n_days // 3
         shift_day_b = (2 * n_days) // 3
+    elif drift_mode == "opposing_recurring":
+        # Both groups share the w0<->w1 axis (no w2 drawn -> RNG stream for the
+        # other modes is untouched); the two subpopulations differ only in the
+        # phase of their oscillation.
+        omega = 2 * np.pi / max(period_days, 1)
+        phase_b = np.pi / 2  # quarter period: A slow <-> B fast, and vice versa
     elif drift_mode == "mixed":
         W_mixed = [rng.normal(0, 1.0, size=n_true_features) for _ in range(_MIXED_N_REGIMES)]
         mixed_sched = _mixed_schedule(n_days, _MIXED_N_REGIMES, rng)
@@ -175,6 +199,11 @@ def generate_synthetic_raw(n_days: int = 180, rows_per_day: int = 5000, n_cat_fe
                               (1 - a_a) * logits0 + a_a * logits1,
                               (1 - a_b) * logits0 + a_b * logits2) + intercept
             row_alpha = np.where(is_group_a, a_a, a_b)  # bookkeeping only
+        elif drift_mode == "opposing_recurring":
+            a_a = 0.5 * (1 + np.sin(omega * t)) * drift_magnitude
+            a_b = 0.5 * (1 + np.sin(omega * t + phase_b)) * drift_magnitude
+            row_alpha = np.where(is_group_a, a_a, a_b)
+            logits = (1 - row_alpha) * logits0 + row_alpha * logits1 + intercept
         elif drift_mode == "mixed":
             j_from = int(mixed_sched["from_idx"][t])
             j_to = int(mixed_sched["to_idx"][t])
