@@ -61,17 +61,55 @@ get the existing L2 on `trainable`.
   §"S7: where a global β_t is not enough" + Extension A negative
   documented. Recompiles clean (pdflatex ×2).
 
-### Next: Extension B — per-example β_t(x)
-S7 is the purpose-built test bed (global β provably wrong for one subpop
-at all times, q_t(x) doesn't help, 66% persistence flips). Design:
-`β_t(x) = σ(r_ψ(s_{t-1}) + g_ξ(c(x)))`, g_ξ **zero-init** (collapses to
-global β at init) + `λ·Var_x[β_t(x)]` penalty for identifiability. c(x) =
-per-example context cols + per-expert preds + short/long disagreement.
-m_{t-1} stays global. New ablations A11 (full), A12 (λ→∞ ≈ A6 identity
-check), A13 (g_ξ context-only). New diagnostics: per-group β trace,
-per-group oracle persistence (extend `oracle_per_day_frame`). Target:
-beat m5b_smooth0.1's 0.4326 on S7. Battery: S0–S7 dev+confirm + Avazu +
-Criteo; if wins S7/S4/S5 → rerun autobid.
+## 2026-09-01 (cont.) — Extension B (per-example β_t(x)) = NEGATIVE
+
+`amgtp_method.py`: `BetaContextHead` g_ξ (zero-init) → `β_t(x) =
+σ(r_ψ(s_{t-1}) + g_ξ(feats_t(x)))`. `run_amgtp(beta_per_example,
+beta_var_reg, beta_hidden, group)`, records `beta_std`, per-group
+`beta_A/beta_B`. Global path bit-identical (tested). `amgtp_run.py
+--beta-x` → A11-A13 + per-group β trace. 30/30 tests pass. Commits
+10791d4, 4dedfe7.
+
+**Dev sweep** (`amgtp_betax_sweep.py`, job 12457082, 25 cells, 5 dev
+seeds × S0/S3/S4/S5/S7, `beta_var_reg` ∈ {0,1e-4,1e-3,1e-2,1e-1}):
+**no config beats global β_t** — S7 (the target) betax +0.0007 vs global
+(0.4318 vs 0.4311); worse on S3/S0, tiny edge S4 (−0.001), tie S5. **g_ξ
+never learns the subgroup split**: |β_A − β_B| ≈ 0.005 at every λ, β_std
+≈ 0.01 (β_t(x) ≈ global β_t(t)). Mechanism: `m_{t-1}` is a single global
+EMA, so per-example β routing sends a stable-subgroup example to the
+*blended* history, not that subgroup's own. Per-example persistence needs
+per-example/per-group `m` — PDF §2.3 scopes that out.
+`stage4_betax/_sweep/FROZEN.md`.
+
+**Confirmed on 12 disjoint S7 seeds** (job 12457141): amgtp_bx −0.0007
+vs global amgtp (i.e. amgtp is 0.0007 *better*), 12/12. Negative holds
+out-of-sample.
+
+### Per-group `m` diagnostic (the hypothesised fix) — ALSO NEGATIVE
+`run_amgtp(persist_per_group=True)` = DIAGNOSTIC (uses the group label like
+the amgtp_eval oracles): a separate persistent state m^(g) per subgroup,
+EMA'd from that subgroup's own deployed weights. S7, 1 seed, 3000 rows:
+- global β_t: 0.4229
+- β_t(x) + global m: 0.4232
+- **β_t(x) + per-group m: 0.4236** (worse still)
+- global β + per-group m: 0.4229 (unchanged)
+- |β_A − β_B| still ≈ 0.008 — **g_ξ never differentiates the subgroups
+  even with an oracle group label AND a per-group m available.**
+
+So "global m is the bottleneck" is **refuted**. Mechanistic read: the
+optimal β_A-vs-β_B relationship *flips sign every quarter cycle* (whichever
+group is at its turning point wants high β), so a time-invariant
+g_ξ(context) cannot represent it — it needs a phase×context interaction,
+which M5c already showed this architecture won't learn; and the direct
+per-example volatility signal (|p_short(x) − p_long(x)|) is apparently
+below the per-impression noise floor. Three variants of "smarter
+per-example persistence" now fail with one coherent explanation.
+
+**Verdict: the per-example-persistence direction is a validated dead end
+for this problem.** Global linear β_t remains the deployed model. AMG-TP's
+S7 boundary (global β can't beat the fixed high-persistence specialist
+when two subpops want opposite persistence) stands as a documented limit,
+not something a smarter β fixes.
 
 ---
 

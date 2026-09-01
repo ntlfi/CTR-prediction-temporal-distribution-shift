@@ -12,6 +12,10 @@ s0_none,A8b 5-expert gate (M5b),m5b_smooth0.001,0.3281700681025004,0.00381766711
 s0_none,A9 static uniform-5,uniform5,0.3563905338307591,0.00400928648191698,12
 s0_none,A10 nonlinear persistence net (h=8),amgtp_hidden8,,,0
 s0_none,A10 nonlinear persistence net (h=16),amgtp_hidden16,,,0
+s0_none,A11 per-example beta_t(x),amgtp_bx,,,0
+s0_none,"A11 per-example beta_t(x), no var penalty",amgtp_bx_var0,,,0
+s0_none,"A12 per-example beta_t(x), var penalty -> global",amgtp_bx_varhi,,,0
+s0_none,"A13 per-example beta_t(x), nonlinear g_xi",amgtp_bx_h8,,,0
 s1_abrupt,A0 expanding only,expanding,0.5376306287325131,0.0036974739649522506,12
 s1_abrupt,A1 no persistence (beta=0),amgtp_fixed_beta0,0.3382423265414373,0.0015684347629311784,12
 s1_abrupt,A2 fixed low persistence,m5b_smooth0.001,0.3382131486790787,0.0015622114314935228,12
@@ -25,6 +29,10 @@ s1_abrupt,A8b 5-expert gate (M5b),m5b_smooth0.001,0.3382131486790787,0.001562211
 s1_abrupt,A9 static uniform-5,uniform5,0.3816595049195701,0.0018795078431941296,12
 s1_abrupt,A10 nonlinear persistence net (h=8),amgtp_hidden8,,,0
 s1_abrupt,A10 nonlinear persistence net (h=16),amgtp_hidden16,,,0
+s1_abrupt,A11 per-example beta_t(x),amgtp_bx,,,0
+s1_abrupt,"A11 per-example beta_t(x), no var penalty",amgtp_bx_var0,,,0
+s1_abrupt,"A12 per-example beta_t(x), var penalty -> global",amgtp_bx_varhi,,,0
+s1_abrupt,"A13 per-example beta_t(x), nonlinear g_xi",amgtp_bx_h8,,,0
 s2_gradual,A0 expanding only,expanding,0.472613978881048,0.0036467427396612686,12
 s2_gradual,A1 no persistence (beta=0),amgtp_fixed_beta0,0.359236632222044,0.002056887710070808,12
 s2_gradual,A2 fixed low persistence,m5b_smooth0.001,0.359217547749534,0.0020542756803149332,12
@@ -38,6 +46,10 @@ s2_gradual,A8b 5-expert gate (M5b),m5b_smooth0.001,0.359217547749534,0.002054275
 s2_gradual,A9 static uniform-5,uniform5,0.38777458168993384,0.0023223369584399784,12
 s2_gradual,A10 nonlinear persistence net (h=8),amgtp_hidden8,,,0
 s2_gradual,A10 nonlinear persistence net (h=16),amgtp_hidden16,,,0
+s2_gradual,A11 per-example beta_t(x),amgtp_bx,,,0
+s2_gradual,"A11 per-example beta_t(x), no var penalty",amgtp_bx_var0,,,0
+s2_gradual,"A12 per-example beta_t(x), var penalty -> global",amgtp_bx_varhi,,,0
+s2_gradual,"A13 per-example beta_t(x), nonlinear g_xi",amgtp_bx_h8,,,0
 s3_recurring,A0 expanding only,expanding,0.43570129853743716,0.00388696033463853,12
 s3_recurring,A1 no persistence (beta=0),amgtp_fixed_beta0,0.44036548002600423,0.004167786177588206,12
 s3_recurring,A2 fixed low persistence,m5b_smooth0.001,0.4378101070675857,0.0036835395830152533,12
@@ -51,6 +63,10 @@ s3_recurring,A8b 5-expert gate (M5b),m5b_smooth0.001,0.4378101070675857,0.003683
 s3_recurring,A9 static uniform-5,uniform5,0.43927475254268394,0.0037573283276652967,12
 s3_recurring,A10 nonlinear persistence net (h=8),amgtp_hidden8,,,0
 s3_recurring,A10 nonlinear persistence net (h=16),amgtp_hidden16,,,0
+s3_recurring,A11 per-example beta_t(x),amgtp_bx,,,0
+s3_recurring,"A11 per-example beta_t(x), no var penalty",amgtp_bx_var0,,,0
+s3_recurring,"A12 per-example beta_t(x), var penalty -> global",amgtp_bx_varhi,,,0
+s3_recurring,"A13 per-example beta_t(x), nonlinear g_xi",amgtp_bx_h8,,,0
 s4_local,A0 expanding only,expanding,0.5190154917448452,0.004476642060459544,12
 s4_local,A1 no persistence (beta=0),amgtp_fixed_beta0,0.4589564610901115,0.0038114886205986333,12
 s4_local,A2 fixed low persistence,m5b_smooth0.001,0.45890181536253416,0.003821695237953958,12
@@ -64,6 +80,10 @@ s4_local,A8b 5-expert gate (M5b),m5b_smooth0.001,0.45890181536253416,0.003821695
 s4_local,A9 static uniform-5,uniform5,0.5039710637595238,0.0043293906615932696,12
 s4_local,A10 nonlinear persistence net (h=8),amgtp_hidden8,,,0
 s4_local,A10 nonlinear persistence net (h=16),amgtp_hidden16,,,0
+s4_local,A11 per-example beta_t(x),amgtp_bx,,,0
+s4_local,"A11 per-example beta_t(x), no var penalty",amgtp_bx_var0,,,0
+s4_local,"A12 per-example beta_t(x), var penalty -> global",amgtp_bx_varhi,,,0
+s4_local,"A13 per-example beta_t(x), nonlinear g_xi",amgtp_bx_h8,,,0
 s5_opposing_local,A0 expanding only,expanding,0.6110425147489539,0.0037001596026654242,12
 s5_opposing_local,A1 no persistence (beta=0),amgtp_fixed_beta0,0.49223441104692695,0.002913798616180615,12
 s5_opposing_local,A2 fixed low persistence,m5b_smooth0.001,0.49210160944438464,0.0029119051854768633,12
@@ -77,6 +97,10 @@ s5_opposing_local,A8b 5-expert gate (M5b),m5b_smooth0.001,0.49210160944438464,0.
 s5_opposing_local,A9 static uniform-5,uniform5,0.5155041981795585,0.0029141283569869116,12
 s5_opposing_local,A10 nonlinear persistence net (h=8),amgtp_hidden8,,,0
 s5_opposing_local,A10 nonlinear persistence net (h=16),amgtp_hidden16,,,0
+s5_opposing_local,A11 per-example beta_t(x),amgtp_bx,,,0
+s5_opposing_local,"A11 per-example beta_t(x), no var penalty",amgtp_bx_var0,,,0
+s5_opposing_local,"A12 per-example beta_t(x), var penalty -> global",amgtp_bx_varhi,,,0
+s5_opposing_local,"A13 per-example beta_t(x), nonlinear g_xi",amgtp_bx_h8,,,0
 s6_mixed,A0 expanding only,expanding,0.546019103516695,0.013704298946312582,12
 s6_mixed,A1 no persistence (beta=0),amgtp_fixed_beta0,0.4003162406020126,0.010851505756063801,12
 s6_mixed,A2 fixed low persistence,m5b_smooth0.001,0.3998407272628352,0.010447319822000796,12
@@ -90,16 +114,24 @@ s6_mixed,A8b 5-expert gate (M5b),m5b_smooth0.001,0.3998407272628352,0.0104473198
 s6_mixed,A9 static uniform-5,uniform5,0.4120711216423915,0.005491102450553956,12
 s6_mixed,A10 nonlinear persistence net (h=8),amgtp_hidden8,,,0
 s6_mixed,A10 nonlinear persistence net (h=16),amgtp_hidden16,,,0
+s6_mixed,A11 per-example beta_t(x),amgtp_bx,,,0
+s6_mixed,"A11 per-example beta_t(x), no var penalty",amgtp_bx_var0,,,0
+s6_mixed,"A12 per-example beta_t(x), var penalty -> global",amgtp_bx_varhi,,,0
+s6_mixed,"A13 per-example beta_t(x), nonlinear g_xi",amgtp_bx_h8,,,0
 s7_opposing_recurring,A0 expanding only,expanding,0.4359699856610044,0.004076164738536073,12
-s7_opposing_recurring,A1 no persistence (beta=0),amgtp_fixed_beta0,0.4356445824396114,0.004059782614370047,12
-s7_opposing_recurring,A2 fixed low persistence,m5b_smooth0.001,0.4355704830608034,0.004037568655996308,12
-s7_opposing_recurring,A3 fixed high persistence,m5b_smooth0.1,0.43263521989541287,0.003968108674476829,12
-s7_opposing_recurring,"A4 adaptive beta, global q",amgtp_global_q,0.43590449561155387,0.004021286146044002,12
+s7_opposing_recurring,A1 no persistence (beta=0),amgtp_fixed_beta0,0.4356446124947546,0.004059755906883772,12
+s7_opposing_recurring,A2 fixed low persistence,m5b_smooth0.001,0.43557052334943486,0.004037568648735264,12
+s7_opposing_recurring,A3 fixed high persistence,m5b_smooth0.1,0.4326352198917607,0.003968108653086744,12
+s7_opposing_recurring,"A4 adaptive beta, global q",amgtp_global_q,0.43590449569514805,0.004021286120403861,12
 s7_opposing_recurring,"A5 adaptive beta, uniform q",amgtp_uniform_q,0.45102384214737773,0.004080541970991527,12
-s7_opposing_recurring,A6 full AMG-TP,amgtp,0.43591969270637865,0.003966291354180246,12
-s7_opposing_recurring,"A7 adaptive beta, no state feats",amgtp_no_state,0.43543086962832295,0.004087684817214001,12
-s7_opposing_recurring,A8a 2-expert gate (M2),m2_context_gate,0.4339907018529421,0.0040137130738823485,12
-s7_opposing_recurring,A8b 5-expert gate (M5b),m5b_smooth0.001,0.4355704830608034,0.004037568655996308,12
+s7_opposing_recurring,A6 full AMG-TP,amgtp,0.43591969189832747,0.003966291155003849,12
+s7_opposing_recurring,"A7 adaptive beta, no state feats",amgtp_no_state,0.43543087003762887,0.004087684780460574,12
+s7_opposing_recurring,A8a 2-expert gate (M2),m2_context_gate,0.4339907018159715,0.004013713066937791,12
+s7_opposing_recurring,A8b 5-expert gate (M5b),m5b_smooth0.001,0.43557052334943486,0.004037568648735264,12
 s7_opposing_recurring,A9 static uniform-5,uniform5,0.45102384266409223,0.004080541974785614,12
-s7_opposing_recurring,A10 nonlinear persistence net (h=8),amgtp_hidden8,0.43529626118000614,0.004023994562008105,12
-s7_opposing_recurring,A10 nonlinear persistence net (h=16),amgtp_hidden16,0.4356817545542202,0.004008388411931574,12
+s7_opposing_recurring,A10 nonlinear persistence net (h=8),amgtp_hidden8,0.43529626112593767,0.0040239946848226165,12
+s7_opposing_recurring,A10 nonlinear persistence net (h=16),amgtp_hidden16,0.43568174712055535,0.004008388624308501,12
+s7_opposing_recurring,A11 per-example beta_t(x),amgtp_bx,0.43661903184810513,0.004008085278568657,12
+s7_opposing_recurring,"A11 per-example beta_t(x), no var penalty",amgtp_bx_var0,0.43664208187719816,0.004006391808328611,12
+s7_opposing_recurring,"A12 per-example beta_t(x), var penalty -> global",amgtp_bx_varhi,0.4363123116331047,0.004010322985759822,12
+s7_opposing_recurring,"A13 per-example beta_t(x), nonlinear g_xi",amgtp_bx_h8,0.43639498433538065,0.004043347603653741,12

@@ -138,7 +138,8 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
               context_gate: bool = True, uniform_q: bool = False,
               state_features: str = "full", persist_hidden: int = 0,
               beta_per_example: bool = False, beta_var_reg: float = 0.0,
-              beta_hidden: int = 0, group: np.ndarray = None):
+              beta_hidden: int = 0, group: np.ndarray = None,
+              persist_per_group: bool = False):
     """Returns rows: {day, y_true, y_pred, n_train, fit_time, weights,
     mean_weights (dict expert -> mean deployed pi), beta (mean deployed),
     beta_std, mean_q (dict), m_state (dict)}; if `group` is given also
@@ -159,6 +160,13 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
       beta_var_reg=lambda     -> penalty lambda * Var_x[beta_t(x)] (A12: lambda huge
                                  -> collapses back to the global beta_t, an identity check)
       beta_hidden=H           -> g_xi gets an H-wide tanh hidden layer
+      persist_per_group=True  -> DIAGNOSTIC (uses the `group` label like the
+                                 amgtp_eval oracles): keep a separate persistent
+                                 state m^(g) per subgroup, EMA'd from that
+                                 subgroup's own deployed weights, so beta_t(x)
+                                 mixes toward *that example's* subgroup history.
+                                 Tests whether the single global m is what caps
+                                 per-example persistence on S7.
     """
     torch.manual_seed(seed)
     days = multi_days(bank, eligible_days)
@@ -191,7 +199,15 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
             g = g + gxi(feats_tensor)
         return torch.sigmoid(g)
 
-    m_state = torch.full((K,), 1.0 / K)          # m_{t-1}
+    pg = persist_per_group and group is not None and day is not None
+    if pg:
+        group_arr = np.asarray(group)
+        g_levels = np.unique(group_arr)
+        G = len(g_levels)
+        gidx_all = np.searchsorted(g_levels, group_arr)   # 0..G-1 per row of the full dataset
+        m_state = torch.full((G, K), 1.0 / K)             # m^(g)_{t-1}
+    else:
+        m_state = torch.full((K,), 1.0 / K)               # m_{t-1}
     prev_gate_move = 0.0
     prev_deployed_mean = None
     prev_mean_q = None
@@ -204,13 +220,15 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
         preds_t = torch.tensor(preds, dtype=torch.float32)
         y_t = torch.tensor(y_true, dtype=torch.float32)
         s_prev = torch.tensor(_persist_state(bank, days, t, T, prev_gate_move, prev_mean_q,
-                                             m_state.numpy(), state_features),
+                                             (m_state.mean(0) if pg else m_state).numpy(), state_features),
                               dtype=torch.float32)
+        gidx_t = torch.tensor(gidx_all[np.asarray(day) == t], dtype=torch.long) if pg else None
+        m_dep = m_state[gidx_t] if pg else m_state.unsqueeze(0)   # (n, K) or (1, K)
 
         with torch.no_grad():
             q = torch.full((len(y_true), K), 1.0 / K) if uniform_q else gate(feats_t)  # (n, K)
             beta = beta_of(feats_t)
-            pi = (1 - _bcast(beta)) * q + _bcast(beta) * m_state.unsqueeze(0)   # (n, K)
+            pi = (1 - _bcast(beta)) * q + _bcast(beta) * m_dep   # (n, K)
             pi_np = pi.numpy()
             q_np = q.numpy()
             beta_arr = np.full(len(y_true), float(beta)) if beta.ndim == 0 else beta.numpy()
@@ -230,7 +248,7 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
             "mean_q": dict(zip(WINDOW_FAMILY, mean_q.tolist())),
             "beta": beta_val,
             "beta_std": beta_std,
-            "m_state": dict(zip(WINDOW_FAMILY, m_state.tolist())),
+            "m_state": dict(zip(WINDOW_FAMILY, (m_state.mean(0) if pg else m_state).tolist())),
         }
         if group is not None and day is not None:
             g_t = np.asarray(group)[np.asarray(day) == t]
@@ -245,7 +263,7 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
                 opt.zero_grad()
                 q_tr = torch.full((len(y_true), K), 1.0 / K) if uniform_q else gate(feats_t)
                 beta_tr = beta_of(feats_t)
-                pi_tr = (1 - _bcast(beta_tr)) * q_tr + _bcast(beta_tr) * m_state.unsqueeze(0).detach()
+                pi_tr = (1 - _bcast(beta_tr)) * q_tr + _bcast(beta_tr) * m_dep.detach()
                 p_mix = (preds_t * pi_tr).sum(dim=-1).clamp(1e-7, 1 - 1e-7)
                 bce = -(y_t * p_mix.log() + (1 - y_t) * (1 - p_mix).log()).mean()
                 l2_term = sum((p ** 2).sum() for p in trainable)
@@ -263,8 +281,14 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
         with torch.no_grad():
             q_new = torch.full((len(y_true), K), 1.0 / K) if uniform_q else gate(feats_t)
             beta_new = beta_of(feats_t)
-            pi_new = ((1 - _bcast(beta_new)) * q_new + _bcast(beta_new) * m_state.unsqueeze(0)).mean(dim=0)
-            m_state = (1 - rho) * m_state + rho * pi_new.detach()
+            pi_full = (1 - _bcast(beta_new)) * q_new + _bcast(beta_new) * m_dep   # (n, K)
+            if pg:
+                for gi in range(G):
+                    mask = gidx_t == gi
+                    if mask.any():
+                        m_state[gi] = (1 - rho) * m_state[gi] + rho * pi_full[mask].mean(dim=0).detach()
+            else:
+                m_state = (1 - rho) * m_state + rho * pi_full.mean(dim=0).detach()
             prev_gate_move = 0.0 if np.isnan(gate_move) else gate_move
             prev_mean_q = mean_q
             prev_deployed_mean = mean_pi
