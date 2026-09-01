@@ -174,6 +174,10 @@ def main():
     ap.add_argument("--no-diff-forgetting", action="store_true",
                     help="Skip Differentiable Forgetting (the slow per-day bilevel baseline).")
     ap.add_argument("--recovery-horizon", type=int, default=30)
+    ap.add_argument("--et-eta", type=float, default=2.0,
+                    help="Fixed Share / Learn-alpha exponential-weights rate (frozen on dev).")
+    ap.add_argument("--et-alpha", type=float, default=0.05,
+                    help="Fixed Share switching rate (frozen on dev; Learn-alpha learns its own).")
     ap.add_argument("--stage2", action="store_true",
                     help="Also run AMG-TP (adaptive global beta_t) and its ablations A4-A7.")
     ap.add_argument("--beta-x", action="store_true",
@@ -233,6 +237,19 @@ def main():
     adamoe_rows = run_adamoe(bank, eligible_days)
     methods["adamoe"] = [{k: r[k] for k in ("day", "y_true", "y_pred", "n_train", "fit_time")} for r in adamoe_rows]
     weights["adamoe"] = ([{"day": r["day"], "mean_weights": r["weights"]} for r in adamoe_rows], list(WINDOW_FAMILY))
+
+    print("Fixed Share / Learn-alpha (classical expert tracking) ...", flush=True)
+    t0 = time.time()
+    from expert_tracking import run_fixed_share, run_learn_alpha, DEFAULT_ETA, DEFAULT_ALPHA
+    fs_rows = run_fixed_share(bank, eligible_days, eta=args.et_eta, alpha=args.et_alpha)
+    la_rows = run_learn_alpha(bank, eligible_days, eta=args.et_eta)
+    methods["fixed_share"] = [{k: r[k] for k in ("day", "y_true", "y_pred", "n_train", "fit_time")} for r in fs_rows]
+    methods["learn_alpha"] = [{k: r[k] for k in ("day", "y_true", "y_pred", "n_train", "fit_time")} for r in la_rows]
+    weights["fixed_share"] = ([{"day": r["day"], "mean_weights": r["weights"]} for r in fs_rows], list(WINDOW_FAMILY))
+    weights["learn_alpha"] = ([{"day": r["day"], "mean_weights": r["weights"]} for r in la_rows], list(WINDOW_FAMILY))
+    pd.DataFrame([{"day": r["day"], "mean_alpha": r["mean_alpha"]} for r in la_rows]) \
+        .to_csv(out / "learn_alpha_trace.csv", index=False)
+    print(f"  {time.time() - t0:.1f}s", flush=True)
 
     if not args.no_diff_forgetting:
         print("Differentiable Forgetting ...", flush=True)

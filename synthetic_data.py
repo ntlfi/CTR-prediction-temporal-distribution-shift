@@ -26,7 +26,7 @@ import pandas as pd
 from data import hash_features
 
 DRIFT_MODES = ["none", "gradual", "abrupt", "recurring", "local", "opposing_local",
-               "mixed", "opposing_recurring"]
+               "mixed", "opposing_recurring", "irregular_recurring", "heterogeneous"]
 
 # AMG-TP plan (AMG-TP_Academic_LaTeX.pdf, Table 2) adds regimes beyond the
 # original five:
@@ -89,6 +89,54 @@ def _mixed_schedule(n_days: int, n_regimes: int, rng: np.random.Generator) -> di
             frac[t] = min(1.0, (i + 1) / ramp) if gradual else 1.0
     return {"from_idx": from_idx, "to_idx": to_idx, "frac": frac,
             "n_seg": n_seg, "regime_seq": regime_seq, "bounds": bounds.tolist()}
+
+
+def _irregular_alpha_schedule(n_days: int, rng: np.random.Generator,
+                              min_seg: int = 5, max_seg: int = 20) -> np.ndarray:
+    """S8 irregular_recurring: the ground truth alternates w0 <-> w1 like
+    `recurring`, but segment lengths are drawn i.i.d. Uniform[min_seg, max_seg]
+    rather than following a fixed period -- recurrent but aperiodic, so no
+    fixed expert horizon can be synchronised to it."""
+    alpha = np.zeros(n_days, dtype=float)
+    t, state = 0, 0
+    while t < n_days:
+        seg = int(rng.integers(min_seg, max_seg + 1))
+        alpha[t:t + seg] = state
+        t += seg
+        state = 1 - state
+    return alpha
+
+
+def _heterogeneous_plan(n_days: int, rng: np.random.Generator):
+    """S9 heterogeneous: one long stream that transitions sequentially through
+    stationary -> abrupt -> recurring -> local -> gradual -> irregular
+    recurrence, ~1/6 of the horizon each. Returns per-day (alpha float array,
+    local_only bool array) plus the segment boundaries for reporting."""
+    bounds = np.linspace(0, n_days, 7).astype(int)
+    alpha = np.zeros(n_days, dtype=float)
+    local_only = np.zeros(n_days, dtype=bool)
+    seg_names = ["stationary", "abrupt", "recurring", "local", "gradual", "irregular"]
+    for i, name in enumerate(seg_names):
+        lo, hi = int(bounds[i]), int(bounds[i + 1])
+        L = hi - lo
+        if L <= 0:
+            continue
+        if name == "stationary":
+            alpha[lo:hi] = 0.0
+        elif name == "abrupt":
+            alpha[lo:hi] = 0.0
+            alpha[lo + L // 2:hi] = 1.0
+        elif name == "recurring":
+            tt = np.arange(L)
+            alpha[lo:hi] = 0.5 * (1 + np.sin(2 * np.pi * tt / max(min(L, 14), 1)))
+        elif name == "local":
+            alpha[lo:hi] = 1.0
+            local_only[lo:hi] = True
+        elif name == "gradual":
+            alpha[lo:hi] = np.linspace(0, 1, L)
+        elif name == "irregular":
+            alpha[lo:hi] = _irregular_alpha_schedule(L, rng)
+    return alpha, local_only, list(zip(seg_names, bounds[:-1].tolist(), bounds[1:].tolist()))
 
 
 def _drift_alpha(t: int, n_days: int, drift_mode: str, shift_day: int, period_days: int) -> float:
@@ -182,6 +230,10 @@ def generate_synthetic_raw(n_days: int = 180, rows_per_day: int = 5000, n_cat_fe
     elif drift_mode == "mixed":
         W_mixed = [rng.normal(0, 1.0, size=n_true_features) for _ in range(_MIXED_N_REGIMES)]
         mixed_sched = _mixed_schedule(n_days, _MIXED_N_REGIMES, rng)
+    elif drift_mode == "irregular_recurring":
+        irr_alpha = _irregular_alpha_schedule(n_days, rng)
+    elif drift_mode == "heterogeneous":
+        het_alpha, het_local, het_segs = _heterogeneous_plan(n_days, rng)
 
     frames = []
     for t in range(n_days):
@@ -203,6 +255,17 @@ def generate_synthetic_raw(n_days: int = 180, rows_per_day: int = 5000, n_cat_fe
             a_a = 0.5 * (1 + np.sin(omega * t)) * drift_magnitude
             a_b = 0.5 * (1 + np.sin(omega * t + phase_b)) * drift_magnitude
             row_alpha = np.where(is_group_a, a_a, a_b)
+            logits = (1 - row_alpha) * logits0 + row_alpha * logits1 + intercept
+        elif drift_mode == "irregular_recurring":
+            a = float(irr_alpha[t]) * drift_magnitude
+            row_alpha = np.full(rows_per_day, a)
+            logits = (1 - a) * logits0 + a * logits1 + intercept
+        elif drift_mode == "heterogeneous":
+            a = float(het_alpha[t]) * drift_magnitude
+            if het_local[t]:
+                row_alpha = np.where(is_group_a, a, 0.0)
+            else:
+                row_alpha = np.full(rows_per_day, a)
             logits = (1 - row_alpha) * logits0 + row_alpha * logits1 + intercept
         elif drift_mode == "mixed":
             j_from = int(mixed_sched["from_idx"][t])

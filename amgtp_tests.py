@@ -164,6 +164,60 @@ def test_opposing_recurring_rng_untouched():
           (b0, b7) == (125, 124), f"got ({b0}, {b7}), expected (125, 124)")
 
 
+def test_new_drift_modes():
+    """S8 irregular_recurring drifts but has no single dominant period; S9
+    heterogeneous walks through its six sub-regimes; neither perturbs the
+    RNG stream of the original modes (covered by the recurring fingerprint
+    test above)."""
+    from synthetic_data import generate_synthetic_raw, _heterogeneous_plan
+    import numpy as _np
+    df, _ = generate_synthetic_raw(n_days=120, rows_per_day=2000,
+                                   drift_mode="irregular_recurring", seed=0)
+    a = df.groupby("day")["click"].mean().to_numpy()
+    check("S8 irregular_recurring: ground truth drifts", a.max() - a.min() > 0.03,
+          f"CTR range {a.max() - a.min():.3f}")
+    ac = [abs(_np.corrcoef(a[:-k], a[k:])[0, 1]) for k in range(2, 45)]
+    check("S8 irregular_recurring: no sharp single period (max |autocorr| < 0.8)",
+          max(ac) < 0.8, f"max |autocorr| = {max(ac):.2f}")
+
+    df, _ = generate_synthetic_raw(n_days=120, rows_per_day=2000, drift_mode="heterogeneous", seed=0)
+    alpha, local_only, segs = _heterogeneous_plan(120, _np.random.default_rng(0))
+    check("S9 heterogeneous: six ordered segments", [s[0] for s in segs] ==
+          ["stationary", "abrupt", "recurring", "local", "gradual", "irregular"])
+    seg0 = alpha[segs[0][1]:segs[0][2]]
+    check("S9 heterogeneous: stationary segment is flat", float(seg0.max() - seg0.min()) == 0.0)
+    check("S9 heterogeneous: gradual segment ramps", alpha[segs[4][1]:segs[4][2]][-1] > 0.9)
+
+
+def test_expert_tracking():
+    """Fixed Share / Learn-alpha: predictions in [0,1], causal (no future
+    leak), reproducible; Learn-alpha's mean switching rate stays in the grid."""
+    from candidate_bank import build_candidate_bank
+    from expert_tracking import run_fixed_share, run_learn_alpha, ALPHA_GRID
+    d = _small_bank(drift="recurring", n_days=48, seed=1)
+    bank = build_candidate_bank(d["X"], d["y"], d["day"], d["eligible"], n_jobs=4)
+    fs = run_fixed_share(bank, d["eligible"])
+    la = run_learn_alpha(bank, d["eligible"])
+    for nm, r in (("fixed_share", fs), ("learn_alpha", la)):
+        p = np.concatenate([x["y_pred"] for x in r])
+        check(f"{nm}: predictions in (0,1)", p.min() > 0 and p.max() < 1, f"range [{p.min():.3f}, {p.max():.3f}]")
+    check("learn_alpha: mean_alpha within the grid", all(
+        ALPHA_GRID[0] - 1e-9 <= x["mean_alpha"] <= ALPHA_GRID[-1] + 1e-9 for x in la))
+    fs2 = run_fixed_share(bank, d["eligible"])
+    mx = max(float(np.abs(a["y_pred"] - b["y_pred"]).max()) for a, b in zip(fs, fs2))
+    check("fixed_share: reproducible", mx == 0.0, f"max |Δ| = {mx:.1e}")
+
+    cutoff = sorted(d["test"])[len(d["test"]) // 2]
+    y2 = d["y"].copy()
+    fut = d["day"] > cutoff
+    y2[fut] = 1 - y2[fut]
+    bank2 = build_candidate_bank(d["X"], y2, d["day"], d["eligible"], n_jobs=4)
+    fs_p = run_fixed_share(bank2, d["eligible"])
+    b0 = {r["day"]: r["y_pred"] for r in fs}
+    md = max(float(np.abs(b0[r["day"]] - r["y_pred"]).max()) for r in fs_p if r["day"] <= cutoff and r["day"] in b0)
+    check("fixed_share: no future leakage (preds <= cutoff unchanged)", md == 0.0, f"max |Δ| = {md:.1e}")
+
+
 def test_amgtp_hidden_persistence(d):
     """Extension A -- the hidden-layer PersistenceNet: hidden=0 is
     deterministic and matches the default path; hidden>0 still starts at
@@ -273,6 +327,8 @@ def main():
     test_opposing_local_isolation()
     test_opposing_recurring_isolation()
     test_opposing_recurring_rng_untouched()
+    test_new_drift_modes()
+    test_expert_tracking()
     test_calibration_metric()
     print()
     if FAILS:

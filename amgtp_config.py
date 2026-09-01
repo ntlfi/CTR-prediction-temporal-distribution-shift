@@ -23,6 +23,13 @@ SYNTH_REGIMES = {
     "s6_mixed":           {"drift": "mixed",          "label": "S6 mixed unknown"},
     "s7_opposing_recurring": {"drift": "opposing_recurring",
                               "label": "S7 opposing recurring"},
+    # --- Package 2 additions (appended so synth_grid indices 0-135 are unchanged) ---
+    "s3b_recurring_p9":  {"drift": "recurring", "label": "S3b recurring period 9",  "period": 9},
+    "s3c_recurring_p11": {"drift": "recurring", "label": "S3c recurring period 11", "period": 11},
+    "s3d_recurring_p17": {"drift": "recurring", "label": "S3d recurring period 17", "period": 17},
+    "s3e_recurring_p21": {"drift": "recurring", "label": "S3e recurring period 21", "period": 21},
+    "s8_irregular_recurring": {"drift": "irregular_recurring", "label": "S8 irregular recurring"},
+    "s9_heterogeneous":       {"drift": "heterogeneous",       "label": "S9 heterogeneous stream"},
 }
 
 # plan section 12/17: >= 10 seeds; hyperparameters were frozen on the dev seeds
@@ -63,7 +70,7 @@ def synth_run_args(regime_key: str) -> list:
             "--synthetic-days", str(SYNTH_DAYS),
             "--synthetic-rows-per-day", str(SYNTH_ROWS_PER_DAY),
             "--synthetic-drift", r["drift"],
-            "--synthetic-period-days", str(SYNTH_PERIOD_DAYS)]
+            "--synthetic-period-days", str(r.get("period", SYNTH_PERIOD_DAYS))]
     if "shift_day" in r:
         args += ["--synthetic-shift-day", str(r["shift_day"])]
     return args

@@ -36,7 +36,7 @@ from amgtp_config import (CONFIRM_SEEDS, DEV_SEEDS, SYNTH_REGIMES, SYNTH_DAYS)
 # no injected change point (drift is whatever the data naturally contains).
 REAL_REGIMES = ["criteo", "avazu"]
 
-KEY_REFERENCES = ["expanding", "han_arw", "adamoe", "diff_forgetting",
+KEY_REFERENCES = ["expanding", "han_arw", "adamoe", "diff_forgetting", "fixed_share", "learn_alpha",
                   "m2_context_gate", "m5b_smooth0.001", "m5b_smooth0.1", "ensemble3", "rolling_14",
                   "amgtp", "amgtp_fixed_beta0", "amgtp_uniform_q", "amgtp_global_q", "amgtp_no_state",
                   "amgtp_hidden8", "amgtp_hidden16",

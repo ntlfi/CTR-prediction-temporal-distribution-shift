@@ -42,7 +42,7 @@ GRID_CELLS = [(rk, s) for rk in SYNTH_REGIMES for s in ALL_SEEDS]
 
 def _regime_kw(rk):
     r = SYNTH_REGIMES[rk]
-    kw = dict(drift_mode=r["drift"], period_days=SYNTH_PERIOD_DAYS)
+    kw = dict(drift_mode=r["drift"], period_days=r.get("period", SYNTH_PERIOD_DAYS))
     if "shift_day" in r:
         kw["shift_day"] = r["shift_day"]
     return kw
