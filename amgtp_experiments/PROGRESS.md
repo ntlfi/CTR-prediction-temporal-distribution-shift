@@ -6,6 +6,63 @@ the narrative of what was done, what is running, and what is next.
 
 ---
 
+## 2026-09-01 — Stage 4: revised-claim validation (4 experiment packages)
+
+**Status: DONE. PDF: `amgtp_experiments/findings_stage4.pdf` (6pp).**
+Revised claim: context gate = predictive gains; adaptive beta_t = robustness
+across regimes favouring different persistence levels.
+
+### New infra
+- `synthetic_data.py`: `irregular_recurring` (S8, segment lengths i.i.d.
+  Uniform[5,20]) + `heterogeneous` (S9, one stream: stationary->abrupt->
+  recurring->local->gradual->irregular). Off-grid recurring periods 9/11/17/21
+  as S3b-e. All appended -> synth_grid 238 cells, indices 0-135 unchanged,
+  RNG of original modes byte-identical.
+- `expert_tracking.py`: Fixed Share (Herbster-Warmuth) + Learn-alpha
+  (Monteleoni-Jaakkola) over the 5 window experts. Wired into `amgtp_run.py`
+  as standard baselines (`--et-eta 2 --et-alpha 0.05`, a-priori from the
+  regret-bound heuristic; Learn-alpha learns its own rate).
+- `amgtp_betasweep.py/.slurm`: dense fixed-beta grid {0..1 step .05} x 14
+  regimes x 17 seeds (jobs 12457852 + 12458021, 238 cells).
+- `amgtp_stage4_full.slurm`: full battery over all 14 regimes + FS/LA
+  (job 12458121, 238 cells).
+- `amgtp_stage4_report.py`: paired-seed excess vs per-regime fixed-beta
+  oracle (mean + worst-regime, paired bootstrap CI), Holm-corrected
+  per-regime Wilcoxon, measured cost, 3 mechanism figures.
+
+### RESULTS — claim substantially validated
+- **Fixed-beta sweep**: per-regime optimal beta spans 0.0 (S0/S1/S2/S4/S5)
+  to 0.8-0.9 (S3/S3b-e/S6/S8/S9). Best *single* fixed beta = 0.8, still
+  +0.025 worst-regime excess.
+- **AMG-TP has the best mean (+0.0019 [+.0014,+.0023]) AND worst-regime
+  (+0.017) excess of all 11 methods.** Holm-significant vs best-fixed-beta
+  on 9/14 regimes, never significantly worse. Beats fixed-beta oracle
+  outright on S3/S6.
+- **Off-grid recurrence: advantage survives** — excess +0.0001..+0.0010
+  for periods 11/17/21, not Holm-significant vs the per-regime oracle;
+  beta=0 degrades to +0.019 at period 21.
+- **vs Learn-alpha / Fixed Share**: AMG-TP wins mean + worst-case; classical
+  trackers win ONLY S8 (+0.013) and S9 (+0.006) — the aperiodic regimes
+  where loss-driven switch-rate helps and context doesn't. On S4 local
+  AMG-TP beats them by -0.025 (context routing).
+- **vs ensemble3**: ties mean, better worst-case, ~3x cheaper (amgtp 1.15s
+  vs ensemble3 ~3.5s gating on top of the shared 74s bank).
+- **Genuine gaps**: S8 irregular (+0.0072, Holm p=0.17 n.s.) and S9
+  heterogeneous (+0.0052, Holm p=0.013 sig) vs the fixed-beta oracle —
+  beta_t doesn't ramp high/fast enough for aperiodic recurrence. Still
+  best-of-class vs every fixed beta on both.
+- beta_t trace through S9 is a clean mechanism plot (0.4 stationary -> 0.15
+  post-abrupt -> 0.85 recurring -> 0.25 local -> 0.9 irregular).
+
+### Next / open
+- FS/LA eta/alpha sensitivity sweep not finished (login-node runs too slow;
+  needs a SLURM job). Defaults are principled a-priori.
+- FS/LA + new regimes not run on real Criteo/Avazu (synthetic-only battery).
+- Suggested direction for S8/S9: feed Fixed-Share/Learn-alpha loss-tracking
+  signals into beta_t's state features.
+
+---
+
 ## 2026-09-01 — S7 opposing_recurring regime + Extension A (hidden persistence net)
 
 **Status: implemented + all unit tests pass. No battery run yet.**

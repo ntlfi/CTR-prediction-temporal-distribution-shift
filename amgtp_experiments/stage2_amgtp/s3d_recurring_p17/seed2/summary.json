@@ -1,0 +1,565 @@
+{
+  "config": {
+    "source": "synthetic",
+    "drift": "recurring",
+    "seed": 2,
+    "synthetic_days": 120,
+    "synthetic_rows_per_day": 3000,
+    "synthetic_period_days": 17,
+    "synthetic_shift_day": null,
+    "sample_frac": 1.0,
+    "warmup_days": 3,
+    "test_frac": 0.3,
+    "n_eligible_days": 116,
+    "n_dev_days": 81,
+    "n_test_days": 35,
+    "shift_days": [],
+    "validation_selected_h": "expanding",
+    "method_under_test": "m5b_smooth0.1"
+  },
+  "oracle": {
+    "best_fixed_horizon": "expanding",
+    "best_fixed_horizon_loss": 0.42344953718320505,
+    "fixed_horizon_scores": {
+      "expanding": 0.42344953718320505,
+      "rolling_1": 0.6741399518455816,
+      "rolling_3": 0.46444743415986633,
+      "rolling_7": 0.4853136677783092,
+      "rolling_14": 0.4694934417236909
+    },
+    "oracle_fixed_smoothness": "high",
+    "m5b_low_test_loss": 0.4294982904560742,
+    "m5b_high_test_loss": 0.4099533956232343,
+    "oracle_persistence_switch_frac": 0.6857142857142857
+  },
+  "methods": {
+    "expanding": {
+      "log_loss": 0.4234495371832051,
+      "log_loss_ci95": [
+        0.4093966201016308,
+        0.43779715465003866
+      ],
+      "brier": 0.13607388560909797,
+      "pr_auc": 0.6441840261790298,
+      "roc_auc": 0.8323747238455373,
+      "ece": 0.04671123425599993,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.022332111707828766,
+      "max_excess_over_oracle": 0.06215606608346669,
+      "log_loss_A": 0.43046223862245975,
+      "log_loss_B": 0.41645178023289936
+    },
+    "rolling_1": {
+      "log_loss": 0.6741399518455816,
+      "log_loss_ci95": [
+        0.6539655919660511,
+        0.6945437839921212
+      ],
+      "brier": 0.1891828881500571,
+      "pr_auc": 0.49289286900700774,
+      "roc_auc": 0.738079378650458,
+      "ece": 0.14121254465260547,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.2730225263702053,
+      "max_excess_over_oracle": 0.37995936095120236,
+      "log_loss_A": 0.6872267818607296,
+      "log_loss_B": 0.6610810106530555
+    },
+    "rolling_3": {
+      "log_loss": 0.4644474341598664,
+      "log_loss_ci95": [
+        0.4465945256964757,
+        0.48382633360653166
+      ],
+      "brier": 0.14724441672902014,
+      "pr_auc": 0.6035703245186129,
+      "roc_auc": 0.8090758770761887,
+      "ece": 0.06614554299195687,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.06333000868449007,
+      "max_excess_over_oracle": 0.18324876312987115,
+      "log_loss_A": 0.47070565799619446,
+      "log_loss_B": 0.458202546975294
+    },
+    "rolling_7": {
+      "log_loss": 0.48531366777830937,
+      "log_loss_ci95": [
+        0.4552629452689599,
+        0.5148440891073801
+      ],
+      "brier": 0.1562881090881008,
+      "pr_auc": 0.5604805720608089,
+      "roc_auc": 0.7777762611054052,
+      "ece": 0.06598333046139898,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.08419624230293297,
+      "max_excess_over_oracle": 0.19889783938461048,
+      "log_loss_A": 0.4945724079071553,
+      "log_loss_B": 0.4760746585820767
+    },
+    "rolling_14": {
+      "log_loss": 0.4694934417236909,
+      "log_loss_ci95": [
+        0.447486442817579,
+        0.4926796923236865
+      ],
+      "brier": 0.15219849711277314,
+      "pr_auc": 0.5664216258039809,
+      "roc_auc": 0.7839516277745613,
+      "ece": 0.05282519157932133,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.06837601624831456,
+      "max_excess_over_oracle": 0.14208057427907833,
+      "log_loss_A": 0.47926582748343627,
+      "log_loss_B": 0.45974188150632106
+    },
+    "uniform5": {
+      "log_loss": 0.42344484105331764,
+      "log_loss_ci95": [
+        0.4103364827970189,
+        0.4363435754686322
+      ],
+      "brier": 0.13647331550103112,
+      "pr_auc": 0.6353847097190931,
+      "roc_auc": 0.8277602685943665,
+      "ece": 0.03681101675664842,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.022327415577941392,
+      "max_excess_over_oracle": 0.06032874514535863,
+      "log_loss_A": 0.4307573961020385,
+      "log_loss_B": 0.4161478694996394
+    },
+    "validation_selected(h=expanding)": {
+      "log_loss": 0.4234495371832051,
+      "log_loss_ci95": [
+        0.4093966201016308,
+        0.43779715465003866
+      ],
+      "brier": 0.13607388560909797,
+      "pr_auc": 0.6441840261790298,
+      "roc_auc": 0.8323747238455373,
+      "ece": 0.04671123425599993,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.022332111707828766,
+      "max_excess_over_oracle": 0.06215606608346669,
+      "log_loss_A": 0.43046223862245975,
+      "log_loss_B": 0.41645178023289936
+    },
+    "decay_hl1": {
+      "log_loss": 0.5426167779461735,
+      "log_loss_ci95": [
+        0.5332326716723552,
+        0.5519432607013222
+      ],
+      "brier": 0.17918513679299095,
+      "pr_auc": 0.5812945459838339,
+      "roc_auc": 0.7949422859657009,
+      "ece": 0.12187582874962932,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.14149935247079712,
+      "max_excess_over_oracle": 0.17492279618643658,
+      "log_loss_A": 0.5494570341559061,
+      "log_loss_B": 0.5357910987342239
+    },
+    "decay_hl3": {
+      "log_loss": 0.5045921071628896,
+      "log_loss_ci95": [
+        0.4934191649043316,
+        0.5157045330729657
+      ],
+      "brier": 0.16478148306822013,
+      "pr_auc": 0.6029900853225071,
+      "roc_auc": 0.8070690353911785,
+      "ece": 0.12171594217108275,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.10347468168751332,
+      "max_excess_over_oracle": 0.1287897918963467,
+      "log_loss_A": 0.5126608475967087,
+      "log_loss_B": 0.49654056170069294
+    },
+    "decay_hl7": {
+      "log_loss": 0.474330880218532,
+      "log_loss_ci95": [
+        0.46204754153780636,
+        0.4866955176205929
+      ],
+      "brier": 0.15344342410224274,
+      "pr_auc": 0.6194424264388952,
+      "roc_auc": 0.8167888076475943,
+      "ece": 0.09816100106258022,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.07321345474315565,
+      "max_excess_over_oracle": 0.1049678397842359,
+      "log_loss_A": 0.4824252057510055,
+      "log_loss_B": 0.4662538041810664
+    },
+    "han_arw": {
+      "log_loss": 0.429246375002794,
+      "log_loss_ci95": [
+        0.41554956442509794,
+        0.4433014511618811
+      ],
+      "brier": 0.13796080574672712,
+      "pr_auc": 0.6363326926616597,
+      "roc_auc": 0.8283405100112929,
+      "ece": 0.04823119754539812,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.02812894952741768,
+      "max_excess_over_oracle": 0.13887251093683017,
+      "log_loss_A": 0.4367519645437917,
+      "log_loss_B": 0.42175678032496305
+    },
+    "adamoe": {
+      "log_loss": 0.42262105511292264,
+      "log_loss_ci95": [
+        0.4096369540069792,
+        0.435477670611817
+      ],
+      "brier": 0.1361883522396277,
+      "pr_auc": 0.6367417479049537,
+      "roc_auc": 0.828558078707937,
+      "ece": 0.03658028533747382,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.02150362963754631,
+      "max_excess_over_oracle": 0.0589680561457801,
+      "log_loss_A": 0.42986979044018514,
+      "log_loss_B": 0.41538776727703425
+    },
+    "fixed_share": {
+      "log_loss": 0.4170274021322601,
+      "log_loss_ci95": [
+        0.40389740542073665,
+        0.430321562323553
+      ],
+      "brier": 0.13386039287134985,
+      "pr_auc": 0.6557715710875427,
+      "roc_auc": 0.8395428616929611,
+      "ece": 0.04707919849325914,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.015909976656883734,
+      "max_excess_over_oracle": 0.03912237315997441,
+      "log_loss_A": 0.4239798571879916,
+      "log_loss_B": 0.41008976317680707
+    },
+    "learn_alpha": {
+      "log_loss": 0.41626895480400544,
+      "log_loss_ci95": [
+        0.4036019992498187,
+        0.42919334353218086
+      ],
+      "brier": 0.13360663385825103,
+      "pr_auc": 0.6565031248924504,
+      "roc_auc": 0.8399509019542071,
+      "ece": 0.04653106934703682,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.015151529328629072,
+      "max_excess_over_oracle": 0.03504229267197223,
+      "log_loss_A": 0.4232414374038575,
+      "log_loss_B": 0.40931133098433414
+    },
+    "diff_forgetting": {
+      "log_loss": 0.4273223742696632,
+      "log_loss_ci95": [
+        0.41365527242118916,
+        0.44152560056206674
+      ],
+      "brier": 0.13715250001048507,
+      "pr_auc": 0.6440846063415654,
+      "roc_auc": 0.8321356242013265,
+      "ece": 0.0529291069060215,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.02620494879428677,
+      "max_excess_over_oracle": 0.0647430010137523,
+      "log_loss_A": 0.43448271942731176,
+      "log_loss_B": 0.4201772882386158
+    },
+    "m1_global_mix": {
+      "log_loss": 0.4118916371390772,
+      "log_loss_ci95": [
+        0.40123928465194425,
+        0.4235893969375678
+      ],
+      "brier": 0.1328252603538398,
+      "pr_auc": 0.654277157144295,
+      "roc_auc": 0.8397703766225212,
+      "ece": 0.03706662511549148,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.0107742116637009,
+      "max_excess_over_oracle": 0.039818238386915894,
+      "log_loss_A": 0.41786506978497095,
+      "log_loss_B": 0.4059309342377671
+    },
+    "m2_context_gate": {
+      "log_loss": 0.4207307540815474,
+      "log_loss_ci95": [
+        0.40793470727633474,
+        0.4324217966030182
+      ],
+      "brier": 0.1358800978802775,
+      "pr_auc": 0.6440528810757651,
+      "roc_auc": 0.8351276236568986,
+      "ece": 0.04637204635364737,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.019613328606171036,
+      "max_excess_over_oracle": 0.07375836797293028,
+      "log_loss_A": 0.4269102762224189,
+      "log_loss_B": 0.4145644008743804
+    },
+    "m5b_smooth0": {
+      "log_loss": 0.4268333159670611,
+      "log_loss_ci95": [
+        0.41277124138066934,
+        0.4404891923080154
+      ],
+      "brier": 0.13771517231285563,
+      "pr_auc": 0.6336183626965365,
+      "roc_auc": 0.8277149868345607,
+      "ece": 0.04273262779070462,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.02571589049168475,
+      "max_excess_over_oracle": 0.06427490372630418,
+      "log_loss_A": 0.4336085762483206,
+      "log_loss_B": 0.42007249417334813
+    },
+    "m5b_smooth0.001": {
+      "log_loss": 0.4294982904560742,
+      "log_loss_ci95": [
+        0.4161969314342976,
+        0.4426604976368924
+      ],
+      "brier": 0.1386671471389801,
+      "pr_auc": 0.6301340744227879,
+      "roc_auc": 0.8257556554924925,
+      "ece": 0.04479190554011588,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.0283808649806979,
+      "max_excess_over_oracle": 0.09034480339909123,
+      "log_loss_A": 0.4365951505214961,
+      "log_loss_B": 0.42241655422669994
+    },
+    "m5b_smooth0.01": {
+      "log_loss": 0.4258312259705748,
+      "log_loss_ci95": [
+        0.4126389793039352,
+        0.4385864019713856
+      ],
+      "brier": 0.1375306193777468,
+      "pr_auc": 0.6343026511442027,
+      "roc_auc": 0.8288600400443612,
+      "ece": 0.0437465643365736,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.024713800495198467,
+      "max_excess_over_oracle": 0.07262274655961104,
+      "log_loss_A": 0.43252641283318366,
+      "log_loss_B": 0.4191503069542368
+    },
+    "m5b_smooth0.1": {
+      "log_loss": 0.4099533956232343,
+      "log_loss_ci95": [
+        0.3991250489012131,
+        0.42069734610804527
+      ],
+      "brier": 0.1316337224471498,
+      "pr_auc": 0.6617255292758493,
+      "roc_auc": 0.8435386456758199,
+      "ece": 0.04112144059230195,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.008835970147857962,
+      "max_excess_over_oracle": 0.04956909617401428,
+      "log_loss_A": 0.41629947069196316,
+      "log_loss_B": 0.40362084442252605
+    },
+    "m5b_smooth0.3": {
+      "log_loss": 0.4104489065877696,
+      "log_loss_ci95": [
+        0.39907440381356923,
+        0.4220194656364334
+      ],
+      "brier": 0.13149821656135743,
+      "pr_auc": 0.6645698267185721,
+      "roc_auc": 0.8429677319177172,
+      "ece": 0.04141912535842572,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.009331481112393321,
+      "max_excess_over_oracle": 0.039697754522650064,
+      "log_loss_A": 0.41710173627291985,
+      "log_loss_B": 0.403810254483195
+    },
+    "ensemble3": {
+      "log_loss": 0.41435080905696137,
+      "log_loss_ci95": [
+        0.40275668690462657,
+        0.4254202948451396
+      ],
+      "brier": 0.13335931013881727,
+      "pr_auc": 0.6536381662815853,
+      "roc_auc": 0.8393853122711008,
+      "ece": 0.042528029556947455,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.013233383581585037,
+      "max_excess_over_oracle": 0.05744162226572769,
+      "log_loss_A": 0.4204849445144917,
+      "log_loss_B": 0.408229745811381
+    },
+    "amgtp": {
+      "log_loss": 0.41579882948286945,
+      "log_loss_ci95": [
+        0.4046336119914281,
+        0.42747451183981916
+      ],
+      "brier": 0.13351013075838186,
+      "pr_auc": 0.654105440854097,
+      "roc_auc": 0.8388665566333865,
+      "ece": 0.04248428768227399,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.014681404007493097,
+      "max_excess_over_oracle": 0.038219562208783864,
+      "log_loss_A": 0.42275528397848056,
+      "log_loss_B": 0.40885719961058403
+    },
+    "amgtp_global_q": {
+      "log_loss": 0.41668842738493606,
+      "log_loss_ci95": [
+        0.4054010036111557,
+        0.4281158835940689
+      ],
+      "brier": 0.13392618390395955,
+      "pr_auc": 0.6501305338045229,
+      "roc_auc": 0.8367763735756004,
+      "ece": 0.04011849484145002,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.01557100190955968,
+      "max_excess_over_oracle": 0.04500193185847923,
+      "log_loss_A": 0.4236650983021548,
+      "log_loss_B": 0.40972662417345446
+    },
+    "amgtp_uniform_q": {
+      "log_loss": 0.42344484083724376,
+      "log_loss_ci95": [
+        0.41033648276031504,
+        0.43634357503019233
+      ],
+      "brier": 0.13647331538279006,
+      "pr_auc": 0.6353847097190931,
+      "roc_auc": 0.8277602685943665,
+      "ece": 0.03681101657164722,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.022327415361867498,
+      "max_excess_over_oracle": 0.06032874391287629,
+      "log_loss_A": 0.4307573957844609,
+      "log_loss_B": 0.41614786938485315
+    },
+    "amgtp_no_state": {
+      "log_loss": 0.4170860804443328,
+      "log_loss_ci95": [
+        0.4049723921751398,
+        0.42908727033590444
+      ],
+      "brier": 0.13425723807787218,
+      "pr_auc": 0.6477884782780367,
+      "roc_auc": 0.8354998199018494,
+      "ece": 0.038524066965291814,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.015968654968956497,
+      "max_excess_over_oracle": 0.0597678750479807,
+      "log_loss_A": 0.42397857737906447,
+      "log_loss_B": 0.4102082718355143
+    },
+    "amgtp_fixed_beta0": {
+      "log_loss": 0.4268333159670611,
+      "log_loss_ci95": [
+        0.41277124138066934,
+        0.4404891923080154
+      ],
+      "brier": 0.13771517231285563,
+      "pr_auc": 0.6336183626965365,
+      "roc_auc": 0.8277149868345607,
+      "ece": 0.04273262779070462,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.02571589049168475,
+      "max_excess_over_oracle": 0.06427490372630418,
+      "log_loss_A": 0.4336085762483206,
+      "log_loss_B": 0.42007249417334813
+    },
+    "amgtp_fixed_beta_hi": {
+      "log_loss": 0.41627165616173206,
+      "log_loss_ci95": [
+        0.40521421967242177,
+        0.4269643184514816
+      ],
+      "brier": 0.13401125021555263,
+      "pr_auc": 0.6510299882141347,
+      "roc_auc": 0.8384248564911065,
+      "ece": 0.04232745031474892,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.015154230686355774,
+      "max_excess_over_oracle": 0.05220206787219511,
+      "log_loss_A": 0.42352716036157284,
+      "log_loss_B": 0.4090316138781403
+    },
+    "amgtp_hidden8": {
+      "log_loss": 0.4155175452755953,
+      "log_loss_ci95": [
+        0.40377516344786035,
+        0.4270364744923304
+      ],
+      "brier": 0.13379432537075084,
+      "pr_auc": 0.6530477874865583,
+      "roc_auc": 0.8379269246587707,
+      "ece": 0.040328847135778875,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.014400119800219009,
+      "max_excess_over_oracle": 0.0788715438178047,
+      "log_loss_A": 0.42194301584913546,
+      "log_loss_B": 0.40910576776667645
+    },
+    "amgtp_hidden16": {
+      "log_loss": 0.4195006746732141,
+      "log_loss_ci95": [
+        0.40547630214062574,
+        0.4342109275785771
+      ],
+      "brier": 0.13529271435134413,
+      "pr_auc": 0.6453641021227955,
+      "roc_auc": 0.8340863541018346,
+      "ece": 0.03976548300047316,
+      "n_test_days": 35,
+      "stationary_downside": null,
+      "mean_excess_over_oracle": 0.01838324919783776,
+      "max_excess_over_oracle": 0.05953723799325328,
+      "log_loss_A": 0.42724079485659827,
+      "log_loss_B": 0.41177704915191476
+    }
+  },
+  "runtime_s": 409.5731563568115
+}

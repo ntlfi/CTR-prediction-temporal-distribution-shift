@@ -1,0 +1,8 @@
+component,seconds,note
+candidate_bank (shared by all),74.39,5 SGD experts
+han_arw (selection),1.578,over the shared bank
+fixed_share,0.026,"EW + share, no training"
+learn_alpha,0.059,7 Fixed-Share sub-algs
+m5b gate (1x),0.952,online context gate
+ensemble3,0.813,meta-gate ONLY (needs m2 + 2x m5b first: ~3x gate cost)
+amgtp (adaptive),1.15,one gate + one persistence net
