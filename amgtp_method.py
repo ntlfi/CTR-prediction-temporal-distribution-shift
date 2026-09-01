@@ -27,6 +27,12 @@ from baselines import WINDOW_FAMILY
 from han_arw import per_sample_log_loss
 from m5_multiscale_gate import MultiExpertGate, _entropy, gate_feature_matrix, multi_days
 
+
+def _bcast(beta):
+    """A beta that is scalar (global) or (n,) (per-example) -> shape that
+    broadcasts against pi (n, K)."""
+    return beta.unsqueeze(-1) if beta.ndim == 1 else beta
+
 PERSIST_STATE_NAMES = (["recent_loss_" + n for n in WINDOW_FAMILY]
                        + ["recent_disagreement", "recent_ctr", "recent_gate_move", "norm_time",
                           "loss_jump", "q_vs_m_div"])
@@ -58,10 +64,39 @@ class PersistenceNet(nn.Module):
         nn.init.zeros_(self.out.weight)
         nn.init.constant_(self.out.bias, init_bias)
 
-    def forward(self, s: torch.Tensor) -> torch.Tensor:
+    def logit(self, s: torch.Tensor) -> torch.Tensor:
         if self.hidden > 0:
             s = torch.tanh(self.h(s))
-        return torch.sigmoid(self.out(s)).squeeze(-1)
+        return self.out(s).squeeze(-1)
+
+    def forward(self, s: torch.Tensor) -> torch.Tensor:
+        return torch.sigmoid(self.logit(s))
+
+
+class BetaContextHead(nn.Module):
+    """g_xi: per-example gate features -> a scalar logit *offset* added to the
+    global persistence logit before the sigmoid, giving beta_t(x) (Extension
+    B, PDF section 3's deferred example-specific persistence).
+
+    Zero-initialised, so at the start g_xi == 0 and beta_t(x) collapses to the
+    global beta_t exactly -- the per-example term only moves off zero if it
+    lowers loss, and a Var_x[beta_t(x)] penalty pulls it back toward the
+    global value. hidden>0 adds one tanh layer (still zero-init output)."""
+    def __init__(self, n_features: int, hidden: int = 0):
+        super().__init__()
+        self.hidden = hidden
+        if hidden > 0:
+            self.h = nn.Linear(n_features, hidden)
+            self.out = nn.Linear(hidden, 1)
+        else:
+            self.out = nn.Linear(n_features, 1)
+        nn.init.zeros_(self.out.weight)
+        nn.init.zeros_(self.out.bias)
+
+    def forward(self, c: torch.Tensor) -> torch.Tensor:
+        if self.hidden > 0:
+            c = torch.tanh(self.h(c))
+        return self.out(c).squeeze(-1)
 
 
 def _expert_mean_loss(bank: dict, d: int) -> np.ndarray:
@@ -101,11 +136,14 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
               context: np.ndarray = None, day: np.ndarray = None,
               adaptive_beta: bool = True, fixed_beta: float = 0.0, init_bias: float = -1.0,
               context_gate: bool = True, uniform_q: bool = False,
-              state_features: str = "full", persist_hidden: int = 0):
+              state_features: str = "full", persist_hidden: int = 0,
+              beta_per_example: bool = False, beta_var_reg: float = 0.0,
+              beta_hidden: int = 0, group: np.ndarray = None):
     """Returns rows: {day, y_true, y_pred, n_train, fit_time, weights,
-    mean_weights (dict expert -> mean deployed pi), beta, mean_q (dict),
-    m_state (dict)}. `y_pred` is the deployed AMG-TP mixture for day t
-    (q, beta, m all carried from days < t).
+    mean_weights (dict expert -> mean deployed pi), beta (mean deployed),
+    beta_std, mean_q (dict), m_state (dict)}; if `group` is given also
+    beta_A / beta_B (mean deployed beta per subgroup). `y_pred` is the
+    deployed AMG-TP mixture for day t (q, beta, m all carried from days < t).
 
     Ablation switches (PDF Table 3):
       adaptive_beta=False, fixed_beta=b   -> A2/A3: fix persistence at b
@@ -114,6 +152,13 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
       state_features='time_only'          -> A7: strip recent loss/shift features from r_psi
       persist_hidden=H                     -> A10: nonlinear (H-wide tanh) persistence net
                                              in place of the linear one (H=0, default)
+
+    Extension B (PDF section 3 -- example-specific persistence):
+      beta_per_example=True   -> beta_t(x) = sigmoid(r_psi(s_{t-1}) + g_xi(feats_t(x)));
+                                 g_xi zero-init so it starts == the global beta_t
+      beta_var_reg=lambda     -> penalty lambda * Var_x[beta_t(x)] (A12: lambda huge
+                                 -> collapses back to the global beta_t, an identity check)
+      beta_hidden=H           -> g_xi gets an H-wide tanh hidden layer
     """
     torch.manual_seed(seed)
     days = multi_days(bank, eligible_days)
@@ -128,8 +173,23 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
     gate = MultiExpertGate(n_gate_features, K)
     n_state = len(PERSIST_STATE_NAMES) if state_features == "full" else 1
     persist = PersistenceNet(n_state, init_bias=init_bias, hidden=persist_hidden)
-    trainable = list(gate.parameters()) + (list(persist.parameters()) if adaptive_beta else [])
+    gxi = BetaContextHead(n_gate_features, hidden=beta_hidden) if (adaptive_beta and beta_per_example) else None
+    trainable = list(gate.parameters())
+    if adaptive_beta:
+        trainable += list(persist.parameters())
+        if gxi is not None:
+            trainable += list(gxi.parameters())
     opt = torch.optim.Adam(trainable, lr=lr) if trainable else None
+
+    def beta_of(feats_tensor):
+        """Deployed beta for day t: scalar (global) or (n,) (per-example),
+        all from state/context carried from days < t."""
+        if not adaptive_beta:
+            return torch.tensor(float(fixed_beta))
+        g = persist.logit(s_prev)
+        if gxi is not None:
+            g = g + gxi(feats_tensor)
+        return torch.sigmoid(g)
 
     m_state = torch.full((K,), 1.0 / K)          # m_{t-1}
     prev_gate_move = 0.0
@@ -149,17 +209,19 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
 
         with torch.no_grad():
             q = torch.full((len(y_true), K), 1.0 / K) if uniform_q else gate(feats_t)  # (n, K)
-            beta = persist(s_prev) if adaptive_beta else torch.tensor(float(fixed_beta))
-            pi = (1 - beta) * q + beta * m_state.unsqueeze(0)   # (n, K)
+            beta = beta_of(feats_t)
+            pi = (1 - _bcast(beta)) * q + _bcast(beta) * m_state.unsqueeze(0)   # (n, K)
             pi_np = pi.numpy()
             q_np = q.numpy()
-            beta_val = float(beta)
+            beta_arr = np.full(len(y_true), float(beta)) if beta.ndim == 0 else beta.numpy()
+            beta_val = float(beta_arr.mean())
+            beta_std = float(beta_arr.std())
         y_pred = (preds * pi_np).sum(axis=1)
         mean_pi = pi_np.mean(axis=0)
         mean_q = q_np.mean(axis=0)
 
         gate_move = float(np.abs(mean_pi - prev_deployed_mean).sum()) if prev_deployed_mean is not None else np.nan
-        rows.append({
+        row = {
             "day": t, "y_true": y_true, "y_pred": y_pred,
             "n_train": int(np.mean([bank[n][t]["n_train"] for n in WINDOW_FAMILY])),
             "fit_time": float(sum(bank[n][t]["fit_time"] for n in WINDOW_FAMILY)),
@@ -167,16 +229,23 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
             "mean_weights": dict(zip(WINDOW_FAMILY, mean_pi.tolist())),
             "mean_q": dict(zip(WINDOW_FAMILY, mean_q.tolist())),
             "beta": beta_val,
+            "beta_std": beta_std,
             "m_state": dict(zip(WINDOW_FAMILY, m_state.tolist())),
-        })
+        }
+        if group is not None and day is not None:
+            g_t = np.asarray(group)[np.asarray(day) == t]
+            if len(g_t) == len(beta_arr):
+                row["beta_A"] = float(beta_arr[g_t].mean()) if g_t.any() else np.nan
+                row["beta_B"] = float(beta_arr[~g_t].mean()) if (~g_t).any() else np.nan
+        rows.append(row)
 
         # --- updates, only now that day t's labels are observed ----------
         if opt is not None:
             for _ in range(epochs_per_day):
                 opt.zero_grad()
                 q_tr = torch.full((len(y_true), K), 1.0 / K) if uniform_q else gate(feats_t)
-                beta_tr = persist(s_prev) if adaptive_beta else torch.tensor(float(fixed_beta))
-                pi_tr = (1 - beta_tr) * q_tr + beta_tr * m_state.unsqueeze(0).detach()
+                beta_tr = beta_of(feats_t)
+                pi_tr = (1 - _bcast(beta_tr)) * q_tr + _bcast(beta_tr) * m_state.unsqueeze(0).detach()
                 p_mix = (preds_t * pi_tr).sum(dim=-1).clamp(1e-7, 1 - 1e-7)
                 bce = -(y_t * p_mix.log() + (1 - y_t) * (1 - p_mix).log()).mean()
                 l2_term = sum((p ** 2).sum() for p in trainable)
@@ -184,15 +253,17 @@ def run_amgtp(bank: dict, eligible_days, T: int, lr: float = 0.05, l2: float = 1
                 if not uniform_q:
                     loss = loss + entropy_reg * (-_entropy(q_tr).mean())
                 if adaptive_beta and beta_entropy_reg > 0:
-                    b = beta_tr.clamp(1e-6, 1 - 1e-6)
+                    b = beta_tr.mean().clamp(1e-6, 1 - 1e-6)
                     loss = loss - beta_entropy_reg * (-(b * b.log() + (1 - b) * (1 - b).log()))
+                if gxi is not None and beta_var_reg > 0 and beta_tr.ndim == 1:
+                    loss = loss + beta_var_reg * beta_tr.var()
                 loss.backward()
                 opt.step()
 
         with torch.no_grad():
             q_new = torch.full((len(y_true), K), 1.0 / K) if uniform_q else gate(feats_t)
-            beta_new = persist(s_prev) if adaptive_beta else torch.tensor(float(fixed_beta))
-            pi_new = ((1 - beta_new) * q_new + beta_new * m_state.unsqueeze(0)).mean(dim=0)
+            beta_new = beta_of(feats_t)
+            pi_new = ((1 - _bcast(beta_new)) * q_new + _bcast(beta_new) * m_state.unsqueeze(0)).mean(dim=0)
             m_state = (1 - rho) * m_state + rho * pi_new.detach()
             prev_gate_move = 0.0 if np.isnan(gate_move) else gate_move
             prev_mean_q = mean_q

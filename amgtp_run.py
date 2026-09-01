@@ -176,6 +176,12 @@ def main():
     ap.add_argument("--recovery-horizon", type=int, default=30)
     ap.add_argument("--stage2", action="store_true",
                     help="Also run AMG-TP (adaptive global beta_t) and its ablations A4-A7.")
+    ap.add_argument("--beta-x", action="store_true",
+                    help="Also run Extension B: per-example beta_t(x) variants + ablations A11/A12 "
+                         "(implies --stage2).")
+    ap.add_argument("--beta-var-reg", type=float, default=1e-3,
+                    help="[--beta-x] Var_x[beta_t(x)] penalty for the deployed amgtp_bx variant "
+                         "(frozen on dev seeds by amgtp_betax_sweep.py).")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
@@ -258,6 +264,8 @@ def main():
     methods["ensemble3"] = [{k: r[k] for k in ("day", "y_true", "y_pred", "n_train", "fit_time")} for r in ens3_rows]
     weights["ensemble3"] = ([{"day": r["day"], "mean_weights": r["mean_weights"]} for r in ens3_rows], list(ENS3_EXPERTS))
 
+    if args.beta_x:
+        args.stage2 = True
     if args.stage2:
         from amgtp_method import run_amgtp
         amgtp_variants = {
@@ -270,6 +278,18 @@ def main():
             "amgtp_hidden8": dict(persist_hidden=8, **AMGTP_CONFIG),          # A10 nonlinear persistence net
             "amgtp_hidden16": dict(persist_hidden=16, **AMGTP_CONFIG),        # A10 (wider)
         }
+        if args.beta_x:
+            amgtp_variants.update({
+                # Extension B -- per-example persistence beta_t(x)
+                "amgtp_bx": dict(beta_per_example=True, beta_var_reg=args.beta_var_reg,
+                                 group=group, **AMGTP_CONFIG),                    # A11 deployed
+                "amgtp_bx_var0": dict(beta_per_example=True, beta_var_reg=0.0,
+                                      group=group, **AMGTP_CONFIG),               # A11 no var penalty
+                "amgtp_bx_varhi": dict(beta_per_example=True, beta_var_reg=10.0,
+                                       group=group, **AMGTP_CONFIG),              # A12 -> collapses to global
+                "amgtp_bx_h8": dict(beta_per_example=True, beta_var_reg=args.beta_var_reg,
+                                    beta_hidden=8, group=group, **AMGTP_CONFIG),  # A13 nonlinear g_xi
+            })
         amgtp_rows_by_name = {}
         for name, kw in amgtp_variants.items():
             print(f"{name} ...", flush=True)
@@ -281,6 +301,11 @@ def main():
                        **{f"q_{k}": v for k, v in rr["mean_q"].items()},
                        **{f"m_{k}": v for k, v in rr["m_state"].items()}}
                       for rr in amgtp_rows_by_name["amgtp"]]).to_csv(out / "amgtp_beta_trace.csv", index=False)
+        if args.beta_x:
+            pd.DataFrame([{"day": rr["day"], "beta": rr["beta"], "beta_std": rr.get("beta_std"),
+                           "beta_A": rr.get("beta_A"), "beta_B": rr.get("beta_B")}
+                          for rr in amgtp_rows_by_name["amgtp_bx"]]).to_csv(
+                out / "amgtp_bx_beta_trace.csv", index=False)
 
     # ---- per-day metrics (computed once; all aggregation reads these) ----
     per_day = []

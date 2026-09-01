@@ -199,6 +199,43 @@ def test_amgtp_hidden_persistence(d):
           f"max |Δpred| = {mx8:.2e}")
 
 
+def test_amgtp_beta_per_example(d):
+    """Extension B -- per-example beta_t(x): g_xi is zero-init so day 0 is
+    bit-identical to the global model; a huge Var_x[beta] penalty collapses
+    it back to the global beta_t (the A12 identity check); beta_t(x) stays
+    in [0,1]; per-group beta is recorded when `group` is passed."""
+    from amgtp_method import run_amgtp
+    from candidate_bank import build_candidate_bank
+    bank = build_candidate_bank(d["X"], d["y"], d["day"], d["eligible"], n_jobs=4)
+
+    g = run_amgtp(bank, d["eligible"], T=d["T"], context=d["context"], day=d["day"], seed=0)
+    bx = run_amgtp(bank, d["eligible"], T=d["T"], context=d["context"], day=d["day"], seed=0,
+                   beta_per_example=True, beta_var_reg=1e-3, group=d["group"])
+
+    d0 = float(np.abs(g[0]["y_pred"] - bx[0]["y_pred"]).max())
+    check("beta_t(x): g_xi zero-init -> day-0 == global AMG-TP", d0 == 0.0, f"max |Δpred| day 0 = {d0:.2e}")
+
+    betas = np.array([r["beta"] for r in bx])
+    check("beta_t(x): mean beta_t in [0,1]", betas.min() >= 0.0 and betas.max() <= 1.0,
+          f"range [{betas.min():.3f}, {betas.max():.3f}]")
+    check("beta_t(x): predictions finite", all(np.isfinite(r["y_pred"]).all() for r in bx))
+    check("beta_t(x): per-group beta recorded", "beta_A" in bx[0] and "beta_B" in bx[0])
+
+    bx_var0 = run_amgtp(bank, d["eligible"], T=d["T"], context=d["context"], day=d["day"], seed=0,
+                        beta_per_example=True, beta_var_reg=0.0, group=d["group"])
+    bx_hi = run_amgtp(bank, d["eligible"], T=d["T"], context=d["context"], day=d["day"], seed=0,
+                      beta_per_example=True, beta_var_reg=1.0, group=d["group"])
+    spread0 = float(np.mean([r["beta_std"] for r in bx_var0]))
+    spread_hi = float(np.mean([r["beta_std"] for r in bx_hi]))
+    check("beta_t(x): Var_x[beta] penalty shrinks the per-example spread (A11 vs A12)",
+          spread_hi < 0.5 * spread0, f"mean beta_std: no penalty {spread0:.3f} -> lambda=1 {spread_hi:.3f}")
+
+    bxb = run_amgtp(bank, d["eligible"], T=d["T"], context=d["context"], day=d["day"], seed=0,
+                    beta_per_example=True, beta_var_reg=1e-3, group=d["group"])
+    rep = max(float(np.abs(a["y_pred"] - b["y_pred"]).max()) for a, b in zip(bx, bxb))
+    check("beta_t(x): reproducible under fixed seed", rep < 1e-6, f"max |Δpred| = {rep:.2e}")
+
+
 def test_reproducibility(d):
     """Same seed -> identical predictions within numerical tolerance (plan 21.6)."""
     from m5_multiscale_gate import run_m5
@@ -231,6 +268,7 @@ def main():
     test_mixture_identity(d)
     test_reproducibility(d)
     test_amgtp_hidden_persistence(d)
+    test_amgtp_beta_per_example(d)
     test_local_shift_isolation()
     test_opposing_local_isolation()
     test_opposing_recurring_isolation()
