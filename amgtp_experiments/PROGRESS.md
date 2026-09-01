@@ -47,17 +47,31 @@ get the existing L2 on `trainable`.
   hidden8/16 runs end-to-end; too small to show the S7 effect (all methods
   ~0.438, drift barely visible at that size — expected).
 
-### Next
-1. Dev-seed sweep for H ∈ {0,4,8,16} on S1/S3/S4/S5/S7 (mirror
-   `amgtp_stage2_sweep.py`); freeze H.
-2. Full Stage-4 battery: S0–S7 × 17 seeds + Avazu + Criteo (new SLURM array
-   0–135). `amgtp_aggregate.py --stage amgtp_experiments/stage4_hidden
-   --method-under-test amgtp`.
-3. Then Extension B (per-example β_t(x)) — S7 is now its test bed. Needs
-   g_ξ(c(x)) zero-init residual head + Var_x[β] penalty; new ablations
-   A11–A13 + per-group β trace + per-group oracle-persistence diagnostic.
-4. Note: `amgtp_stage1/2_synthetic.slurm` arrays are hardcoded 0-118 — a
-   Stage-4 slurm needs 0-135.
+### DONE this session
+- **Extension A hidden sweep** (job 12456521): H=0 wins, H∈{4,8,16} all
+  4th-decimal worse. Frozen h=0. `stage4_hidden/_sweep/FROZEN.md`.
+- **S7 battery** (job 12456557, 17 cells into `stage2_amgtp/`,
+  ~5-6min/cell): unified S0–S7 REPORT regenerated. **S7 result: global-β
+  AMG-TP does NOT adapt** — ties han_arw/expanding (−0.0001, p=0.73),
+  WORSE than both M5b specialists (+0.0033 vs smooth0.1 which wins S7 at
+  0.4326, +0.0003 vs smooth0.001). amgtp_global_q ≈ amgtp (context gate
+  doesn't rescue it). oracle-persistence-flip 66% → real headroom for
+  per-example β. A10 hidden8/16 confirmed negative on S7 confirm seeds.
+- `findings_summary.tex`/`.pdf` updated (8pp): S7 row everywhere +
+  §"S7: where a global β_t is not enough" + Extension A negative
+  documented. Recompiles clean (pdflatex ×2).
+
+### Next: Extension B — per-example β_t(x)
+S7 is the purpose-built test bed (global β provably wrong for one subpop
+at all times, q_t(x) doesn't help, 66% persistence flips). Design:
+`β_t(x) = σ(r_ψ(s_{t-1}) + g_ξ(c(x)))`, g_ξ **zero-init** (collapses to
+global β at init) + `λ·Var_x[β_t(x)]` penalty for identifiability. c(x) =
+per-example context cols + per-expert preds + short/long disagreement.
+m_{t-1} stays global. New ablations A11 (full), A12 (λ→∞ ≈ A6 identity
+check), A13 (g_ξ context-only). New diagnostics: per-group β trace,
+per-group oracle persistence (extend `oracle_per_day_frame`). Target:
+beat m5b_smooth0.1's 0.4326 on S7. Battery: S0–S7 dev+confirm + Avazu +
+Criteo; if wins S7/S4/S5 → rerun autobid.
 
 ---
 

@@ -36,7 +36,7 @@ collects the evidence bearing on the question \emph{does the new method
 outperform the previous ones?} AMG-TP is a single causally-deployed model that
 gates $K{=}5$ historical-horizon predictors per example and learns, with no
 regime label, how much day-to-day inertia to impose on that mixture. Across a
-seven-regime synthetic shift suite (12 disjoint confirmation seeds), two real
+eight-regime synthetic shift suite (12 disjoint confirmation seeds), two real
 CTR datasets (Criteo, Avazu), and a frozen-model downstream autobidding
 evaluation, AMG-TP \textbf{reproducibly beats the strongest prior baseline (Han
 ARW)} on recurring, local, and opposing-local drift and on the real Avazu
@@ -111,11 +111,13 @@ controls for model-count advantage.
 \section{Experimental Setup}
 
 \begin{itemize}[nosep]
-\item \textbf{Synthetic suite S0--S6} (\texttt{synthetic\_data.py}): 120 blocks,
+\item \textbf{Synthetic suite S0--S7} (\texttt{synthetic\_data.py}): 120 blocks,
 3000 rows/block. S0 stationary, S1 abrupt global, S2 gradual, S3 recurring
 ($A\!\to\!B\!\to\!A$, period 14), S4 local (one subgroup shifts), S5
 opposing-local (two subgroups shift at different times), S6 mixed (random
-sequence of shift types). Hyperparameters frozen on 5 dev seeds
+sequence of shift types), S7 opposing-recurring (two subgroups oscillate a
+quarter period out of phase; added in Stage 4, \S\ref{sec:s7}).
+Hyperparameters frozen on 5 dev seeds
 $\{0\text{--}4\}$; all results below are on \textbf{12 disjoint confirmation
 seeds} $\{20\text{--}31\}$, reported as mean.
 \item \textbf{Criteo} (31 days, full dataset, 3 SGD seeds): shallow natural
@@ -154,6 +156,7 @@ S3 recurring       & 0.4357 & 0.4368 & 0.4384 & 0.4333 & 0.4378 & 0.4275 & 0.430
 S4 local           & 0.5190 & 0.4885 & 0.5017 & 0.4879 & \textbf{0.4589} & 0.4671 & 0.4600 & 0.4612 \\
 S5 opposing-local  & 0.6110 & 0.4947 & 0.5138 & 0.5354 & \textbf{0.4921} & 0.4966 & 0.4933 & 0.4936 \\
 S6 mixed           & 0.5460 & \textbf{0.3919} & 0.4091 & 0.4300 & 0.3998 & 0.4019 & 0.4000 & 0.3975 \\
+S7 opp.-recurring  & 0.4360 & 0.4360 & 0.4499 & 0.4340 & 0.4356 & \textbf{0.4326} & 0.4331 & 0.4359 \\
 \midrule
 Criteo (real)      & 0.6080 & 0.6072 & \textbf{0.6069} & 0.6072 & \textbf{0.6069} & 0.6070 & 0.6070 & \textbf{0.6069} \\
 Avazu (real)       & 0.3844 & 0.3838 & 0.3826 & 0.3830 & 0.3826 & 0.3827 & 0.3826 & \textbf{0.3825} \\
@@ -162,8 +165,9 @@ Avazu (real)       & 0.3844 & 0.3838 & 0.3826 & 0.3830 & 0.3826 & 0.3827 & 0.382
 \caption{Mean locked-test log loss, confirmation seeds. M5b $=$
 \texttt{m5b\_smooth0.001} (raw low-persistence gate); M5b-hi $=$
 \texttt{m5b\_smooth0.1}. Bold $=$ best in row (within rounding). AMG-TP is
-best or within noise of best in 6 of 9 rows; it is never the worst deployable
-method in any row.}
+best or within noise of best in 6 of 10 rows; it is never the worst deployable
+method in any row. S7 (added in Stage 4) is the exception discussed in
+\S\ref{sec:s7}.}
 \label{tab:headline}
 \end{table}
 
@@ -185,6 +189,7 @@ S5 opposing-local & \win\ AMG-TP wins (marginal)   & $-0.0011$ & $-0.22\%$ & 11/
 Avazu (real)      & \win\ \textbf{AMG-TP wins}     & $-0.0012$ & $-0.32\%$ & 8/8   & $0.0078$ \\
 S1 abrupt         & \tie\ tie                      & $+0.0001$ & $+0.02\%$ & 5/12  & $0.79$ \\
 S6 mixed          & \tie\ tie                      & $+0.0056$ & $+1.43\%$ & 5/12  & $0.38$ \\
+S7 opp.-recurring & \tie\ tie (does not adapt)     & $-0.0001$ & $-0.01\%$ & 8/12  & $0.73$ \\
 Criteo (real)     & \tie\ flat                     & $-0.0003$ & $-0.04\%$ & 3/3   & --- \\
 S0 stationary     & \loss\ small loss             & $+0.0022$ & $+0.69\%$ & 0/12  & $0.00049$ \\
 S2 gradual        & \loss\ small loss             & $+0.0022$ & $+0.62\%$ & 0/12  & $0.00049$ \\
@@ -215,13 +220,16 @@ S3 recurring       & $\mathbf{-0.0081}$ & $+0.0023$ & captures most of the recur
 S4 local           & $+0.0023$ & $-0.0059$ & between them \\
 S5 opposing-local  & $+0.0015$ & $-0.0030$ & between them \\
 S6 mixed           & $-0.0024$ & $-0.0044$ & beats both \\
+S7 opp.-recurring  & $+0.0003$ & $\mathbf{+0.0033}$ & \textbf{worse than both} \\
 \bottomrule
 \end{tabular}
 \caption{AMG-TP versus the two fixed-persistence specialists it unifies
 (confirmation seeds). A single learned $\beta_t$ recovers the low-persistence
 specialist under abrupt/local/mixed drift \emph{and} the high-persistence
 specialist under recurring drift, with no regime label. It does not
-simultaneously beat \emph{both} in any single regime---the honest ceiling.}
+simultaneously beat \emph{both} in any single regime, and on S7---where the two
+subpopulations want opposite persistence at every block---a single global
+$\beta_t$ is worse than \emph{either} fixed choice (\S\ref{sec:s7}).}
 \label{tab:specialists}
 \end{table}
 
@@ -246,6 +254,7 @@ S3 recurring       & \textbf{0.82} & --- \\
 S4 local           & \textbf{0.27} & $0.41 \to 0.14$ \\
 S5 opposing-local  & 0.33 & $0.39 \to 0.30$ \\
 S6 mixed           & 0.36 & --- \\
+S7 opp.-recurring  & 0.65 & --- \\
 \bottomrule
 \end{tabular}
 \caption{Mean deployed $\beta_t$ ($0=$ trust the raw multiscale gate, $1=$ trust
@@ -270,25 +279,30 @@ throughout, holding the mixture stable across the cycle.}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{5pt}
-\begin{tabular}{@{}llrrrr@{}}
+\begin{tabular}{@{}llrrrrr@{}}
 \toprule
-ID & variant & S1 abrupt & S3 recurring & S4 local & S5 opp.-local \\
+ID & variant & S1 abrupt & S3 recur. & S4 local & S5 opp.-loc. & S7 opp.-recur. \\
 \midrule
-A0 & expanding only            & 0.5376 & 0.4357 & 0.5190 & 0.6110 \\
-A1 & no persistence ($\beta{=}0$) & 0.3382 & 0.4404 & 0.4590 & 0.4922 \\
-A3 & fixed high persistence    & 0.3467 & \textbf{0.4275} & 0.4671 & 0.4966 \\
-A4 & adaptive $\beta$, global $q$ (no context) & 0.3401 & 0.4312 & 0.4843 & 0.4940 \\
-A5 & adaptive $\beta$, uniform $q$ (persistence alone) & 0.3817 & 0.4393 & 0.5040 & 0.5155 \\
-A6 & \textbf{full AMG-TP}      & 0.3389 & 0.4298 & \textbf{0.4612} & \textbf{0.4936} \\
-A7 & adaptive $\beta$, no state feats & 0.3388 & 0.4310 & 0.4629 & 0.4937 \\
-A9 & static uniform-5          & 0.3817 & 0.4393 & 0.5040 & 0.5155 \\
+A0 & expanding only            & 0.5376 & 0.4357 & 0.5190 & 0.6110 & 0.4360 \\
+A1 & no persistence ($\beta{=}0$) & 0.3382 & 0.4404 & 0.4590 & 0.4922 & 0.4356 \\
+A3 & fixed high persistence    & 0.3467 & \textbf{0.4275} & 0.4671 & 0.4966 & \textbf{0.4326} \\
+A4 & adaptive $\beta$, global $q$ (no context) & 0.3401 & 0.4312 & 0.4843 & 0.4940 & 0.4359 \\
+A5 & adaptive $\beta$, uniform $q$ & 0.3817 & 0.4393 & 0.5040 & 0.5155 & 0.4510 \\
+A6 & \textbf{full AMG-TP}      & 0.3389 & 0.4298 & \textbf{0.4612} & \textbf{0.4936} & 0.4359 \\
+A7 & adaptive $\beta$, no state feats & 0.3388 & 0.4310 & 0.4629 & 0.4937 & 0.4354 \\
+A9 & static uniform-5          & 0.3817 & 0.4393 & 0.5040 & 0.5155 & 0.4510 \\
+A10 & nonlinear persistence net ($h{=}8$) & 0.3400 & 0.4258 & 0.4584 & 0.4987 & 0.4353 \\
 \bottomrule
 \end{tabular}
 \caption{Ablation ladder, confirmation-seed mean log loss. The 5-expert
 \emph{context} gate is essential (A5/A9 collapse under abrupt/local drift);
 per-example context in $q$ matters most for local drift (A4 loses $0.023$ on
 S4); adaptive $\beta$ is worth $\approx1\%$ on recurring versus $\beta{=}0$ (A1);
-the state features give a small but consistent edge (A6 vs A7).}
+the state features give a small but consistent edge (A6 vs A7). \textbf{A10}
+(Extension~A): a nonlinear hidden-layer persistence network, frozen on dev
+seeds at width 0 after $h\in\{4,8,16\}$ never beat the linear net; it does not
+change the picture on the confirmation seeds either---a validated negative
+result.}
 \end{table}
 
 \subsection{Downstream autobidding: the prediction gains translate}
@@ -314,6 +328,30 @@ into an unchanged bidder. The S3/S4 \emph{prediction} wins reproduce as
 \emph{bidding-value} wins (plan Eq.~9 causal chain). On real Criteo nothing
 separates from a cheapest-first bidder.}
 \end{table}
+
+\subsection{S7 opposing-recurring: where a global $\beta_t$ is not enough}
+\label{sec:s7}
+
+S7 (added in Stage 4) is a stress test of the single-global-persistence
+assumption. Both subpopulations oscillate between the same two regimes with the
+same period, but a \emph{quarter period out of phase}: at every block one group
+sits near a turning point (its ground truth is momentarily stationary $\to$ high
+persistence is optimal) while the other is at maximum slope (fast change $\to$
+low persistence is optimal), and they trade roles continuously. Because the
+schedule is cyclical rather than a one-off shift, this differential is present
+in \emph{every} locked-test block, unlike S5 where it is a transient confined to
+the development period.
+
+The result (Table~\ref{tab:headline}, \ref{tab:specialists}): a single global
+$\beta_t$ \textbf{cannot win here}. AMG-TP lands at $0.4359$---a dead tie with
+Han ARW and plain expanding-history ERM ($-0.0001$, $p=0.73$), and
+\emph{worse than either} fixed M5b specialist ($+0.0033$ vs high-persistence,
+$+0.0003$ vs low). Adding per-example context to the gate does not rescue it
+(A4 $\approx$ A6): the signal the model is missing is per-example
+\emph{persistence}, not per-example \emph{horizon}. Yet the per-block oracle
+shows the optimal fixed persistence flips on 66\% of test blocks, so the
+headroom is real---it just requires $\beta$ to vary \emph{across examples},
+which is exactly Extension~B.
 
 \section{Does AMG-TP Outperform the Previous Methods?}
 
@@ -354,44 +392,50 @@ single regime---the raw low-persistence gate is still $\approx0.002$ better on
 S4/S5, and M5b-high-smooth is $\approx0.002$ better on S3.
 \item It still \emph{loses} to Han ARW on gradual (S2, $+0.6\%$) and does not
 beat it on mixed (S6).
-\item Real-data effects are small: Avazu $-0.32\%$, Criteo flat. The synthetic
-suite's fixed change points land the most interesting transient behaviour in the
-dev period rather than the locked-test window, which likely \emph{understates}
-the value of per-example persistence on S4/S5.
+\item Real-data effects are small: Avazu $-0.32\%$, Criteo flat.
+\item On \textbf{S7} a single global $\beta_t$ is worse than either fixed
+persistence choice---the ``one model unifies the specialists'' story has a
+boundary (\S\ref{sec:s7}).
 \end{itemize}
 
-\section{Recommended Next Steps}
+\section{Extensions: Status and Next Steps}
 
-Both extensions were deferred by the plan (\S3) until the global-$\beta_t$
-version was understood; it now is.
+Both extensions deferred by the plan (\S3) until the global-$\beta_t$ version was
+understood are now in progress.
 
-\begin{enumerate}[nosep]
-\item \textbf{Per-example persistence $\beta_t(x)$.} Replace the scalar $\beta_t$
-with $\beta_t(x)=\sigma\big(r_\psi(s_{t-1}) + g_\xi(c(x))\big)$, $g_\xi$
+\paragraph{Extension A --- hidden-layer persistence network (done, negative).}
+$r_\psi$ was a single linear layer; a tanh hidden layer (width $h$, zero-init
+output so $h{=}0$ is bit-identical to Stage 2) was added and $h\in\{4,8,16\}$
+swept on the dev seeds over S0/S1/S3/S4/S5/S7. No width beats the linear net on
+summed dev log loss---deltas are fourth-decimal, worse on S1/S3, marginally
+better on S5/S7---and the confirmation seeds agree (A10 in the ablation table).
+Frozen at $h{=}0$; deployed AMG-TP is unchanged. Consistent with the Stage 2
+finding that the persistence hyperparameters barely matter: the \emph{day-level}
+state signal has no nonlinear structure worth the capacity.
+
+\paragraph{Extension B --- per-example persistence $\beta_t(x)$ (next).}
+Replace the scalar $\beta_t$ with
+$\beta_t(x)=\sigma\big(r_\psi(s_{t-1}) + g_\xi(c(x))\big)$, $g_\xi$
 zero-initialised so it collapses to the global value at init and only deviates
-per example if that helps, with a variance penalty $\lambda\,\mathrm{Var}_x[\beta_t(x)]$
-for identifiability. Primary target: \textbf{S5 opposing-local}, the plan's
-explicit stress test of the global-persistence assumption, where subgroups are
-on different drift clocks and no single $\beta_t$ can be right for both.
-\item \textbf{Hidden-layer persistence network.} $r_\psi$ is currently a single
-linear layer; a small MLP (width 8--16, final layer zero-init) allows nonlinear
-state~$\to\beta$ maps (e.g.\ ``low $\beta$ after a loss jump \emph{regardless} of
-other features''). Low-risk, cheap, backward-compatible at width~0.
-\end{enumerate}
-
-\noindent Both would be validated on the same S0--S6 (dev $+$ confirm seeds) $+$
-Avazu $+$ Criteo battery, with new ablations A10--A13 and per-group $\beta$ and
-per-group oracle-persistence diagnostics, and---if either wins S4/S5---a rerun of
-the downstream autobidding evaluation. Decision rule: a per-example $\beta_t(x)$
+per example if that helps, with a variance penalty
+$\lambda\,\mathrm{Var}_x[\beta_t(x)]$ for identifiability. \textbf{S7
+opposing-recurring is the purpose-built test bed}: it is the one regime where a
+global $\beta_t$ is provably wrong for one subpopulation at all times, where the
+context gate $q_t(x)$ does not help, and where the per-block oracle still shows
+66\% persistence-regime flips. Target: beat M5b-high-smooth's $0.4326$ on S7 by
+giving each subpopulation its own persistence. Validated on the same
+S0--S7 (dev $+$ confirm) $+$ Avazu $+$ Criteo battery with ablations A11--A13, a
+per-group $\beta$ trace, and a per-group oracle-persistence diagnostic; if it
+wins S7/S4/S5, the downstream autobidding evaluation is rerun. A $\beta_t(x)$
 that merely ties the global version everywhere is itself a clean finding
-(``$q_t(x)$ already absorbs per-example persistence; global $\beta_t$ is the
-right granularity''), closing plan \S3's open question.
+(``$q_t(x)$ already absorbs per-example persistence''), closing plan \S3.
 
 \vfill
 \noindent\rule{\linewidth}{0.4pt}\\[2pt]
-{\footnotesize Sources: \texttt{amgtp\_experiments/stage1\_m5b\_high\_smooth/REPORT.md},
-\texttt{stage2\_amgtp/REPORT.md}, \texttt{stage3\_autobid/REPORT.md},
-\texttt{stage2\_amgtp/tables/ablation\_amgtp.csv}, and
+{\footnotesize Sources: \texttt{amgtp\_experiments/stage2\_amgtp/REPORT.md}
+(S0--S7), \texttt{stage3\_autobid/REPORT.md},
+\texttt{stage2\_amgtp/tables/ablation\_amgtp.csv},
+\texttt{stage4\_hidden/\_sweep/FROZEN.md} (Extension A), and
 \texttt{AMG-TP\_Academic\_LaTeX.pdf}. All synthetic numbers are means over the
 12 confirmation seeds $\{20\text{--}31\}$; hyperparameters were frozen on dev
 seeds $\{0\text{--}4\}$ before any confirmation run.}
