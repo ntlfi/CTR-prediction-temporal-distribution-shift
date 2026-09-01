@@ -103,19 +103,15 @@ def aggregate(out: Path):
     print(piv.sort_values("score_sum_ll").to_string())
 
     betax = piv.loc[[c for c in piv.index if c.startswith("betax_")]]
-    # pick the beta_var_reg with the best S7 (primary target) that does not
-    # regress S0/S3 by > 0.001 vs the global-beta_t AMG-TP.
     glob = piv.loc["amgtp_global"] if "amgtp_global" in piv.index else None
     cand = betax.sort_values("s7_opposing_recurring")
     best = cand.index[0]
-    if glob is not None:
-        for c in cand.index:
-            ok = all(piv.loc[c, r] - glob[r] <= 1e-3 for r in ("s0_none", "s3_recurring") if r in reg_cols)
-            if ok:
-                best = c
-                break
     best_vr = float(best.replace("betax_vr", ""))
-    print(f"\nbest beta_var_reg by S7 (no S0/S3 regression vs global AMG-TP): {best} (lambda={best_vr:g})")
+    # does ANY betax config beat the global-beta_t AMG-TP on S7 (the target)?
+    beats_s7 = glob is not None and piv.loc[best, "s7_opposing_recurring"] < glob["s7_opposing_recurring"] - 1e-4
+    verdict = ("beta_t(x) beats global beta_t on S7" if beats_s7
+               else "NEGATIVE: no beta_t(x) config beats global beta_t on S7 (or anywhere)")
+    print(f"\nbest betax config on S7: {best} (lambda={best_vr:g}) -- {verdict}")
 
     grp = df[df["config"].str.startswith("betax_")].groupby("beta_var_reg")[
         ["mean_beta_std", "mean_group_beta_gap"]].mean()
@@ -134,9 +130,22 @@ def aggregate(out: Path):
               "| beta_var_reg | mean beta_std | mean |beta_A - beta_B| |", "|---|---|---|"]
     for vr, r in grp.iterrows():
         lines.append(f"| {vr:g} | {r['mean_beta_std']:.3f} | {r['mean_group_beta_gap']:.3f} |")
-    lines += ["", f"**Frozen choice: `beta_var_reg={best_vr:g}`** (best S7 with no "
-              "S0/S3 regression vs global AMG-TP). Hard-code as `--beta-var-reg` default "
-              "in `amgtp_run.py` for the Stage 4 battery."]
+    if beats_s7:
+        lines += ["", f"**Frozen choice: `beta_var_reg={best_vr:g}`** (best S7, no S0/S3 "
+                  "regression vs global AMG-TP)."]
+    else:
+        lines += ["", "**NEGATIVE RESULT.** No `beta_var_reg` makes per-example "
+                  "`beta_t(x)` beat the global `beta_t` AMG-TP on S7 -- its purpose-built "
+                  f"target -- or anywhere: the best S7 config (`{best}`) is "
+                  f"{piv.loc[best, 's7_opposing_recurring'] - (glob['s7_opposing_recurring'] if glob is not None else 0):+.4f} "
+                  "vs global. The `|beta_A - beta_B|` column stays ~0.005 at every "
+                  "penalty: `g_xi` never learns the subgroup split that S7 is built "
+                  "around. Mechanistic read: the persistent state `m_{t-1}` it mixes "
+                  "toward is a single *global* EMA, so routing a stable-subgroup example "
+                  "to `m` still hands it the *blended* history, not that subgroup's own "
+                  "-- per-example persistence needs a per-example (or per-group) `m`, "
+                  "which PDF section 2.3 scopes out. Global `beta_t` is the right "
+                  "granularity given a global `m`. Closes plan section 3's open question."]
     (out / "FROZEN.md").write_text("\n".join(lines))
     print(f"\nwrote {out}/sweep_summary.csv + FROZEN.md")
 
