@@ -68,10 +68,40 @@ Bug fixes found in smoke: per-impression ablation needs its own decaying LR
 captured-gain denom floor raised to 1e-4 (Criteo's oracle gap is below that
 most days, so captured-gain is legitimately mostly undefined here).
 
-### Running (submitted 2026-09-04, branch `twoscale-experiment`, commit 8af5211)
-- `twoscale_criteo.slurm` array 0-2 (full data, 3 seeds) — **job 12482301**
-- `twoscale_avazu.slurm`  array 0-7 (20% subsamples, 8 seeds) — **job 12482302**
-Then `twoscale_aggregate.py --stage twoscale_experiments/{criteo,avazu}`.
+### RESULTS (2026-09-04, jobs 12482301 Criteo 3 seeds / 12482302 Avazu 8 seeds, all COMPLETED)
+
+Full write-up: `FINDINGS.md`. Stage REPORTs: `criteo/REPORT.md`, `avazu/REPORT.md`.
+
+**Headline: the within-day online scalar calibration does not earn its place.**
+On neither dataset does `combined` beat *both* `long_only` and `short_only`
+(H3 / complementarity — not supported).
+
+- **Criteo (full data):** `combined` ≈ `long_only` (Δ −0.00006, 0/3 seeds
+  CI<0, sign-p 0.125). The *long-term adaptive mixture* is the useful
+  component (−0.15% vs plain expanding, 3/3 seeds, once its exp-weights η is
+  tuned to ~150). Plan §10 outcome = **"Long-only ≈ Combined: limited
+  exploitable within-day calibration drift."**
+- **Avazu (10 days, thin):** the mixture *underperforms* expanding (0/8
+  seeds) — too few days. `short_only` / `equal_ensemble` are best; `combined`
+  loses to `short_only` (Δ +0.00046, 0/8). Within-day calibration helps a
+  fixed backbone a little (short_only −0.02% vs expanding, 8/8) and beats
+  `time_of_day` (8/8) — real but small.
+- **Chronology placebo ≈ real on both** (Δ < 3e-5): the small calibration
+  effect is slow-bias / seasonality correction, NOT exploitation of
+  within-day arrival order. On Criteo `time_of_day` (fixed hourly intercepts)
+  matches the online calibrator.
+- **Feedback delay** 0→3600s: ≤ 1e-4 change. **online_platt** (slope+intercept)
+  is marginally best-scoring on both, negative regret vs the intercept oracle,
+  but within 1 sd of `long_only` on Criteo.
+- Feasibility was right: dev oracle-intercept headroom 0.037% (Criteo) /
+  0.023% (Avazu). Causal signature clean (calibrated ≈ long-term early in the
+  day). Calib cost 0.06–0.10 s / M impressions.
+
+**Downstream autobidding (step 9): NOT run** — gated on a positive prediction
+result (plan §11), which neither dataset provides.
+
+Committed: branch `twoscale-experiment`, commits 8af5211, 23a1806, <results commit>.
+Not on main, not pushed (user to decide).
 
 ### Not yet done
 - Downstream matched-budget autobidding eval (plan section 7.3 / 11 step 9) —
