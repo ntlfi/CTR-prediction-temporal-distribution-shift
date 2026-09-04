@@ -179,7 +179,9 @@ def main():
                     help="fraction of twoscale's dev days used to fit adapters; the rest early-stops them")
     ap.add_argument("--margin", type=float, default=1e-4, help="decision-rule 'practically visible margin'")
     ap.add_argument("--materiality-floor", type=float, default=2e-4)
-    ap.add_argument("--config", default=None, help="JSON overriding withinday.train.DEFAULT_CFG")
+    ap.add_argument("--config", default=None,
+                    help="frozen hyperparameter JSON from withinday_hpo.py: "
+                         "{'sketch_dim': m, 'per_variant': {variant: {cfg overrides}}}")
     ap.add_argument("--verbose-train", action="store_true")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
@@ -188,11 +190,20 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
 
-    cfg = dict(DEFAULT_CFG)
-    if args.config:
-        cfg.update(json.loads(Path(args.config).read_text()))
-    cfg["seed"] = args.seed
-    m = args.sketch_dim
+    cfg_d = json.loads(Path(args.config).read_text()) if args.config else {}
+    m = cfg_d.get("sketch_dim", args.sketch_dim)
+    per_variant_overrides = cfg_d.get("per_variant", {})
+
+    def cfg_for(name: str) -> dict:
+        """Per-variant adapter config: DEFAULT_CFG, overridden by any
+        flat top-level keys in --config (shared across variants), then by
+        that variant's ``per_variant`` block (e.g. a withinday_hpo.py
+        FROZEN.json) -- most specific wins."""
+        merged = dict(DEFAULT_CFG)
+        merged.update({k: v for k, v in cfg_d.items() if k not in ("sketch_dim", "per_variant")})
+        merged.update(per_variant_overrides.get(name, {}))
+        merged["seed"] = args.seed
+        return merged
 
     path = args.data or DATA_PATHS[args.source]
     print(f"loading {args.source} from {path} (sample_frac={args.sample_frac}) ...", flush=True)
@@ -239,7 +250,7 @@ def main():
     for name in VARIANTS:
         t1 = time.time()
         r = evaluate_candidate(name, caches_adtr, caches_addev, a_dim, tok_dim, summ_dim,
-                               cfg, m, long_only_dev, online_platt_dev, args.margin,
+                               cfg_for(name), m, long_only_dev, online_platt_dev, args.margin,
                                args.seed, args.verbose_train)
         results.append(r)
         print(f"  {name:16s} dev_ll={r['dev_ll']:.6f}  "
@@ -278,7 +289,8 @@ def main():
                    "block_sec": args.block_sec, "delay_sec": args.delay_sec, "sketch_dim": m,
                    "adapter_train_days": list(map(int, adapter_train_days)),
                    "adapter_dev_days": list(map(int, adapter_dev_days)),
-                   "test_days": list(map(int, test_days)), "adapter_cfg": cfg,
+                   "test_days": list(map(int, test_days)),
+                   "adapter_cfg": {name: cfg_for(name) for name in VARIANTS},
                    "margin": args.margin, "materiality_floor": args.materiality_floor},
         "candidates": {r["name"]: {"dev_ll": r["dev_ll"], "gates": r["gates"], "eligible": r["eligible"]}
                       for r in results},
@@ -296,7 +308,7 @@ def main():
         print(f"\n=== Stage C: locked test for selected model '{winner['name']}' "
               f"({len(test_days)} days, opened once) ===", flush=True)
         test_recs = predict_records(winner["name"], winner["model"], caches_test,
-                                    K=cfg.get("K", DEFAULT_CFG["K"]))
+                                    K=cfg_for(winner["name"])["K"])
         long_only_test = [r for r in methods["long_only"] if r["day"] in test_set]
         online_platt_test = [r for r in methods["online_platt"] if r["day"] in test_set]
 
