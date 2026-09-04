@@ -20,28 +20,98 @@
       9
     ],
     "adapter_cfg": {
-      "hidden": 32,
-      "n_heads": 2,
-      "mlp_hidden": [
-        64,
-        32
-      ],
-      "rank": 4,
-      "cross_dim": 32,
-      "delta_max": 1.0,
-      "dropout": 0.0,
-      "lr": 0.001,
-      "weight_decay": 1e-05,
-      "lam_delta": 0.0,
-      "K": 16,
-      "seed": 0
+      "v1_transformer": {
+        "hidden": 16,
+        "n_heads": 2,
+        "mlp_hidden": [
+          64,
+          32
+        ],
+        "rank": 4,
+        "cross_dim": 32,
+        "delta_max": 1.0,
+        "dropout": 0.0,
+        "lr": 0.0003,
+        "weight_decay": 1e-05,
+        "lam_delta": 0.0,
+        "K": 16,
+        "seed": 0
+      },
+      "v2_gru": {
+        "hidden": 16,
+        "n_heads": 2,
+        "mlp_hidden": [
+          64,
+          32
+        ],
+        "rank": 4,
+        "cross_dim": 32,
+        "delta_max": 1.0,
+        "dropout": 0.0,
+        "lr": 0.0003,
+        "weight_decay": 1e-05,
+        "lam_delta": 0.0,
+        "K": 16,
+        "seed": 0
+      },
+      "v3_mlp": {
+        "hidden": 32,
+        "n_heads": 2,
+        "mlp_hidden": [
+          16,
+          16
+        ],
+        "rank": 4,
+        "cross_dim": 32,
+        "delta_max": 1.0,
+        "dropout": 0.0,
+        "lr": 0.0003,
+        "weight_decay": 1e-05,
+        "lam_delta": 0.0,
+        "K": 16,
+        "seed": 0
+      },
+      "v4_bilinear": {
+        "hidden": 32,
+        "n_heads": 2,
+        "mlp_hidden": [
+          64,
+          32
+        ],
+        "rank": 4,
+        "cross_dim": 32,
+        "delta_max": 1.0,
+        "dropout": 0.0,
+        "lr": 0.0003,
+        "weight_decay": 1e-05,
+        "lam_delta": 0.0,
+        "K": 16,
+        "seed": 0
+      },
+      "v5_linear": {
+        "hidden": 32,
+        "n_heads": 2,
+        "mlp_hidden": [
+          64,
+          32
+        ],
+        "rank": 4,
+        "cross_dim": 32,
+        "delta_max": 1.0,
+        "dropout": 0.0,
+        "lr": 0.0003,
+        "weight_decay": 1e-05,
+        "lam_delta": 0.0,
+        "K": 16,
+        "seed": 0
+      }
     },
     "margin": 0.0001,
     "materiality_floor": 0.0002
   },
   "candidates": {
     "v1_transformer": {
-      "dev_ll": 0.41845912674041796,
+      "dev_ll": 0.41845912672846125,
       "gates": {
         "beats_long_only": false,
         "beats_online_platt": true,
@@ -51,7 +121,7 @@
       "eligible": false
     },
     "v2_gru": {
-      "dev_ll": 0.41845912674041796,
+      "dev_ll": 0.41845912672846125,
       "gates": {
         "beats_long_only": false,
         "beats_online_platt": true,
@@ -61,7 +131,7 @@
       "eligible": false
     },
     "v3_mlp": {
-      "dev_ll": 0.41845912674041796,
+      "dev_ll": 0.41845912672846125,
       "gates": {
         "beats_long_only": false,
         "beats_online_platt": true,
@@ -71,7 +141,7 @@
       "eligible": false
     },
     "v4_bilinear": {
-      "dev_ll": 0.41845912674041796,
+      "dev_ll": 0.41845912672846125,
       "gates": {
         "beats_long_only": false,
         "beats_online_platt": true,
@@ -81,17 +151,44 @@
       "eligible": false
     },
     "v5_linear": {
-      "dev_ll": 0.41845912674041796,
+      "dev_ll": 0.41830497336279526,
       "gates": {
-        "beats_long_only": false,
+        "beats_long_only": true,
         "beats_online_platt": true,
-        "beats_no_history_control": false,
-        "chron_or_ctx_signal": false
+        "beats_no_history_control": true,
+        "chron_or_ctx_signal": true
       },
-      "eligible": false
+      "eligible": true
     }
   },
-  "winner": null,
-  "locked_test": null,
-  "interpretation": "no candidate beats OPS and controls on dev -- within-day history is not exploitable by this capacity ladder; stop the branch"
+  "winner": "v5_linear",
+  "locked_test": {
+    "winner": "v5_linear",
+    "test_imp_wt_logloss": 0.38767392902883535,
+    "vs_long_only": {
+      "mean_delta": -0.00033440632176643764,
+      "ci95": [
+        -0.000431363682159569,
+        -0.0002731918015305701
+      ],
+      "days_won_frac": 1.0,
+      "days_won": 3,
+      "days_total": 3,
+      "significant_below_zero": true
+    },
+    "vs_online_platt": {
+      "mean_delta": 2.243554756968062e-05,
+      "ci95": [
+        -2.736171301104262e-05,
+        9.371842856575885e-05
+      ],
+      "days_won_frac": 0.3333333333333333,
+      "days_won": 1,
+      "days_total": 3,
+      "significant_below_zero": false
+    },
+    "beats_both_on_locked_test": false,
+    "meets_materiality_floor": true
+  },
+  "interpretation": "selected model cleared dev gates but did not beat both baselines (or gain is below the materiality floor) on the locked test -- do not proceed to downstream extensions"
 }
