@@ -12,6 +12,9 @@ amgtp_experiments/logs/
 twoscale_experiments/logs/
 twoscale_experiments/_smoke*/
 twoscale_experiments/dev/
+withinday_experiments/logs/
+withinday_experiments/_smoke*/
+withinday_experiments/dev/
 slurm-*.out
 # large regenerable per-day metric dumps -- summary.json + comparison_table.csv
 # + oracle_per_day.csv + gate_dynamics.csv keep the distilled results
