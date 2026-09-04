@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=110G
 #SBATCH --time=12:00:00
-#SBATCH --array=0-2
+#SBATCH --array=0-0
 #SBATCH --output=withinday_experiments/logs/criteo_%A_%a.out
 
 # Within-day capacity-ladder adapters -- primary real dataset (Criteo
@@ -17,12 +17,16 @@
 # Uses the plan's fixed default hyperparameters (withinday.train.DEFAULT_CFG)
 # rather than a tuned grid -- there is no withinday_hpo.py yet (see
 # withinday_experiments/README.md).
+#
+# Single seed for a fast first read (twoscale used 3); widen SEEDS + the
+# array range back to 0-2 for the full multi-seed protocol once this looks
+# worth confirming.
 cd "$SLURM_SUBMIT_DIR"
 set -e
 mkdir -p withinday_experiments/logs
 PY=.venv/bin/python
 
-SEEDS=(0 1 2)
+SEEDS=(0)
 SEED=${SEEDS[$SLURM_ARRAY_TASK_ID]}
 OUT=withinday_experiments/criteo/seed${SEED}
 DATA=/insomnia001/home/tn2447/data/criteo/criteo_attribution_dataset.tsv.gz
