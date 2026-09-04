@@ -10,13 +10,11 @@
 #SBATCH --output=withinday_experiments/logs/criteo_%A_%a.out
 
 # Within-day capacity-ladder adapters -- primary real dataset (Criteo
-# Attribution, real second-resolution within-day arrival times). Trains
-# V1-V5 plus their 5 required ablations each, applies the plan's decision
-# rules, and opens the locked test only if a candidate clears them.
-#
-# Uses the plan's fixed default hyperparameters (withinday.train.DEFAULT_CFG)
-# rather than a tuned grid -- there is no withinday_hpo.py yet (see
-# withinday_experiments/README.md).
+# Attribution, real second-resolution within-day arrival times). Per seed:
+# pick per-variant hyperparameters on the dev days (withinday_hpo.py),
+# freeze, then train V1-V5 plus their 5 required ablations at that config,
+# apply the plan's decision rules, and open the locked test only if a
+# candidate clears them.
 #
 # Single seed for a fast first read (twoscale used 3); widen SEEDS + the
 # array range back to 0-2 for the full multi-seed protocol once this looks
@@ -31,5 +29,8 @@ SEED=${SEEDS[$SLURM_ARRAY_TASK_ID]}
 OUT=withinday_experiments/criteo/seed${SEED}
 DATA=/insomnia001/home/tn2447/data/criteo/criteo_attribution_dataset.tsv.gz
 
+$PY withinday_hpo.py --source criteo --data "$DATA" --sample-frac 1.0 \
+    --seed "$SEED" --n-jobs 8 --out "$OUT/_hpo"
+
 $PY withinday_run.py --source criteo --data "$DATA" --sample-frac 1.0 \
-    --seed "$SEED" --n-jobs 8 --out "$OUT"
+    --seed "$SEED" --n-jobs 8 --config "$OUT/_hpo/FROZEN.json" --out "$OUT"

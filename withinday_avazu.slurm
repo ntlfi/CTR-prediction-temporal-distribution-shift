@@ -10,9 +10,11 @@
 #SBATCH --output=withinday_experiments/logs/avazu_%A_%a.out
 
 # Within-day capacity-ladder adapters -- second real dataset (Avazu,
-# hour-resolution within-day arrival times). Single seed for a fast first
-# read (twoscale used 8, each a disjoint 20% subsample); widen the array
-# range back to 0-7 for the full multi-seed protocol once this looks worth
+# hour-resolution within-day arrival times). Per seed: pick per-variant
+# hyperparameters on the dev days (withinday_hpo.py), freeze, then run the
+# full protocol (withinday_run.py). Single seed for a fast first read
+# (twoscale used 8, each a disjoint 20% subsample); widen the array range
+# back to 0-7 for the full multi-seed protocol once this looks worth
 # confirming.
 cd "$SLURM_SUBMIT_DIR"
 set -e
@@ -23,5 +25,8 @@ SEED=$SLURM_ARRAY_TASK_ID
 OUT=withinday_experiments/avazu/seed${SEED}
 DATA=/insomnia001/home/tn2447/data/avazu/Avazu_x4.zip
 
+$PY withinday_hpo.py --source avazu --data "$DATA" --sample-frac 0.2 \
+    --seed "$SEED" --warmup 3 --n-jobs 8 --out "$OUT/_hpo"
+
 $PY withinday_run.py --source avazu --data "$DATA" --sample-frac 0.2 \
-    --seed "$SEED" --warmup 3 --n-jobs 8 --out "$OUT"
+    --seed "$SEED" --warmup 3 --n-jobs 8 --config "$OUT/_hpo/FROZEN.json" --out "$OUT"
