@@ -1,0 +1,107 @@
+{
+  "config": {
+    "source": "criteo",
+    "seed": 0,
+    "sample_frac": 1.0,
+    "n_rows": 16468027,
+    "n_days": 31,
+    "block_sec": 900,
+    "delay_sec": 1800,
+    "sketch_dim": 32,
+    "adapter_train_days": [
+      16,
+      17,
+      18,
+      19
+    ],
+    "adapter_dev_days": [
+      20,
+      21
+    ],
+    "test_days": [
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+    ],
+    "adapter_cfg": {
+      "hidden": 32,
+      "n_heads": 2,
+      "mlp_hidden": [
+        64,
+        32
+      ],
+      "rank": 4,
+      "cross_dim": 32,
+      "delta_max": 1.0,
+      "dropout": 0.0,
+      "lr": 0.001,
+      "weight_decay": 1e-05,
+      "lam_delta": 0.0,
+      "K": 16,
+      "seed": 0
+    },
+    "margin": 0.0001,
+    "materiality_floor": 0.0002
+  },
+  "candidates": {
+    "v1_transformer": {
+      "dev_ll": 0.6063509102024113,
+      "gates": {
+        "beats_long_only": false,
+        "beats_online_platt": true,
+        "beats_no_history_control": false,
+        "chron_or_ctx_signal": false
+      },
+      "eligible": false
+    },
+    "v2_gru": {
+      "dev_ll": 0.6063509102024113,
+      "gates": {
+        "beats_long_only": false,
+        "beats_online_platt": true,
+        "beats_no_history_control": false,
+        "chron_or_ctx_signal": false
+      },
+      "eligible": false
+    },
+    "v3_mlp": {
+      "dev_ll": 0.6063509102024113,
+      "gates": {
+        "beats_long_only": false,
+        "beats_online_platt": true,
+        "beats_no_history_control": false,
+        "chron_or_ctx_signal": false
+      },
+      "eligible": false
+    },
+    "v4_bilinear": {
+      "dev_ll": 0.6063220410613614,
+      "gates": {
+        "beats_long_only": true,
+        "beats_online_platt": true,
+        "beats_no_history_control": false,
+        "chron_or_ctx_signal": false
+      },
+      "eligible": false
+    },
+    "v5_linear": {
+      "dev_ll": 0.6063509102024113,
+      "gates": {
+        "beats_long_only": false,
+        "beats_online_platt": true,
+        "beats_no_history_control": false,
+        "chron_or_ctx_signal": false
+      },
+      "eligible": false
+    }
+  },
+  "winner": null,
+  "locked_test": null,
+  "interpretation": "no candidate beats OPS and controls on dev -- within-day history is not exploitable by this capacity ladder; stop the branch"
+}
