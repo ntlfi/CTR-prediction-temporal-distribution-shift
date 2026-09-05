@@ -1,22 +1,21 @@
 """Hyperparameter selection (plan section 5.2) -- development days only.
 
-The plan's validation grid (context-sketch dim, hidden dim, lr, weight
-decay, dropout, bilinear rank, correction cap) has ~200 combinations; at
-neural-net training cost that full cross product per variant is not
-affordable the way twoscale's cheap sklearn calibrator grid was. Instead
-this is a staged coordinate search per variant, in the same spirit as
-``twoscale_hpo.py``'s two-stage (mixture, then calibrator) search:
+Full per-variant cross product of the plan's validation grid (hidden dim /
+MLP width / rank / cross-feature width, lr, weight decay, dropout,
+correction cap -- "where applicable": V4/V5 have no tanh cap and no
+dropout in their ``adapters.py`` definitions (eq 13, 15 are raw
+affine/bilinear/linear, not ``delta_max * tanh(...)``), so those two knobs
+are only swept for V1/V2/V3, keeping V4 at 8 configs and V5 at 12 instead
+of wastefully re-training identical models 4x). Real per-config costs
+measured on full Criteo (``hpo_grid.csv`` from the first staged-search
+pass) size this: V1 ~104s/config x 48 = ~1.4h, V2 ~5s x 48, V3 ~8s x 48,
+V4 ~7s x 8, V5 ~25s x 12 -- dominated by V1, comfortably inside a 12h
+slurm allocation even at 1.4h+change per seed.
 
-  1. pick the context-sketch dimension ``m`` once, with a single proxy
-     variant (V3 MLP) at default hyperparameters -- ``m`` changes the cache
-     itself (Stage A), so it is not something each variant can search
-     independently without rebuilding the cache five times over;
-  2. for each variant independently, holding ``m`` fixed: (a) a small
-     learning-rate x weight-decay grid, (b) that variant's capacity knob
-     (hidden dim for V1/V2, MLP width for V3, rank for V4, cross-feature
-     width for V5), (c) dropout x correction-cap -- each stage fixing the
-     winner of the previous one, so the total cost per variant is additive
-     in grid size, not multiplicative.
+The context-sketch dimension ``m`` is still picked once via a single
+proxy variant (V3 MLP) at default hyperparameters, *before* the per-variant
+grids -- ``m`` changes the cache itself (Stage A), so unlike every other
+knob it cannot be swept per-variant without rebuilding the cache 5x over.
 
 Long-term backbone (the adaptive mixture) is *not* retuned here -- it is
 frozen at the values [[twoscale]] already picked, per plan section 2.3's
@@ -29,6 +28,7 @@ Writes ``FROZEN.json`` in the shape ``withinday_run.py --config`` expects:
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import time
 from pathlib import Path
@@ -48,16 +48,32 @@ from withinday.train import DEFAULT_CFG, predict_records, train_variant
 
 MIXTURE_ETA, MIXTURE_HALFLIFE = 60.0, 5.0   # frozen at twoscale's plan-default center
 
-LR_WD_GRID = [(3e-4, 1e-5), (3e-4, 1e-4), (1e-3, 1e-5), (1e-3, 1e-4)]
-DROPOUT_DELTAMAX_GRID = [(0.0, 1.0), (0.0, 2.0), (0.1, 1.0), (0.1, 2.0)]
-CAPACITY_GRID = {
-    "v1_transformer": [{"hidden": 16}, {"hidden": 32}, {"hidden": 64}],
-    "v2_gru": [{"hidden": 16}, {"hidden": 32}, {"hidden": 64}],
-    "v3_mlp": [{"mlp_hidden": (16, 16)}, {"mlp_hidden": (32, 16)}, {"mlp_hidden": (64, 32)}],
-    "v4_bilinear": [{"rank": 4}, {"rank": 8}],
-    "v5_linear": [{"cross_dim": 16}, {"cross_dim": 32}, {"cross_dim": 64}],
+LR_GRID = [3e-4, 1e-3]
+WD_GRID = [1e-5, 1e-4]
+DROPOUT_GRID = [0.0, 0.1]
+DELTAMAX_GRID = [1.0, 2.0]
+
+# per-variant knobs, "where applicable" (plan section 5.2's grid table):
+# V1/V2/V3 use dropout + the tanh correction cap (eq 8, 10, 12); V4/V5 (eq
+# 13, 15) are raw affine/bilinear/linear with neither, per adapters.py.
+KNOB_GRID = {
+    "v1_transformer": dict(hidden=[16, 32, 64], lr=LR_GRID, weight_decay=WD_GRID,
+                           dropout=DROPOUT_GRID, delta_max=DELTAMAX_GRID),
+    "v2_gru": dict(hidden=[16, 32, 64], lr=LR_GRID, weight_decay=WD_GRID,
+                  dropout=DROPOUT_GRID, delta_max=DELTAMAX_GRID),
+    "v3_mlp": dict(mlp_hidden=[(16, 16), (32, 16), (64, 32)], lr=LR_GRID, weight_decay=WD_GRID,
+                  dropout=DROPOUT_GRID, delta_max=DELTAMAX_GRID),
+    "v4_bilinear": dict(rank=[4, 8], lr=LR_GRID, weight_decay=WD_GRID),
+    "v5_linear": dict(cross_dim=[16, 32, 64], lr=LR_GRID, weight_decay=WD_GRID),
 }
 SKETCH_DIM_GRID = [32, 64]
+
+
+def full_grid(knob_dict: dict) -> list[dict]:
+    """Cartesian product of a variant's applicable knobs, as a list of
+    overlay dicts (each one full hyperparameter combination)."""
+    keys = list(knob_dict)
+    return [dict(zip(keys, vals)) for vals in itertools.product(*(knob_dict[k] for k in keys))]
 
 
 def _dev_ll(name, model, caches_dev, cfg):
@@ -151,34 +167,21 @@ def main():
     a_dim, tok_dim, summ_dim = best_m + 2, token_dim(best_m), summary_dim(best_m)
     print(f"adapter-train days {adapter_train_days}  adapter-dev days {adapter_dev_days}", flush=True)
 
-    # --- stage 2: per-variant staged search --------------------------------
+    # --- stage 2: per-variant full grid ------------------------------------
     per_variant = {}
     all_rows = []
     for name in args.variants:
-        print(f"\n=== {name} ===", flush=True)
+        grid = full_grid(KNOB_GRID[name])
+        print(f"\n=== {name} ({len(grid)} configs) ===", flush=True)
         base = dict(DEFAULT_CFG)
 
-        rows, best_overlay = sweep(name, base, [{"lr": lr, "weight_decay": wd} for lr, wd in LR_WD_GRID],
-                                   caches_train, caches_dev, a_dim, tok_dim, summ_dim, args.seed, args.verbose_train)
-        for r in rows:
-            all_rows.append({"variant": name, "stage": "lr_wd", **r})
-        base.update(best_overlay)
-        print(f"  lr/wd -> {best_overlay}", flush=True)
-
-        cap_grid = CAPACITY_GRID[name]
-        rows, best_overlay = sweep(name, base, cap_grid, caches_train, caches_dev,
+        rows, best_overlay = sweep(name, base, grid, caches_train, caches_dev,
                                    a_dim, tok_dim, summ_dim, args.seed, args.verbose_train)
         for r in rows:
-            all_rows.append({"variant": name, "stage": "capacity", **r})
+            all_rows.append({"variant": name, **r})
         base.update(best_overlay)
-        print(f"  capacity -> {best_overlay}", flush=True)
-
-        rows, best_overlay = sweep(name, base, [{"dropout": dp, "delta_max": dm} for dp, dm in DROPOUT_DELTAMAX_GRID],
-                                   caches_train, caches_dev, a_dim, tok_dim, summ_dim, args.seed, args.verbose_train)
-        for r in rows:
-            all_rows.append({"variant": name, "stage": "dropout_deltamax", **r})
-        base.update(best_overlay)
-        print(f"  dropout/delta_max -> {best_overlay}", flush=True)
+        print(f"  best -> {best_overlay}  (dev_ll={min(r['dev_imp_wt_ll'] for r in rows):.6f}, "
+              f"{sum(r['seconds'] for r in rows):.0f}s total)", flush=True)
 
         base.pop("seed", None)
         per_variant[name] = base
