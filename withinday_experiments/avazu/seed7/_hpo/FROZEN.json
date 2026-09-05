@@ -26,10 +26,10 @@
       ],
       "rank": 4,
       "cross_dim": 32,
-      "delta_max": 1.0,
-      "dropout": 0.0,
+      "delta_max": 2.0,
+      "dropout": 0.1,
       "lr": 0.001,
-      "weight_decay": 0.0001,
+      "weight_decay": 1e-05,
       "lam_delta": 0.0,
       "K": 16
     },

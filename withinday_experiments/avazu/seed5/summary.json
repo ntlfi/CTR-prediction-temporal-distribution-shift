@@ -96,10 +96,10 @@
           32
         ],
         "rank": 4,
-        "cross_dim": 32,
+        "cross_dim": 16,
         "delta_max": 1.0,
         "dropout": 0.0,
-        "lr": 0.0003,
+        "lr": 0.001,
         "weight_decay": 1e-05,
         "lam_delta": 0.0,
         "K": 16,
@@ -151,7 +151,7 @@
       "eligible": false
     },
     "v5_linear": {
-      "dev_ll": 0.41696699543633853,
+      "dev_ll": 0.4169306884798141,
       "gates": {
         "beats_long_only": true,
         "beats_online_platt": true,
@@ -164,12 +164,12 @@
   "winner": "v5_linear",
   "locked_test": {
     "winner": "v5_linear",
-    "test_imp_wt_logloss": 0.3863524911200502,
+    "test_imp_wt_logloss": 0.3861781247777596,
     "vs_long_only": {
-      "mean_delta": -0.0007829172102720161,
+      "mean_delta": -0.0009507921917578469,
       "ci95": [
-        -0.0012714303049249365,
-        -0.00046952967407981605
+        -0.0014739173064303723,
+        -0.0006493605355341603
       ],
       "days_won_frac": 1.0,
       "days_won": 3,
@@ -177,10 +177,10 @@
       "significant_below_zero": true
     },
     "vs_online_platt": {
-      "mean_delta": -0.0005309176301725449,
+      "mean_delta": -0.0006987926116583757,
       "ci95": [
-        -0.0007859337599754324,
-        -0.000362883013910853
+        -0.0009884207614808682,
+        -0.00048550500035421384
       ],
       "days_won_frac": 1.0,
       "days_won": 3,

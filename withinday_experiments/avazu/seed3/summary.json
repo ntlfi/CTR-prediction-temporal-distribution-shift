@@ -65,7 +65,7 @@
         "cross_dim": 32,
         "delta_max": 2.0,
         "dropout": 0.0,
-        "lr": 0.001,
+        "lr": 0.0003,
         "weight_decay": 1e-05,
         "lam_delta": 0.0,
         "K": 16,
@@ -121,7 +121,7 @@
       "eligible": false
     },
     "v2_gru": {
-      "dev_ll": 0.4166090868846795,
+      "dev_ll": 0.4166090894427741,
       "gates": {
         "beats_long_only": true,
         "beats_online_platt": true,
@@ -131,7 +131,7 @@
       "eligible": false
     },
     "v3_mlp": {
-      "dev_ll": 0.41706308107131573,
+      "dev_ll": 0.41706193222200244,
       "gates": {
         "beats_long_only": true,
         "beats_online_platt": true,

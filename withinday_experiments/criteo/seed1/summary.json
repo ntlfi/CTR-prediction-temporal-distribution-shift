@@ -121,7 +121,7 @@
   },
   "candidates": {
     "v1_transformer": {
-      "dev_ll": 0.6063145785506622,
+      "dev_ll": 0.6063145785720168,
       "gates": {
         "beats_long_only": true,
         "beats_online_platt": true,
@@ -131,7 +131,7 @@
       "eligible": false
     },
     "v2_gru": {
-      "dev_ll": 0.6063162669355814,
+      "dev_ll": 0.6063162669578958,
       "gates": {
         "beats_long_only": false,
         "beats_online_platt": true,
@@ -141,7 +141,7 @@
       "eligible": false
     },
     "v3_mlp": {
-      "dev_ll": 0.6063162669355814,
+      "dev_ll": 0.6063162669578958,
       "gates": {
         "beats_long_only": false,
         "beats_online_platt": true,
@@ -151,7 +151,7 @@
       "eligible": false
     },
     "v4_bilinear": {
-      "dev_ll": 0.6062287012890817,
+      "dev_ll": 0.6062287013125084,
       "gates": {
         "beats_long_only": true,
         "beats_online_platt": true,
@@ -161,7 +161,7 @@
       "eligible": false
     },
     "v5_linear": {
-      "dev_ll": 0.6061352666034961,
+      "dev_ll": 0.6061352668410032,
       "gates": {
         "beats_long_only": true,
         "beats_online_platt": true,
@@ -174,12 +174,12 @@
   "winner": "v5_linear",
   "locked_test": {
     "winner": "v5_linear",
-    "test_imp_wt_logloss": 0.6071573613985912,
+    "test_imp_wt_logloss": 0.6071573618999239,
     "vs_long_only": {
-      "mean_delta": -3.2444826379269325e-05,
+      "mean_delta": -3.244426474393849e-05,
       "ci95": [
-        -0.00010147954063445418,
-        4.710821167842787e-05
+        -0.00010147954769117019,
+        4.710953503418711e-05
       ],
       "days_won_frac": 0.6666666666666666,
       "days_won": 6,
@@ -187,10 +187,10 @@
       "significant_below_zero": false
     },
     "vs_online_platt": {
-      "mean_delta": -0.00013510509119465632,
+      "mean_delta": -0.00013510452955933783,
       "ci95": [
-        -0.0005754175645038818,
-        0.00015994922372162152
+        -0.0005754174159500321,
+        0.00015994987944824887
       ],
       "days_won_frac": 0.4444444444444444,
       "days_won": 4,

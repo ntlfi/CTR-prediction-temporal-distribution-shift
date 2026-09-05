@@ -38,7 +38,7 @@
         "seed": 2
       },
       "v2_gru": {
-        "hidden": 16,
+        "hidden": 64,
         "n_heads": 2,
         "mlp_hidden": [
           64,
@@ -65,7 +65,7 @@
         "cross_dim": 32,
         "delta_max": 2.0,
         "dropout": 0.0,
-        "lr": 0.001,
+        "lr": 0.0003,
         "weight_decay": 1e-05,
         "lam_delta": 0.0,
         "K": 16,
@@ -121,17 +121,17 @@
       "eligible": false
     },
     "v2_gru": {
-      "dev_ll": 0.4175319426179198,
+      "dev_ll": 0.4174443974444713,
       "gates": {
         "beats_long_only": true,
         "beats_online_platt": true,
-        "beats_no_history_control": false,
+        "beats_no_history_control": true,
         "chron_or_ctx_signal": true
       },
-      "eligible": false
+      "eligible": true
     },
     "v3_mlp": {
-      "dev_ll": 0.418066089964191,
+      "dev_ll": 0.4180654981386409,
       "gates": {
         "beats_long_only": true,
         "beats_online_platt": true,

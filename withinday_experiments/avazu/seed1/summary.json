@@ -38,7 +38,7 @@
         "seed": 1
       },
       "v2_gru": {
-        "hidden": 64,
+        "hidden": 16,
         "n_heads": 2,
         "mlp_hidden": [
           64,
@@ -47,7 +47,7 @@
         "rank": 4,
         "cross_dim": 32,
         "delta_max": 2.0,
-        "dropout": 0.1,
+        "dropout": 0.0,
         "lr": 0.001,
         "weight_decay": 1e-05,
         "lam_delta": 0.0,
@@ -121,7 +121,7 @@
       "eligible": false
     },
     "v2_gru": {
-      "dev_ll": 0.41683037227447656,
+      "dev_ll": 0.41676731874044187,
       "gates": {
         "beats_long_only": true,
         "beats_online_platt": true,

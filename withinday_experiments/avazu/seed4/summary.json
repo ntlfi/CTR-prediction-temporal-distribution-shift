@@ -21,7 +21,7 @@
     ],
     "adapter_cfg": {
       "v1_transformer": {
-        "hidden": 64,
+        "hidden": 16,
         "n_heads": 2,
         "mlp_hidden": [
           64,
@@ -111,7 +111,7 @@
   },
   "candidates": {
     "v1_transformer": {
-      "dev_ll": 0.4161413549591246,
+      "dev_ll": 0.4161166031483942,
       "gates": {
         "beats_long_only": true,
         "beats_online_platt": true,
@@ -121,7 +121,7 @@
       "eligible": false
     },
     "v2_gru": {
-      "dev_ll": 0.4160779353193682,
+      "dev_ll": 0.4160779894640474,
       "gates": {
         "beats_long_only": true,
         "beats_online_platt": true,

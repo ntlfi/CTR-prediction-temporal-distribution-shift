@@ -18,7 +18,7 @@
       "K": 16
     },
     "v2_gru": {
-      "hidden": 16,
+      "hidden": 64,
       "n_heads": 2,
       "mlp_hidden": [
         64,
@@ -44,7 +44,7 @@
       "cross_dim": 32,
       "delta_max": 2.0,
       "dropout": 0.0,
-      "lr": 0.001,
+      "lr": 0.0003,
       "weight_decay": 1e-05,
       "lam_delta": 0.0,
       "K": 16

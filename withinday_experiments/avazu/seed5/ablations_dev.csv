@@ -20,7 +20,7 @@ v4_bilinear,no_context_interaction,0.4175838848257947
 v4_bilinear,no_residual_sketch,0.4175838848257947
 v4_bilinear,label_free_history,0.4175838848257947
 v5_linear,no_history,0.4175838848257947
-v5_linear,shuffled_chronology,0.417088155281308
+v5_linear,shuffled_chronology,0.41713524699821736
 v5_linear,no_context_interaction,0.4175838848257947
-v5_linear,no_residual_sketch,0.41696830570762083
-v5_linear,label_free_history,0.4169650875820729
+v5_linear,no_residual_sketch,0.41693351901054376
+v5_linear,label_free_history,0.41692539853116645

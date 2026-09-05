@@ -56,9 +56,9 @@
         ],
         "rank": 4,
         "cross_dim": 32,
-        "delta_max": 2.0,
+        "delta_max": 1.0,
         "dropout": 0.1,
-        "lr": 0.0003,
+        "lr": 0.001,
         "weight_decay": 1e-05,
         "lam_delta": 0.0,
         "K": 16,
@@ -131,7 +131,7 @@
       "eligible": false
     },
     "v2_gru": {
-      "dev_ll": 0.6062849649621193,
+      "dev_ll": 0.6062828432470498,
       "gates": {
         "beats_long_only": true,
         "beats_online_platt": true,

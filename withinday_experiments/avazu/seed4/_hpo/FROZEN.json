@@ -2,7 +2,7 @@
   "sketch_dim": 64,
   "per_variant": {
     "v1_transformer": {
-      "hidden": 64,
+      "hidden": 16,
       "n_heads": 2,
       "mlp_hidden": [
         64,

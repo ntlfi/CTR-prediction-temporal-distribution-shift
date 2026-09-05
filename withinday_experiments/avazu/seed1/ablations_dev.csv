@@ -4,11 +4,11 @@ v1_transformer,shuffled_chronology,0.41680495176864885
 v1_transformer,no_context_interaction,0.4172502018665263
 v1_transformer,no_residual_sketch,0.4168024886806917
 v1_transformer,label_free_history,0.4168026705619037
-v2_gru,no_history,0.41681002028136915
-v2_gru,shuffled_chronology,0.41665267984608295
-v2_gru,no_context_interaction,0.4172453092343482
-v2_gru,no_residual_sketch,0.4168304601429466
-v2_gru,label_free_history,0.4168312863614485
+v2_gru,no_history,0.41680516646042737
+v2_gru,shuffled_chronology,0.4166871431367355
+v2_gru,no_context_interaction,0.4172450860113288
+v2_gru,no_residual_sketch,0.41676727039351025
+v2_gru,label_free_history,0.4167719292673999
 v3_mlp,no_history,0.416947673588766
 v3_mlp,shuffled_chronology,0.4167747511786005
 v3_mlp,no_context_interaction,0.41723190003590394

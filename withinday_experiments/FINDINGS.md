@@ -1,7 +1,15 @@
-# Within-day capacity-ladder: findings (2026-09-04)
+# Within-day capacity-ladder: findings (2026-09-04, updated 2026-09-05)
 
 Full multi-seed locked-test protocol (3 Criteo seeds, 8 Avazu seeds),
-per-variant hyperparameters from `withinday_hpo.py`.
+per-variant hyperparameters from `withinday_hpo.py`. Reran with a full
+per-variant hyperparameter grid (48/48/48/8/12 configs for V1-V5, vs. the
+original ~11-config staged coordinate search) after the first pass looked
+worth confirming -- the tables below are the bigger-grid numbers.
+**Confirmatory, not different:** Criteo's numbers are essentially
+unchanged (the staged search had already found the same optimum); Avazu
+sharpened somewhat (seed 5 improved from -0.000783 to -0.000951) but the
+same seeds pass/fail and the same seed 1 failure mode persists. See
+"Bigger-grid confirmation" below.
 
 ## Headline result
 
@@ -38,10 +46,10 @@ seed-to-seed.**
 | 2 | v5_linear | -0.000310 (sig) | -0.000100 (sig) | **yes** |
 | 3 | v5_linear | +0.000107 (n.s.) | +0.000301 (n.s.) | no |
 | 4 | v5_linear | -0.000649 (sig) | -0.000420 (sig) | **yes** |
-| 5 | v5_linear | -0.000783 (sig) | -0.000531 (sig) | **yes** |
+| 5 | v5_linear | -0.000951 (sig) | -0.000699 (sig) | **yes** |
 | 6 | v5_linear | -0.000528 (sig) | -0.000305 (sig) | **yes** |
 | 7 | v1_transformer | -0.000468 (sig) | -0.000295 (n.s.) | yes |
-| **mean +- sd** | | **-0.000311 +- 0.000414** | **-0.000071 +- 0.000426** | **5/8 both+material, 7/8 material vs long-only alone** |
+| **mean +- sd** | | **-0.000332 +- 0.000445** | **-0.000092 +- 0.000455** | **5/8 both+material, 7/8 material vs long-only alone** |
 
 5 of 8 seeds clearly beat both baselines materially and significantly. But
 **seed 1 is a real failure mode**: the model cleared every development-day
@@ -75,10 +83,23 @@ and showed a real chronology-or-context margin wherever it cleared the
 gates. This rules out "the extra parameters alone explain the gain" as an
 explanation for the winning seeds.
 
+## Bigger-grid confirmation (2026-09-05)
+
+Reran both datasets with `withinday_hpo.py`'s full per-variant grid
+(V1/V2/V3: hidden/width x lr x weight_decay x dropout x delta_max = 48
+configs; V4: rank x lr x weight_decay = 8; V5: cross_dim x lr x
+weight_decay = 12 -- V4/V5 skip dropout/delta_max since their `adapters.py`
+definitions never read those keys) in place of the original ~11-config
+staged coordinate search. Criteo's winning V5 config and locked-test
+numbers came back essentially identical -- the staged search had already
+found the true optimum in that case. Avazu's per-seed picture is
+unchanged in *which* seeds pass/fail, with seed 5's magnitude improving.
+This is evidence the earlier result was not an artifact of an
+under-tuned search: the same qualitative story (real-but-sub-material on
+Criteo, real-but-seed-unstable on Avazu) holds under a ~15x larger grid.
+
 ## Caveats
 
-- 1 HPO run per seed (not per-fold-averaged); the search is a small staged
-  coordinate descent (`withinday_hpo.py`), not the plan's full grid.
 - Avazu's adapter-train/adapter-dev split is very thin (1-2 days out of a
   10-day, 20%-subsampled log) -- seed 1's reversal is likely a symptom of
   that, not of V5 itself being unsound.
