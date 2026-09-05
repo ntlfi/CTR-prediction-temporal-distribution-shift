@@ -6,9 +6,35 @@ Window, ARW, AdaMoE, OPS, DualTime-CTR; Criteo + Avazu; seeds 0,1,2). If
 this session ends before the plan is finished, **read this file first**,
 then the spec (in the conversation that requested it) for exact formulas.
 
-Not yet started: any actual HPO run, any of the 3-seed final test, the
-`final_experiments/` output pipeline, rolling-origin for all 6 methods,
-leakage tests, tables/figures. **The headline table is still all TBD.**
+## Current status (read this first)
+
+- **Full-scale HPO is running right now**: `final_experiments/hpo_criteo.slurm`
+  (job 12491537) and `hpo_avazu.slurm` (job 12491538), both submitted,
+  `--mem` sized to this cluster's confirmed ~250G node cap. Check with
+  `squeue -u $USER` / `sacct -j 12491537,12491538` and read
+  `final_experiments/logs/hpo_{criteo,avazu}_<jobid>.out`. When done, each
+  writes `final_experiments/{criteo,avazu}/hpo/{hpo_best_fixed,hpo_arw,
+  hpo_adamoe,hpo_longterm,hpo_ops,hpo_dualtime}.csv` and
+  `selected_configs.json`.
+- Everything through the HPO pipeline (methods.py, run_hpo.py,
+  leakage_tests.py) is written, unit- and smoke-tested, and committed
+  (commits `3eb8f37`, `fb14f81`, `bd294da`; leakage_tests.txt commit
+  pending as of this edit). **The headline table is still all TBD** --
+  nothing below "primary 3-seed test" in the section-19 checklist has
+  been started.
+- **Not yet built at all**: the primary 3-seed final-test runner (spec
+  section 12 -- reads `selected_configs.json`, runs all 6 methods on the
+  locked test days, produces the 12 headline numbers), the rolling-origin
+  runner for all 6 methods (section 13, different outer-day ranges than
+  the old exploratory `withinday_experiments/rolling/` line -- Criteo
+  16-30 = 15 days, Avazu 5-9 = 5 days), day-level stats wiring (section
+  14 -- reuse `withinday/daystats.py`, don't reimplement), all output
+  tables/figures (sections 17-18), paper text updates (section 20 -- no
+  paper file located in this repo yet, ask the user where it lives).
+- **Next concrete step once HPO finishes**: write
+  `final_experiments/run_final.py` (3-seed locked test, all 6 methods,
+  using frozen `selected_configs.json`) -- this is what actually fills in
+  the 12 TBD cells.
 
 ## What's done
 

@@ -1,0 +1,21 @@
+=== criteo (seed 0, sample_frac=0.03) ===
+[PASS] HPO bank contains no locked test day
+[PASS] OPS and DualTime-CTR were built from the identical q_by_day object
+[PASS] OPS reproduces q exactly within the first block of the first day
+[PASS] DualTime-CTR reproduces q exactly within the first block of the first day
+[PASS] scrambling labels on/after a cutoff day does not change any earlier day's expert predictions
+[PASS] Best Fixed Window's day-1 prediction equals the shared bank's own stored prediction
+[PASS] bank object passed to Best Fixed Window/ARW/AdaMoE/OPS/DualTime is literally the same object
+[PASS] DualTime-CTR's second day also reproduces q exactly in its own first block (no cross-day state)
+=== avazu (seed 0, sample_frac=0.03) ===
+[PASS] HPO bank contains no locked test day
+[PASS] OPS and DualTime-CTR were built from the identical q_by_day object
+[PASS] OPS reproduces q exactly within the first block of the first day
+[PASS] DualTime-CTR reproduces q exactly within the first block of the first day
+[PASS] scrambling labels on/after a cutoff day does not change any earlier day's expert predictions
+[PASS] Best Fixed Window's day-1 prediction equals the shared bank's own stored prediction
+[PASS] bank object passed to Best Fixed Window/ARW/AdaMoE/OPS/DualTime is literally the same object
+[PASS] DualTime-CTR's second day also reproduces q exactly in its own first block (no cross-day state)
+[PASS] all impressions sharing an Avazu hourly timestamp fall in the same causal block
+
+17 passed, 0 failed
