@@ -7,6 +7,22 @@ the "frozen-encoder online-regret" variant the original within-day plan
 sketched (eq 16-17) but never built, now implemented for real using the
 plan's own frozen feature construction (``withinday.blocks``,
 ``withinday.contextsketch``).
+
+IMPORTANT distinction from the capacity-ladder V5 adapter
+(``withinday.adapters.V5Linear``, ``withinday_experiments/``): V5's ``w``
+is trained OFFLINE on historical days by HPO/logistic regression, then
+FROZEN for the whole test period -- only the history features ``h`` (via
+``phi(x, h)``) change causally within a day, not the weights. DualTime-CTR
+as defined in the final-experiment plan is the online version:
+``w`` itself updates within the day,
+``w_{d,i+1} = Pi_W(w_{d,i} - eta_i * grad(l_i(w_{d,i})))`` -- exactly
+what ``replay_day`` below does (``w`` starts at 0 each day and is updated
+by projected gradient descent at every matured block, ``eta_k =
+B_w/sqrt(k)``, discretized at block cadence rather than continuously per
+impression). V5's offline-frozen result is the experiment that motivated
+this module's ``phi`` architecture (the hashed context x history bilinear
+feature), not an implementation of DualTime-CTR itself -- the two must
+never be conflated when writing up results.
 """
 from __future__ import annotations
 

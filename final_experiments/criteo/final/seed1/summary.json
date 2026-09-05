@@ -1,0 +1,54 @@
+{
+  "seed": 1,
+  "n_rows": 16468027,
+  "n_days": 31,
+  "test_days": [
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "methods": {
+    "expanding": {
+      "imp_weighted_log_loss": 0.608076703833043,
+      "daily_mean_log_loss": 0.6083465836643117,
+      "worst_day_log_loss": 0.6155365662640803,
+      "n_test_days": 9
+    },
+    "best_fixed": {
+      "imp_weighted_log_loss": 0.6073283208388387,
+      "daily_mean_log_loss": 0.6075868040929303,
+      "worst_day_log_loss": 0.6143470507233031,
+      "n_test_days": 9
+    },
+    "arw": {
+      "imp_weighted_log_loss": 0.6073283208388387,
+      "daily_mean_log_loss": 0.6075868040929303,
+      "worst_day_log_loss": 0.6143470507233031,
+      "n_test_days": 9
+    },
+    "adamoe": {
+      "imp_weighted_log_loss": 0.6071971543069868,
+      "daily_mean_log_loss": 0.6074552534645613,
+      "worst_day_log_loss": 0.6143654308918824,
+      "n_test_days": 9
+    },
+    "ops": {
+      "imp_weighted_log_loss": 0.6069644011124872,
+      "daily_mean_log_loss": 0.6072221759635044,
+      "worst_day_log_loss": 0.613816558903273,
+      "n_test_days": 9
+    },
+    "dualtime": {
+      "imp_weighted_log_loss": 0.6070751871298717,
+      "daily_mean_log_loss": 0.6073299507166323,
+      "worst_day_log_loss": 0.613873931810248,
+      "n_test_days": 9
+    }
+  }
+}

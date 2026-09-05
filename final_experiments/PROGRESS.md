@@ -6,6 +6,28 @@ Window, ARW, AdaMoE, OPS, DualTime-CTR; Criteo + Avazu; seeds 0,1,2). If
 this session ends before the plan is finished, **read this file first**,
 then the spec (in the conversation that requested it) for exact formulas.
 
+## IMPORTANT: DualTime-CTR is not the capacity-ladder V5 (user clarification, 2026-09-05)
+
+DualTime-CTR's within-day residual model uses an ONLINE-updated `w`:
+`w_{d,i+1} = Pi_W(w_{d,i} - eta_i * grad(l_i(w_{d,i})))` (`dualtime/online.py`
+`replay_day`, block-cadence discretization, `eta_k=B_w/sqrt(k)`, `w` resets
+to 0 every day). This is DIFFERENT from the older capacity-ladder V5
+(`withinday/adapters.py` `V5Linear`, `withinday_experiments/`), whose `w`
+is trained OFFLINE on historical days and FROZEN during test -- only the
+history features change causally there, not the weights. **V5's result
+motivated DualTime-CTR's `phi(x,h)` architecture (the hashed
+context-history bilinear interaction); it is not itself an implementation
+of DualTime-CTR and must not be reported as if it were.**
+
+Verified (2026-09-05): `dualtime/online.py::replay_day`, used by
+`final_experiments/methods.py::dualtime_method`, which is what
+`run_final.py` calls for the "DualTime-CTR" row of the headline table --
+**already implements the online version**, not V5's offline/frozen one.
+No code change was needed for this; the module docstring was updated to
+state the distinction explicitly per the user's request. Every
+`final_experiments/` result recorded below (Criteo done, Avazu pending)
+is therefore already the correct final online DualTime-CTR, not V5.
+
 ## Current status (read this first)
 
 - **Full-scale HPO is running right now**: `final_experiments/hpo_criteo.slurm`
@@ -178,6 +200,44 @@ exploratory" evidence by the new plan (section 20's instruction to keep
 the frozen-head capacity-ladder table labeled as such) -- it is safe to
 let finish (it still feeds that exploratory section) and does not block
 starting new-plan work, which needs new code paths regardless.
+
+## Criteo primary 3-seed locked test: DONE (2026-09-05, job 12491604)
+
+`final_experiments/run_final.py` written this session (reads only frozen
+`selected_configs.json`, no per-seed re-tuning) and run at full scale
+(`final_criteo.slurm`, 16.5M rows x 3 seeds, 838s). Output:
+`final_experiments/criteo/final/{headline_results.csv,summary.json,
+seed{0,1,2}/}`.
+
+Headline (mean impression-weighted log loss, 3 seeds, test days 22-30):
+
+| method | mean log loss | delta vs Expanding | seed-day win frac |
+|---|---|---|---|
+| **OPS** | **0.606958** | -0.001120 (CI excl. 0) | 27/27 |
+| DualTime-CTR | 0.607070 | -0.001010 (CI excl. 0) | 27/27 |
+| AdaMoE | 0.607157 | -0.000922 (CI excl. 0) | 27/27 |
+| Best Fixed Window | 0.607290 | -0.000790 (CI excl. 0) | 27/27 |
+| ARW | 0.607301 | -0.000782 (CI excl. 0) | 27/27 |
+| Expanding | 0.608067 | -- | -- |
+
+All five adaptive methods beat plain Expanding significantly and
+unanimously (27/27 seed-days). **OPS narrowly beats DualTime-CTR on
+Criteo** (delta +0.000112, i.e. DualTime-CTR's online within-day residual
+adds nothing over OPS's plain global scalar calibration here) -- consistent
+with this whole repo's standing finding of shallow real intraday drift on
+Criteo (same story as `twoscale`'s `combined ~= long_only` and
+`withinday`'s sub-materiality result). DualTime-CTR still clearly beats
+ARW/Best-Fixed-Window/AdaMoE. Whether this OPS-over-DualTime-CTR ordering
+also holds on Avazu (thinner, more diurnal structure -- where the older
+`withinday` V5 result and the AMG-TP line both found a small but real
+effect) is the open question the Avazu final run will answer.
+
+Statistical caveat (unchanged from before): the CI/day-level treatment in
+`run_final.py` pools (seed, day) as the replicate unit -- a reasonable
+extension of this repo's existing machinery, not a verbatim transcription
+of the original spec PDF's own section 12/14 pooling rule (that document
+wasn't available this session). Worth a quick check against the source
+spec before this table goes in the paper.
 
 ## Suggested resumption order
 
