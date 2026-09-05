@@ -6,16 +6,17 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=200G
 #SBATCH --time=12:00:00
-#SBATCH --array=0-0
+#SBATCH --array=0-7
 #SBATCH --output=withinday_experiments/logs/avazu_%A_%a.out
 
 # Within-day capacity-ladder adapters -- second real dataset (Avazu,
 # hour-resolution within-day arrival times). Per seed: pick per-variant
 # hyperparameters on the dev days (withinday_hpo.py), freeze, then run the
-# full protocol (withinday_run.py). Single seed for a fast first read
-# (twoscale used 8, each a disjoint 20% subsample); widen the array range
-# back to 0-7 for the full multi-seed protocol once this looks worth
-# confirming.
+# full protocol (withinday_run.py). Full 8-seed protocol (matching
+# twoscale), each a disjoint 20% subsample -- the 1-seed HPO-tuned pass
+# found v5_linear clearing every decision-rule gate and beating long_only
+# significantly (tied with online_platt) on the locked test, so this
+# checks stability across seeds (decision rule item 2).
 cd "$SLURM_SUBMIT_DIR"
 set -e
 mkdir -p withinday_experiments/logs
