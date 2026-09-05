@@ -1,0 +1,14 @@
+{
+  "dataset": "avazu",
+  "outer_days": [
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "code_commit": "934d4ecc34eb31d9483b11bfc8b2562f3102addd",
+  "data_sampling_seed": 0,
+  "model_seed": 0,
+  "runtime_s": 3347.90859746933
+}

@@ -1,0 +1,6 @@
+dataset,comparison,impression_weighted_effect,equal_day_weighted_effect,median_delta,n_days,n_days_won,frac_days_won,ci95_lo,ci95_hi,sign_test_p,worst_day_delta,loo_mean_min,loo_mean_max,loo_reverses_sign,moving_block_bootstrap
+avazu,vs_long_only,-0.00044226958258021266,-0.00041274253379087745,-0.0004538135919363584,5.0,5.0,1.0,-0.0007477006539293396,-0.00010914548387036538,0.0625,-8.894380732205054e-06,-0.0005137045720555455,-0.0002487408455684875,False,"{""mean"": -0.00041274253379087745, ""ci95_lo"": -0.0006997878698339899, ""ci95_hi"": -2.579527207819954e-05, ""block"": 2, ""n_boot"": 5000}"
+avazu,vs_online_platt,-0.00018918374009888777,-0.00018873494224953548,-4.404538412794423e-05,5.0,3.0,0.6,-0.00050429458862834,2.198100852219831e-05,1.0,5.0144378724359395e-05,-0.0002484547724930092,-3.654208013981197e-05,False,"{""mean"": -0.00018873494224953548, ""ci95_lo"": -0.0003994508930212692, ""ci95_hi"": 7.805764767587764e-06, ""block"": 2, ""n_boot"": 5000}"
+avazu,frac_days_beats_both,,0.6,,,,,,,,,,,,
+avazu,frac_days_beats_no_history_control,,1.0,,,,,,,,,,,,
+avazu,frac_days_beats_shuffled_history_control,,1.0,,,,,,,,,,,,
