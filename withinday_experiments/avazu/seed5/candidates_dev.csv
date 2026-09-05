@@ -1,0 +1,6 @@
+variant,dev_imp_wt_ll,delta_long_only,delta_online_platt,delta_chron,delta_ctx,delta_no_history,gate_beats_long_only,gate_beats_online_platt,gate_beats_no_history_control,gate_chron_or_ctx_signal,eligible,selected
+v1_transformer,0.4175838848257947,-4.773903494736942e-12,0.0001136796566679199,0.0,0.0,0.0,True,False,False,False,False,False
+v2_gru,0.4175838848257947,-4.773903494736942e-12,0.0001136796566679199,0.0,0.0,0.0,True,False,False,False,False,False
+v3_mlp,0.4175838848257947,-4.773903494736942e-12,0.0001136796566679199,0.0,0.0,0.0,True,False,False,False,False,False
+v4_bilinear,0.4175838848257947,-4.773903494736942e-12,0.0001136796566679199,0.0,0.0,0.0,True,False,False,False,False,False
+v5_linear,0.41696699543633853,-0.0006168893942301024,-0.000503209732788279,0.00012115984496946508,0.0006168893894561989,0.0006168893894561989,True,True,True,True,True,True

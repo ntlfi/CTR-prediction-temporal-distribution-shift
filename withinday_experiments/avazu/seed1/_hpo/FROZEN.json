@@ -1,0 +1,85 @@
+{
+  "sketch_dim": 64,
+  "per_variant": {
+    "v1_transformer": {
+      "hidden": 16,
+      "n_heads": 2,
+      "mlp_hidden": [
+        64,
+        32
+      ],
+      "rank": 4,
+      "cross_dim": 32,
+      "delta_max": 2.0,
+      "dropout": 0.0,
+      "lr": 0.001,
+      "weight_decay": 1e-05,
+      "lam_delta": 0.0,
+      "K": 16
+    },
+    "v2_gru": {
+      "hidden": 64,
+      "n_heads": 2,
+      "mlp_hidden": [
+        64,
+        32
+      ],
+      "rank": 4,
+      "cross_dim": 32,
+      "delta_max": 2.0,
+      "dropout": 0.1,
+      "lr": 0.001,
+      "weight_decay": 1e-05,
+      "lam_delta": 0.0,
+      "K": 16
+    },
+    "v3_mlp": {
+      "hidden": 32,
+      "n_heads": 2,
+      "mlp_hidden": [
+        64,
+        32
+      ],
+      "rank": 4,
+      "cross_dim": 32,
+      "delta_max": 2.0,
+      "dropout": 0.0,
+      "lr": 0.001,
+      "weight_decay": 1e-05,
+      "lam_delta": 0.0,
+      "K": 16
+    },
+    "v4_bilinear": {
+      "hidden": 32,
+      "n_heads": 2,
+      "mlp_hidden": [
+        64,
+        32
+      ],
+      "rank": 4,
+      "cross_dim": 32,
+      "delta_max": 1.0,
+      "dropout": 0.0,
+      "lr": 0.001,
+      "weight_decay": 1e-05,
+      "lam_delta": 0.0,
+      "K": 16
+    },
+    "v5_linear": {
+      "hidden": 32,
+      "n_heads": 2,
+      "mlp_hidden": [
+        64,
+        32
+      ],
+      "rank": 4,
+      "cross_dim": 16,
+      "delta_max": 1.0,
+      "dropout": 0.0,
+      "lr": 0.0003,
+      "weight_decay": 1e-05,
+      "lam_delta": 0.0,
+      "K": 16
+    }
+  }
+}

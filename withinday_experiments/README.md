@@ -65,31 +65,32 @@ cleared the gates; otherwise the run stops and reports that within-day
 history is not exploitable by this capacity ladder, per the plan's explicit
 stop condition.
 
-## Status (2026-09-04)
+## Status (2026-09-04): DONE
 
-Implemented and tested (`withinday_tests.py`, 35 checks; smoke-tested
-end-to-end against real Criteo data on a small subsample -- see the
-session that added this file for the exact commands): causal cache, all 5
-ladder variants (zero-init identity verified), all 5 required ablations,
-decision rules, parsimony selection, locked-test gating.
+Implemented, tested (`withinday_tests.py`, 35 checks) and run at full scale
+with tuned per-variant hyperparameters (`withinday_hpo.py`): 3 Criteo seeds
+(full 16.5M rows), 8 Avazu seeds (20% subsamples). Full write-up in
+**`FINDINGS.md`**.
 
-**Not yet implemented** (plan sections not covered by this first pass):
+Headline: V5 (the simplest, linear interaction adapter) is selected in 10
+of 11 seeds. On Criteo it beats both long-only and Online Platt in all 3
+seeds, reproducibly, but never clears the plan's own materiality floor --
+a "statistically detectable, operationally negligible" result. On Avazu
+the average effect is real but not stable seed-to-seed (1 of 8 seeds
+reversed direction on the locked test after clearing every dev gate).
+Neither dataset licenses proceeding to downstream extensions as specified.
 
-* `withinday_hpo.py` -- the plan's small dev-only validation grid (section
-  5.2: context-sketch dim, hidden dim, lr, weight decay, dropout, bilinear
-  rank, correction cap). `withinday_run.py` currently trains every
-  candidate at one fixed default config (`withinday.train.DEFAULT_CFG`,
-  overridable via `--config`), analogous to only ever using twoscale's
-  `FROZEN.json` grid center.
+**Not implemented** (plan gates all of these on clearing the locked-test
+bar, which was not met on either dataset):
+
 * Conditional ablations 6-8 (campaign-only history, temporal-granularity
-  sensitivity, reset-vs-carryover) -- plan section 7 gates these on a
-  positive development result, which (consistent with the twoscale finding)
-  may not occur.
-* The theory-friendly frozen-encoder online-regret variant (eq 16-17) and
-  downstream autobidding (gated on beating both baselines on the locked
-  test, same gate that kept twoscale's autobid from ever running).
-* Full-scale locked-test results (3 Criteo seeds / 8 Avazu seeds via the
-  `.slurm` scripts) -- not yet run.
+  sensitivity, reset-vs-carryover).
+* The theory-friendly frozen-encoder online-regret variant (eq 16-17).
+* Downstream autobidding (plan section 11).
+
+`withinday_hpo.py` is also a staged coordinate search, not the plan's full
+validation-grid cross product (see its docstring for why) -- a more
+exhaustive search is a possible follow-up if this line is revisited.
 
 Related: [[twoscale]] (the long-term backbone and prior scalar-calibration
 result this project extends).

@@ -1,9 +1,9 @@
 {
   "config": {
     "source": "avazu",
-    "seed": 0,
+    "seed": 7,
     "sample_frac": 0.2,
-    "n_rows": 8087852,
+    "n_rows": 8084235,
     "n_days": 10,
     "block_sec": 900,
     "delay_sec": 1800,
@@ -21,7 +21,7 @@
     ],
     "adapter_cfg": {
       "v1_transformer": {
-        "hidden": 16,
+        "hidden": 64,
         "n_heads": 2,
         "mlp_hidden": [
           64,
@@ -29,16 +29,16 @@
         ],
         "rank": 4,
         "cross_dim": 32,
-        "delta_max": 1.0,
+        "delta_max": 2.0,
         "dropout": 0.0,
-        "lr": 0.0003,
+        "lr": 0.001,
         "weight_decay": 1e-05,
         "lam_delta": 0.0,
         "K": 16,
-        "seed": 0
+        "seed": 7
       },
       "v2_gru": {
-        "hidden": 16,
+        "hidden": 32,
         "n_heads": 2,
         "mlp_hidden": [
           64,
@@ -48,11 +48,11 @@
         "cross_dim": 32,
         "delta_max": 1.0,
         "dropout": 0.0,
-        "lr": 0.0003,
-        "weight_decay": 1e-05,
+        "lr": 0.001,
+        "weight_decay": 0.0001,
         "lam_delta": 0.0,
         "K": 16,
-        "seed": 0
+        "seed": 7
       },
       "v3_mlp": {
         "hidden": 32,
@@ -69,7 +69,7 @@
         "weight_decay": 1e-05,
         "lam_delta": 0.0,
         "K": 16,
-        "seed": 0
+        "seed": 7
       },
       "v4_bilinear": {
         "hidden": 32,
@@ -82,11 +82,11 @@
         "cross_dim": 32,
         "delta_max": 1.0,
         "dropout": 0.0,
-        "lr": 0.0003,
+        "lr": 0.001,
         "weight_decay": 1e-05,
         "lam_delta": 0.0,
         "K": 16,
-        "seed": 0
+        "seed": 7
       },
       "v5_linear": {
         "hidden": 32,
@@ -103,7 +103,7 @@
         "weight_decay": 1e-05,
         "lam_delta": 0.0,
         "K": 16,
-        "seed": 0
+        "seed": 7
       }
     },
     "margin": 0.0001,
@@ -111,39 +111,39 @@
   },
   "candidates": {
     "v1_transformer": {
-      "dev_ll": 0.41845912674041796,
+      "dev_ll": 0.41682168097589845,
       "gates": {
-        "beats_long_only": false,
+        "beats_long_only": true,
         "beats_online_platt": true,
-        "beats_no_history_control": false,
-        "chron_or_ctx_signal": false
+        "beats_no_history_control": true,
+        "chron_or_ctx_signal": true
       },
-      "eligible": false
+      "eligible": true
     },
     "v2_gru": {
-      "dev_ll": 0.41845912674041796,
+      "dev_ll": 0.417106290345678,
       "gates": {
-        "beats_long_only": false,
+        "beats_long_only": true,
         "beats_online_platt": true,
         "beats_no_history_control": false,
-        "chron_or_ctx_signal": false
+        "chron_or_ctx_signal": true
       },
       "eligible": false
     },
     "v3_mlp": {
-      "dev_ll": 0.41845912674041796,
+      "dev_ll": 0.4173727738689573,
       "gates": {
-        "beats_long_only": false,
-        "beats_online_platt": true,
+        "beats_long_only": true,
+        "beats_online_platt": false,
         "beats_no_history_control": false,
         "chron_or_ctx_signal": false
       },
       "eligible": false
     },
     "v4_bilinear": {
-      "dev_ll": 0.41845912674041796,
+      "dev_ll": 0.4172831901504051,
       "gates": {
-        "beats_long_only": false,
+        "beats_long_only": true,
         "beats_online_platt": true,
         "beats_no_history_control": false,
         "chron_or_ctx_signal": false
@@ -151,7 +151,7 @@
       "eligible": false
     },
     "v5_linear": {
-      "dev_ll": 0.41830497277011236,
+      "dev_ll": 0.4170402762687571,
       "gates": {
         "beats_long_only": true,
         "beats_online_platt": true,
@@ -161,15 +161,15 @@
       "eligible": true
     }
   },
-  "winner": "v5_linear",
+  "winner": "v1_transformer",
   "locked_test": {
-    "winner": "v5_linear",
-    "test_imp_wt_logloss": 0.387673938358419,
+    "winner": "v1_transformer",
+    "test_imp_wt_logloss": 0.38751199821328197,
     "vs_long_only": {
-      "mean_delta": -0.0003343974391979236,
+      "mean_delta": -0.00046752507403950244,
       "ci95": [
-        -0.00043135069457711506,
-        -0.00027318704145390393
+        -0.001176929846306074,
+        -1.4735157533252163e-05
       ],
       "days_won_frac": 1.0,
       "days_won": 3,
@@ -177,18 +177,18 @@
       "significant_below_zero": true
     },
     "vs_online_platt": {
-      "mean_delta": 2.2444430138194676e-05,
+      "mean_delta": -0.00029501004422869775,
       "ci95": [
-        -2.7352812964620554e-05,
-        9.373141614821279e-05
+        -0.0008008844423348371,
+        4.493858190668387e-05
       ],
-      "days_won_frac": 0.3333333333333333,
-      "days_won": 1,
+      "days_won_frac": 0.6666666666666666,
+      "days_won": 2,
       "days_total": 3,
       "significant_below_zero": false
     },
-    "beats_both_on_locked_test": false,
+    "beats_both_on_locked_test": true,
     "meets_materiality_floor": true
   },
-  "interpretation": "selected model cleared dev gates but did not beat both baselines (or gain is below the materiality floor) on the locked test -- do not proceed to downstream extensions"
+  "interpretation": "proceed to downstream extensions: selected model beats long-only and Online Platt on the locked test"
 }

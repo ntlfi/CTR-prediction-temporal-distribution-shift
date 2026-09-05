@@ -1,13 +1,13 @@
 {
   "config": {
     "source": "avazu",
-    "seed": 0,
+    "seed": 1,
     "sample_frac": 0.2,
-    "n_rows": 8087852,
+    "n_rows": 8083398,
     "n_days": 10,
     "block_sec": 900,
     "delay_sec": 1800,
-    "sketch_dim": 32,
+    "sketch_dim": 64,
     "adapter_train_days": [
       5
     ],
@@ -29,16 +29,16 @@
         ],
         "rank": 4,
         "cross_dim": 32,
-        "delta_max": 1.0,
+        "delta_max": 2.0,
         "dropout": 0.0,
-        "lr": 0.0003,
+        "lr": 0.001,
         "weight_decay": 1e-05,
         "lam_delta": 0.0,
         "K": 16,
-        "seed": 0
+        "seed": 1
       },
       "v2_gru": {
-        "hidden": 16,
+        "hidden": 64,
         "n_heads": 2,
         "mlp_hidden": [
           64,
@@ -46,30 +46,30 @@
         ],
         "rank": 4,
         "cross_dim": 32,
-        "delta_max": 1.0,
-        "dropout": 0.0,
-        "lr": 0.0003,
+        "delta_max": 2.0,
+        "dropout": 0.1,
+        "lr": 0.001,
         "weight_decay": 1e-05,
         "lam_delta": 0.0,
         "K": 16,
-        "seed": 0
+        "seed": 1
       },
       "v3_mlp": {
         "hidden": 32,
         "n_heads": 2,
         "mlp_hidden": [
-          16,
-          16
+          64,
+          32
         ],
         "rank": 4,
         "cross_dim": 32,
-        "delta_max": 1.0,
+        "delta_max": 2.0,
         "dropout": 0.0,
-        "lr": 0.0003,
+        "lr": 0.001,
         "weight_decay": 1e-05,
         "lam_delta": 0.0,
         "K": 16,
-        "seed": 0
+        "seed": 1
       },
       "v4_bilinear": {
         "hidden": 32,
@@ -82,11 +82,11 @@
         "cross_dim": 32,
         "delta_max": 1.0,
         "dropout": 0.0,
-        "lr": 0.0003,
+        "lr": 0.001,
         "weight_decay": 1e-05,
         "lam_delta": 0.0,
         "K": 16,
-        "seed": 0
+        "seed": 1
       },
       "v5_linear": {
         "hidden": 32,
@@ -96,14 +96,14 @@
           32
         ],
         "rank": 4,
-        "cross_dim": 32,
+        "cross_dim": 16,
         "delta_max": 1.0,
         "dropout": 0.0,
         "lr": 0.0003,
         "weight_decay": 1e-05,
         "lam_delta": 0.0,
         "K": 16,
-        "seed": 0
+        "seed": 1
       }
     },
     "margin": 0.0001,
@@ -111,29 +111,29 @@
   },
   "candidates": {
     "v1_transformer": {
-      "dev_ll": 0.41845912674041796,
+      "dev_ll": 0.4168024689706691,
       "gates": {
-        "beats_long_only": false,
+        "beats_long_only": true,
         "beats_online_platt": true,
         "beats_no_history_control": false,
-        "chron_or_ctx_signal": false
+        "chron_or_ctx_signal": true
       },
       "eligible": false
     },
     "v2_gru": {
-      "dev_ll": 0.41845912674041796,
+      "dev_ll": 0.41683037227447656,
       "gates": {
-        "beats_long_only": false,
+        "beats_long_only": true,
         "beats_online_platt": true,
         "beats_no_history_control": false,
-        "chron_or_ctx_signal": false
+        "chron_or_ctx_signal": true
       },
       "eligible": false
     },
     "v3_mlp": {
-      "dev_ll": 0.41845912674041796,
+      "dev_ll": 0.4172301540174902,
       "gates": {
-        "beats_long_only": false,
+        "beats_long_only": true,
         "beats_online_platt": true,
         "beats_no_history_control": false,
         "chron_or_ctx_signal": false
@@ -141,9 +141,9 @@
       "eligible": false
     },
     "v4_bilinear": {
-      "dev_ll": 0.41845912674041796,
+      "dev_ll": 0.4171838463014018,
       "gates": {
-        "beats_long_only": false,
+        "beats_long_only": true,
         "beats_online_platt": true,
         "beats_no_history_control": false,
         "chron_or_ctx_signal": false
@@ -151,7 +151,7 @@
       "eligible": false
     },
     "v5_linear": {
-      "dev_ll": 0.41830497277011236,
+      "dev_ll": 0.4170451663641425,
       "gates": {
         "beats_long_only": true,
         "beats_online_platt": true,
@@ -164,26 +164,26 @@
   "winner": "v5_linear",
   "locked_test": {
     "winner": "v5_linear",
-    "test_imp_wt_logloss": 0.387673938358419,
+    "test_imp_wt_logloss": 0.3888651933648125,
     "vs_long_only": {
-      "mean_delta": -0.0003343974391979236,
+      "mean_delta": 0.00047479609383201576,
       "ci95": [
-        -0.00043135069457711506,
-        -0.00027318704145390393
+        0.0004197362951942063,
+        0.0005313247434058366
       ],
-      "days_won_frac": 1.0,
-      "days_won": 3,
+      "days_won_frac": 0.0,
+      "days_won": 0,
       "days_total": 3,
-      "significant_below_zero": true
+      "significant_below_zero": false
     },
     "vs_online_platt": {
-      "mean_delta": 2.2444430138194676e-05,
+      "mean_delta": 0.000755347073939594,
       "ci95": [
-        -2.7352812964620554e-05,
-        9.373141614821279e-05
+        0.0006127708818221556,
+        0.000895404119303389
       ],
-      "days_won_frac": 0.3333333333333333,
-      "days_won": 1,
+      "days_won_frac": 0.0,
+      "days_won": 0,
       "days_total": 3,
       "significant_below_zero": false
     },
