@@ -1,0 +1,44 @@
+{
+  "source": "avazu",
+  "block_sec": 3600,
+  "delay_sec": 1800,
+  "best_fixed_window": {
+    "h_star": "roll3"
+  },
+  "arw": {
+    "delta": 0.05,
+    "min_history": 3
+  },
+  "adamoe": {
+    "lambda": 0.0
+  },
+  "shared_mixture": {
+    "eta": 1000000.0,
+    "halflife": 3.0
+  },
+  "ops": {
+    "B": 0.25,
+    "eta0": 0.3,
+    "schedule": "const",
+    "a_bounds": [
+      0.2,
+      5.0
+    ]
+  },
+  "dualtime": {
+    "B_w": 4.0,
+    "m": 32,
+    "cross_dim": 32,
+    "ewma_halflives": [
+      1.0,
+      4.0,
+      16.0
+    ]
+  },
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "runtime_s": 4089.8890211582184
+}

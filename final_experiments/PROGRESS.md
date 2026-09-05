@@ -239,6 +239,17 @@ of the original spec PDF's own section 12/14 pooling rule (that document
 wasn't available this session). Worth a quick check against the source
 spec before this table goes in the paper.
 
+## Avazu HPO: DONE (2026-09-05, job 12491538, 4090s)
+
+Full 40M-row Avazu, 3 seeds. `final_experiments/avazu/hpo/selected_configs.json`:
+Best Fixed Window -> roll3, ARW delta=0.05, AdaMoE lambda=0, **shared mixture
+eta=1e6** (the grid's degenerate "weight everything ~equally" extreme --
+consistent with this project's standing finding that the adaptive
+cross-day mixture doesn't help on Avazu), OPS B=0.25/eta0=0.3/const (same
+as Criteo), DualTime B_w=4.0. `final_avazu.slurm` (job 12491705) submitted
+immediately after -- 3-seed locked test on full data, `--warmup 3`, into
+`final_experiments/avazu/final/`.
+
 ## Suggested resumption order
 
 Follow spec section 19 literally, steps 1-4 first (manifest, full-data
