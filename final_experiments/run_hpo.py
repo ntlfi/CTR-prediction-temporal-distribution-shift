@@ -116,62 +116,43 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
 
-    print(f"loading {args.source} for seeds {SEEDS} ...", flush=True)
-    per_seed = {}
+    # Each seed's dataset/bank is loaded fresh and dropped (falls out of
+    # scope) at the end of its own iteration -- for full-data Avazu
+    # (~40M rows), holding all 3 seeds' datasets simultaneously risks
+    # exceeding a compute node's memory (this cluster's nodes cap at
+    # ~250G), so phase A and phase B below each load every seed once,
+    # sequentially, rather than once per seed for the whole script.
+
+    # ---- phase A: stages 1-4, one seed at a time ---------------------------
+    bfw_rows_per_seed, arw_rows_per_seed, moe_rows_per_seed, mix_rows_per_seed = [], [], [], []
     for seed in SEEDS:
         ds, split, bank = load_seed_bank(args.source, args.data or DATA_PATHS[args.source],
                                          sample_frac, args.n_features, warmup, seed, args.n_jobs)
-        per_seed[seed] = dict(ds=ds, split=split, bank=bank, dev_days=list(split.dev_days))
-        print(f"  seed {seed}: {len(ds.y):,} rows, dev days {per_seed[seed]['dev_days']}", flush=True)
+        dev_days = list(split.dev_days)
+        print(f"  seed {seed} (phase A): {len(ds.y):,} rows, dev days {dev_days}", flush=True)
 
-    # ---- stage 1: Best Fixed Window (section 7.2) -------------------------
-    bfw_rows_per_seed = []
-    for seed in SEEDS:
-        bank, dev_days = per_seed[seed]["bank"], per_seed[seed]["dev_days"]
         rows = []
         for h in HORIZONS:
-            recs = [{"day": d, "y": bank[d].y, "p": bank[d].preds[h]} for d in dev_days if d in bank]
+            recs = [{"day": d, "y": bank[d].y, "p": bank[d].preds[h], "sec_in_day": bank[d].sec_in_day}
+                   for d in dev_days if d in bank]
             rows.append({"window": h, "dev_loss": impression_weighted_logloss(recs),
-                        "worst_day_loss": _worst_day_loss(
-                            [{"day": d, "y": bank[d].y, "p": bank[d].preds[h], "sec_in_day": bank[d].sec_in_day}
-                             for d in dev_days if d in bank], dev_days)})
+                        "worst_day_loss": _worst_day_loss(recs, dev_days)})
         bfw_rows_per_seed.append(rows)
-    bfw_best, bfw_table = select_by_mean_across_seeds(bfw_rows_per_seed)
-    pd.DataFrame(bfw_table).to_csv(out / "hpo_best_fixed.csv", index=False)
-    print(f"Best Fixed Window -> {bfw_best['window']}", flush=True)
 
-    # ---- stage 2: ARW delta (section 7.3) ---------------------------------
-    arw_rows_per_seed = []
-    for seed in SEEDS:
-        bank, dev_days = per_seed[seed]["bank"], per_seed[seed]["dev_days"]
         rows = []
         for delta in ARW_DELTA_GRID:
             recs, _ = arw_method(bank, dev_days, delta=delta)
             rows.append({"delta": delta, "dev_loss": _dev_loss(recs, dev_days),
                         "worst_day_loss": _worst_day_loss(recs, dev_days)})
         arw_rows_per_seed.append(rows)
-    arw_best, arw_table = select_by_mean_across_seeds(arw_rows_per_seed)
-    pd.DataFrame(arw_table).to_csv(out / "hpo_arw.csv", index=False)
-    print(f"ARW -> delta={arw_best['delta']}", flush=True)
 
-    # ---- stage 3: AdaMoE lambda (section 7.4) -----------------------------
-    moe_rows_per_seed = []
-    for seed in SEEDS:
-        bank, dev_days = per_seed[seed]["bank"], per_seed[seed]["dev_days"]
         rows = []
         for lam in ADAMOE_LAMBDA_GRID:
             recs, _ = adamoe_method(bank, dev_days, lam=lam)
             rows.append({"lambda": lam, "dev_loss": _dev_loss(recs, dev_days),
                         "worst_day_loss": _worst_day_loss(recs, dev_days)})
         moe_rows_per_seed.append(rows)
-    moe_best, moe_table = select_by_mean_across_seeds(moe_rows_per_seed)
-    pd.DataFrame(moe_table).to_csv(out / "hpo_adamoe.csv", index=False)
-    print(f"AdaMoE -> lambda={moe_best['lambda']}", flush=True)
 
-    # ---- stage 4: shared adaptive cross-day mixture (section 8) -----------
-    mix_rows_per_seed = []
-    for seed in SEEDS:
-        bank, dev_days = per_seed[seed]["bank"], per_seed[seed]["dev_days"]
         rows = []
         for eta, halflife in itertools.product(MIX_ETA_GRID, MIX_HALFLIFE_GRID):
             q_by_day, _ = adaptive_q_by_day(bank, dev_days, eta=eta, halflife=halflife)
@@ -180,23 +161,34 @@ def main():
             rows.append({"mix_eta": eta, "mix_halflife": halflife, "dev_loss": _dev_loss(recs, dev_days),
                         "worst_day_loss": _worst_day_loss(recs, dev_days)})
         mix_rows_per_seed.append(rows)
+        del ds, split, bank   # explicit: don't hold this seed's data into the next iteration
+
+    bfw_best, bfw_table = select_by_mean_across_seeds(bfw_rows_per_seed)
+    pd.DataFrame(bfw_table).to_csv(out / "hpo_best_fixed.csv", index=False)
+    print(f"Best Fixed Window -> {bfw_best['window']}", flush=True)
+
+    arw_best, arw_table = select_by_mean_across_seeds(arw_rows_per_seed)
+    pd.DataFrame(arw_table).to_csv(out / "hpo_arw.csv", index=False)
+    print(f"ARW -> delta={arw_best['delta']}", flush=True)
+
+    moe_best, moe_table = select_by_mean_across_seeds(moe_rows_per_seed)
+    pd.DataFrame(moe_table).to_csv(out / "hpo_adamoe.csv", index=False)
+    print(f"AdaMoE -> lambda={moe_best['lambda']}", flush=True)
+
     mix_best, mix_table = select_by_mean_across_seeds(mix_rows_per_seed)
     pd.DataFrame(mix_table).to_csv(out / "hpo_longterm.csv", index=False)
     mix_eta, mix_halflife = mix_best["mix_eta"], mix_best["mix_halflife"]
     print(f"shared adaptive mixture -> eta={mix_eta} halflife={mix_halflife}", flush=True)
 
-    # frozen q_by_day per seed, reused by both OPS and DualTime-CTR below
-    q_by_day_per_seed = {}
+    # ---- phase B: stages 5-6, one seed at a time (reload -- see above) -----
+    ops_rows_per_seed, dt_rows_per_seed = [], []
     for seed in SEEDS:
-        bank, dev_days = per_seed[seed]["bank"], per_seed[seed]["dev_days"]
+        ds, split, bank = load_seed_bank(args.source, args.data or DATA_PATHS[args.source],
+                                         sample_frac, args.n_features, warmup, seed, args.n_jobs)
+        dev_days = list(split.dev_days)
+        print(f"  seed {seed} (phase B): {len(ds.y):,} rows", flush=True)
         q_by_day, _ = adaptive_q_by_day(bank, dev_days, eta=mix_eta, halflife=mix_halflife)
-        q_by_day_per_seed[seed] = q_by_day
 
-    # ---- stage 5: OPS (section 10) -----------------------------------------
-    ops_rows_per_seed = []
-    for seed in SEEDS:
-        bank, dev_days = per_seed[seed]["bank"], per_seed[seed]["dev_days"]
-        q_by_day = q_by_day_per_seed[seed]
         rows = []
         for B, eta0, sched in itertools.product(OPS_B_GRID, OPS_ETA0_GRID, OPS_SCHEDULE_GRID):
             cfg = CalibConfig(B=B, eta0=eta0, eta_schedule=sched, update="block",
@@ -205,16 +197,7 @@ def main():
             rows.append({"B": B, "eta0": eta0, "schedule": sched, "dev_loss": _dev_loss(recs, dev_days),
                         "worst_day_loss": _worst_day_loss(recs, dev_days)})
         ops_rows_per_seed.append(rows)
-    ops_best, ops_table = select_by_mean_across_seeds(
-        ops_rows_per_seed, complexity_key=lambda r: r["B"])
-    pd.DataFrame(ops_table).to_csv(out / "hpo_ops.csv", index=False)
-    print(f"OPS -> B={ops_best['B']} eta0={ops_best['eta0']} schedule={ops_best['schedule']}", flush=True)
 
-    # ---- stage 6: DualTime-CTR B_w (section 11) ----------------------------
-    dt_rows_per_seed = []
-    for seed in SEEDS:
-        ds, bank, dev_days = per_seed[seed]["ds"], per_seed[seed]["bank"], per_seed[seed]["dev_days"]
-        q_by_day = q_by_day_per_seed[seed]
         rows = []
         for B_w in DUALTIME_BW_GRID:
             dt_cfg = DualTimeConfig(block_sec=block_sec, delay_sec=DELAY_SEC, m=32, cross_dim=32, B_w=B_w)
@@ -222,6 +205,13 @@ def main():
             rows.append({"B_w": B_w, "dev_loss": _dev_loss(recs, dev_days),
                         "worst_day_loss": _worst_day_loss(recs, dev_days)})
         dt_rows_per_seed.append(rows)
+        del ds, split, bank, q_by_day
+
+    ops_best, ops_table = select_by_mean_across_seeds(
+        ops_rows_per_seed, complexity_key=lambda r: r["B"])
+    pd.DataFrame(ops_table).to_csv(out / "hpo_ops.csv", index=False)
+    print(f"OPS -> B={ops_best['B']} eta0={ops_best['eta0']} schedule={ops_best['schedule']}", flush=True)
+
     dt_best, dt_table = select_by_mean_across_seeds(dt_rows_per_seed, complexity_key=lambda r: r["B_w"])
     pd.DataFrame(dt_table).to_csv(out / "hpo_dualtime.csv", index=False)
     print(f"DualTime-CTR -> B_w={dt_best['B_w']}", flush=True)
