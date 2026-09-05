@@ -250,6 +250,54 @@ as Criteo), DualTime B_w=4.0. `final_avazu.slurm` (job 12491705) submitted
 immediately after -- 3-seed locked test on full data, `--warmup 3`, into
 `final_experiments/avazu/final/`.
 
+## Avazu primary 3-seed locked test: DONE (2026-09-05, job 12491705, 2357s)
+
+Full 40M-row Avazu, 3 seeds, test days 7-9. Output:
+`final_experiments/avazu/final/{headline_results.csv,summary.json,seed{0,1,2}/}`.
+
+| method | mean log loss | delta vs Expanding (day-level) | CI excl. 0? |
+|---|---|---|---|
+| **AdaMoE** | **0.387402** | -0.000211 | **yes** |
+| OPS | 0.387443 | -0.000201 | no |
+| ARW | 0.387530 | -0.000076 | no |
+| Expanding | 0.387596 | -- | -- |
+| DualTime-CTR | 0.387610 | -0.000041 | no |
+| Best Fixed Window | 0.388147 | +0.000443 | no |
+
+**Much weaker signal than Criteo.** Only AdaMoE clears significance (and
+even that's a small ~0.05% effect); OPS/ARW/DualTime-CTR are directionally
+better than Expanding but every CI crosses zero -- not distinguishable from
+noise at 3 seeds. **DualTime-CTR shows no real edge on Avazu in this final
+protocol** -- its online within-day residual does not reproduce the
+"small but real diurnal effect" the earlier AMG-TP and capacity-ladder V5
+lines found (those were different comparisons: AMG-TP vs Han ARW, and V5
+vs Online Platt with `sample_frac=0.2`, not this 6-method full-data
+protocol against Expanding). Note the sign quirk for DualTime-CTR: its
+`mean_imp_wt_ll` (0.387610) is fractionally *worse* than Expanding's
+(0.387596, impression-weighted across all test days) while its
+`mean_delta_vs_expanding` (day-equal-weighted, seed x day pooled) is
+slightly negative/better -- the two metrics use different weighting and
+can disagree at this small a margin; report both, don't collapse to one
+sentence.
+
+**Both halves of the primary 3-seed locked test (spec section 12, item 12
+of section 19) are now DONE.** Full 12-cell headline table (6 methods x 2
+datasets) exists across `final_experiments/{criteo,avazu}/final/
+headline_results.csv`. Headline picture: on Criteo, OPS/DualTime-CTR/
+AdaMoE/Best-Fixed-Window/ARW all significantly beat Expanding (DualTime-CTR
+2nd behind OPS); on Avazu, only AdaMoE clears significance and every
+method is close to Expanding -- the adaptive-training story is much
+stronger on Criteo than Avazu in this final protocol, opposite of what
+the project's earlier (different-protocol) Avazu results might suggest.
+**This distinction matters for the paper's headline claim and should be
+stated as-is, not smoothed over.**
+
+Still not done (section 19 items 13-18): rolling-origin confirmation
+(different day ranges than the old exploratory `withinday_experiments/
+rolling/` run), day-level stats module wiring beyond what `run_final.py`
+already does inline, tables/figures, paper text (no paper file located in
+this repo -- ask the user where it lives before attempting).
+
 ## Suggested resumption order
 
 Follow spec section 19 literally, steps 1-4 first (manifest, full-data

@@ -1,0 +1,126 @@
+{
+  "source": "avazu",
+  "config_used": "final_experiments/avazu/hpo/selected_configs.json",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "per_seed": [
+    {
+      "expanding": {
+        "imp_weighted_log_loss": 0.3876252046911937,
+        "daily_mean_log_loss": 0.38871551542491195,
+        "worst_day_log_loss": 0.40636388813410224,
+        "n_test_days": 3
+      },
+      "best_fixed": {
+        "imp_weighted_log_loss": 0.3880637688132421,
+        "daily_mean_log_loss": 0.3890477849216203,
+        "worst_day_log_loss": 0.4061402592247081,
+        "n_test_days": 3
+      },
+      "arw": {
+        "imp_weighted_log_loss": 0.38748718291897755,
+        "daily_mean_log_loss": 0.3885629086497541,
+        "worst_day_log_loss": 0.4061402592247081,
+        "n_test_days": 3
+      },
+      "adamoe": {
+        "imp_weighted_log_loss": 0.38742394761040116,
+        "daily_mean_log_loss": 0.3884978878361407,
+        "worst_day_log_loss": 0.4061556558377176,
+        "n_test_days": 3
+      },
+      "ops": {
+        "imp_weighted_log_loss": 0.38740727602377,
+        "daily_mean_log_loss": 0.38844733738456855,
+        "worst_day_log_loss": 0.4057741465579025,
+        "n_test_days": 3
+      },
+      "dualtime": {
+        "imp_weighted_log_loss": 0.3875376908337294,
+        "daily_mean_log_loss": 0.3885762666865659,
+        "worst_day_log_loss": 0.40589670381746984,
+        "n_test_days": 3
+      }
+    },
+    {
+      "expanding": {
+        "imp_weighted_log_loss": 0.3875860787869008,
+        "daily_mean_log_loss": 0.388678133568469,
+        "worst_day_log_loss": 0.4065022609415935,
+        "n_test_days": 3
+      },
+      "best_fixed": {
+        "imp_weighted_log_loss": 0.3879367945222156,
+        "daily_mean_log_loss": 0.3889486494968038,
+        "worst_day_log_loss": 0.4065454999264295,
+        "n_test_days": 3
+      },
+      "arw": {
+        "imp_weighted_log_loss": 0.38751413120281175,
+        "daily_mean_log_loss": 0.3885932134436403,
+        "worst_day_log_loss": 0.4065454999264295,
+        "n_test_days": 3
+      },
+      "adamoe": {
+        "imp_weighted_log_loss": 0.3873327149960862,
+        "daily_mean_log_loss": 0.3884147527282998,
+        "worst_day_log_loss": 0.40624031400250654,
+        "n_test_days": 3
+      },
+      "ops": {
+        "imp_weighted_log_loss": 0.38739704301114586,
+        "daily_mean_log_loss": 0.388436396566114,
+        "worst_day_log_loss": 0.4059338750799545,
+        "n_test_days": 3
+      },
+      "dualtime": {
+        "imp_weighted_log_loss": 0.3875743686416555,
+        "daily_mean_log_loss": 0.38860737974671883,
+        "worst_day_log_loss": 0.40608775250628926,
+        "n_test_days": 3
+      }
+    },
+    {
+      "expanding": {
+        "imp_weighted_log_loss": 0.3875760731949701,
+        "daily_mean_log_loss": 0.38867434125343653,
+        "worst_day_log_loss": 0.4065396934056987,
+        "n_test_days": 3
+      },
+      "best_fixed": {
+        "imp_weighted_log_loss": 0.38844011801177897,
+        "daily_mean_log_loss": 0.38940150474329616,
+        "worst_day_log_loss": 0.4068885642586056,
+        "n_test_days": 3
+      },
+      "arw": {
+        "imp_weighted_log_loss": 0.38758860804441864,
+        "daily_mean_log_loss": 0.3886833040557467,
+        "worst_day_log_loss": 0.4067057346792158,
+        "n_test_days": 3
+      },
+      "adamoe": {
+        "imp_weighted_log_loss": 0.3874480564429085,
+        "daily_mean_log_loss": 0.38852142567844555,
+        "worst_day_log_loss": 0.40635661216354946,
+        "n_test_days": 3
+      },
+      "ops": {
+        "imp_weighted_log_loss": 0.38752539934283053,
+        "daily_mean_log_loss": 0.3885823904245808,
+        "worst_day_log_loss": 0.4063019757990035,
+        "n_test_days": 3
+      },
+      "dualtime": {
+        "imp_weighted_log_loss": 0.38771730045530983,
+        "daily_mean_log_loss": 0.38876278295545,
+        "worst_day_log_loss": 0.40640714638159586,
+        "n_test_days": 3
+      }
+    }
+  ],
+  "runtime_s": 2357.343297481537
+}
