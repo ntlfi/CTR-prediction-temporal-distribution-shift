@@ -13,7 +13,10 @@ from withinday.adapters import VARIANTS, build_variant
 from withinday.blocks import (build_block_tokens, deterministic_summary,
                               last_available_block, n_blocks_per_day,
                               shuffle_block_order, summary_dim, token_dim)
+from withinday.cache import build_day_cache
 from withinday.contextsketch import build_projection, context_sketch
+from withinday.daystats import day_summary, leave_one_day_out, moving_block_bootstrap_ci
+from withinday.rolling import KNOB_GRID_V5, full_grid, rolling_origin_v5, select_config_inner_cv
 from withinday.train import DayTensors, forward_variant
 
 PASS, FAIL = 0, 0
@@ -217,6 +220,105 @@ def test_no_context_interaction_removes_a_dependence():
               torch.allclose(delta_ablated[0], delta_ablated[1], atol=1e-6))
 
 
+# --------------------------------------------------------------------- #
+#  rolling-origin engine (causal walk-forward selection, no real data)   #
+# --------------------------------------------------------------------- #
+def _fake_cache_for_day(day, n=200, m=8, block_sec=3600, delay_sec=1800, seed=0, R=None):
+    rng = np.random.default_rng(seed + day)
+    q = rng.uniform(0.05, 0.5, n)
+    y = (rng.uniform(size=n) < q).astype(float)
+    sec = np.sort(rng.uniform(0, 86400, n))
+    F = 2 ** 10
+    X = sp.random(n, F, density=0.02, random_state=seed + day, format="csr")
+    if R is None:
+        R = build_projection(F, m, seed=0)
+    return build_day_cache(day, q, y, sec, X, block_sec, delay_sec, m, R)
+
+
+def _fake_multiday_cache(n_days=8, n=200, m=8, seed=0):
+    R = build_projection(2 ** 10, m, seed=0)
+    return {d: _fake_cache_for_day(d, n=n, m=m, seed=seed, R=R) for d in range(n_days)}, R
+
+
+def test_full_grid_v5_size():
+    grid = full_grid(KNOB_GRID_V5)
+    check("V5 grid has 3(cross_dim) x 2(lr) x 2(weight_decay) = 12 configs", len(grid) == 12)
+
+
+def test_inner_cv_never_touches_outer_day_or_future():
+    cache = _fake_multiday_cache(n_days=8, m=8)[0]
+    d = 6
+    candidate_days = sorted(e for e in cache if e < d)
+    a_dim, tok_dim, summ_dim = 8 + 2, token_dim(8), summary_dim(8)
+    from withinday.train import DEFAULT_CFG
+    best_overlay, inner_days, rows = select_config_inner_cv(
+        cache, candidate_days, full_grid(KNOB_GRID_V5)[:2],  # trim grid for test speed
+        a_dim, tok_dim, summ_dim, dict(DEFAULT_CFG), inner_k=3, seed=0)
+    check("inner validation days are all strictly before the outer day",
+          all(v < d for v in inner_days))
+    check("inner validation days are drawn only from candidate (pre-d) days",
+          all(v in candidate_days for v in inner_days))
+    for r in rows:
+        check(f"inner-CV row for cross_dim={r.get('cross_dim')} only used pre-d val days",
+              all(v < d for v in r["inner_val_days"]))
+
+
+def test_rolling_origin_v5_end_to_end_causal():
+    cache, _ = _fake_multiday_cache(n_days=8, m=8, seed=1)
+    m = 8
+    a_dim, tok_dim, summ_dim = m + 2, token_dim(m), summary_dim(m)
+    outer_days = [5, 6, 7]
+    # fabricate long_only / online_platt records aligned to the fake cache
+    long_only_records = [{"day": d, "y": cache[d].y, "p": cache[d].q, "sec_in_day": cache[d].sec_in_day}
+                         for d in cache]
+    online_platt_records = long_only_records  # fine for this structural test
+    results, inner_rows = rolling_origin_v5(cache, outer_days, long_only_records, online_platt_records,
+                                            a_dim, tok_dim, summ_dim, m, seed=0, inner_k=2)
+    check("one RollingDayResult per outer day, in order", [r.day for r in results] == outer_days)
+    for r in results:
+        check(f"day {r.day}: all training days are strictly earlier", all(t < r.day for t in r.train_days))
+        check(f"day {r.day}: all inner-val days are strictly earlier", all(v < r.day for v in r.inner_val_days))
+        check(f"day {r.day}: v5 log loss is finite", np.isfinite(r.ll_v5))
+        check(f"day {r.day}: chosen overlay is one of the frozen V5 knobs",
+              set(r.chosen_overlay) <= set(KNOB_GRID_V5))
+
+
+# --------------------------------------------------------------------- #
+#  day-level statistics (no real data)                                   #
+# --------------------------------------------------------------------- #
+def test_day_summary_matches_hand_computation():
+    deltas = np.array([-0.001, -0.002, 0.0005, -0.0015, 0.0002])
+    s = day_summary(deltas, seed=0)
+    check("n_days matches input length", s["n_days"] == 5)
+    check("mean_delta matches np.mean", np.isclose(s["mean_delta"], deltas.mean()))
+    check("median_delta matches np.median", np.isclose(s["median_delta"], np.median(deltas)))
+    check("n_days_won counts strictly-negative days", s["n_days_won"] == int(np.sum(deltas < 0)))
+    check("worst_day_delta is the maximum (least favorable) delta", np.isclose(s["worst_day_delta"], deltas.max()))
+    check("sign_test_p is a valid probability", 0.0 <= s["sign_test_p"] <= 1.0)
+
+
+def test_leave_one_day_out_reference():
+    deltas = np.array([-0.001, -0.002, 0.003, -0.0015])
+    loo = leave_one_day_out(deltas)
+    want = np.array([np.mean(np.delete(deltas, i)) for i in range(4)])
+    check("leave-one-day-out matches manual per-day recomputation", np.allclose(loo, want))
+
+
+def test_leave_one_day_out_can_reveal_single_day_reversal():
+    # one big favorable day masking otherwise-unfavorable days
+    deltas = np.array([0.0008, 0.0006, 0.0007, -0.01])
+    s = day_summary(deltas, seed=0)
+    check("aggregate mean favors V5 only because of one day", s["mean_delta"] < 0)
+    check("day_summary flags that leave-one-out reverses the sign", s["loo_reverses_sign"])
+
+
+def test_moving_block_bootstrap_skips_when_too_few_days():
+    check("returns None with fewer than 2*block days",
+          moving_block_bootstrap_ci(np.array([-0.001, 0.002]), block=2) is None)
+    result = moving_block_bootstrap_ci(np.random.default_rng(0).normal(size=10), block=2, n_boot=200)
+    check("returns a dict with enough days", isinstance(result, dict) and "ci95_lo" in result)
+
+
 def main():
     for fn in [
         test_sketch_deterministic_and_bounded,
@@ -230,6 +332,13 @@ def main():
         test_shuffle_block_order_is_a_permutation,
         test_adapters_zero_init_identity,
         test_no_context_interaction_removes_a_dependence,
+        test_full_grid_v5_size,
+        test_inner_cv_never_touches_outer_day_or_future,
+        test_rolling_origin_v5_end_to_end_causal,
+        test_day_summary_matches_hand_computation,
+        test_leave_one_day_out_reference,
+        test_leave_one_day_out_can_reveal_single_day_reversal,
+        test_moving_block_bootstrap_skips_when_too_few_days,
     ]:
         print(f"{fn.__name__}:")
         fn()
