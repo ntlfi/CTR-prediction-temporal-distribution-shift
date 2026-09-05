@@ -32,29 +32,35 @@ conflated when citing results.
 
 **Criteo** (3 seeds, test days 22–30, `final_experiments/criteo/final/`):
 
-| method | log loss | delta vs Expanding | CI excludes 0? | seed-days won |
+| method | log loss (mean ± sd, 3 seeds) | delta vs Expanding (95% CI) | CI excludes 0? | seed-days won |
 |---|---|---|---|---|
-| **OPS** | **0.606958** | −0.001120 | yes | 27/27 |
-| DualTime-CTR | 0.607070 | −0.001010 | yes | 27/27 |
-| AdaMoE | 0.607157 | −0.000922 | yes | 27/27 |
-| Best Fixed Window | 0.607290 | −0.000790 | yes | 27/27 |
-| ARW | 0.607301 | −0.000782 | yes | 27/27 |
-| Expanding | 0.608067 | — | — | — |
+| **OPS** | **0.606958 ± 0.000004** | −0.001120 [−0.001243, −0.001011] | yes | 27/27 |
+| DualTime-CTR | 0.607070 ± 0.000030 | −0.001010 [−0.001133, −0.000902] | yes | 27/27 |
+| AdaMoE | 0.607157 ± 0.000030 | −0.000922 [−0.001022, −0.000830] | yes | 27/27 |
+| Best Fixed Window | 0.607290 ± 0.000038 | −0.000790 [−0.000927, −0.000660] | yes | 27/27 |
+| ARW | 0.607301 ± 0.000045 | −0.000782 [−0.000923, −0.000646] | yes | 27/27 |
+| Expanding | 0.608067 ± 0.000011 | — | — | — |
 
 **Avazu** (3 seeds, test days 7–9, `final_experiments/avazu/final/`):
 
-| method | log loss | delta vs Expanding | CI excludes 0? | seed-days won |
+| method | log loss (mean ± sd, 3 seeds) | delta vs Expanding (95% CI) | CI excludes 0? | seed-days won |
 |---|---|---|---|---|
-| **AdaMoE** | **0.387402** | −0.000211 | **yes** | 8/9 |
-| OPS | 0.387443 | −0.000201 | no | 6/9 |
-| ARW | 0.387530 | −0.000076 | no | 4/9 |
-| Expanding | 0.387596 | — | — | — |
-| DualTime-CTR | 0.387610 | −0.000041 | no | 6/9 |
-| Best Fixed Window | 0.388147 | +0.000443 | no | 4/9 |
+| **AdaMoE** | **0.387402 ± 0.000050** | −0.000211 [−0.000299, −0.000117] | **yes** | 8/9 |
+| OPS | 0.387443 ± 0.000058 | −0.000201 [−0.000433, +0.000057] | no | 6/9 |
+| ARW | 0.387530 ± 0.000043 | −0.000076 [−0.000172, +0.000013] | no | 4/9 |
+| Expanding | 0.387596 ± 0.000021 | — | — | — |
+| DualTime-CTR | 0.387610 ± 0.000078 | −0.000041 [−0.000300, +0.000251] | no | 6/9 |
+| Best Fixed Window | 0.388147 ± 0.000214 | +0.000443 [−0.000058, +0.001006] | no | 4/9 |
 
-("delta vs Expanding" pools (seed, test day) as the replicate unit and
-reports the mean day-level log-loss difference with a moving-block-style
-bootstrap CI, via `withinday.daystats.day_summary` — see caveat below.)
+`log loss (mean ± sd)` is the impression-weighted per-seed log loss's
+standard deviation across the 3 seeds (`std_across_seeds` in
+`headline_results.csv`) — how much each method's own score moved seed to
+seed. "delta vs Expanding" is a separate quantity: it pools (seed, test
+day) as the replicate unit and reports the mean day-level log-loss
+difference with its 95% bootstrap CI, via `withinday.daystats.day_summary`
+— see caveat below. The two shouldn't be conflated: a method can have a
+small seed-sd (stable score) yet a wide delta-CI (noisy day-to-day
+comparison against Expanding), as Best Fixed Window's Avazu row shows.
 
 ## Interpretation
 
