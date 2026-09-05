@@ -1,0 +1,15 @@
+{
+  "dataset": "criteo",
+  "outer_days": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21
+  ],
+  "code_commit": "958c8404bb8a39c81c8844955d10b761a545c4db",
+  "data_sampling_seed": 0,
+  "model_seed": 0,
+  "runtime_s": 5040.506968021393
+}
