@@ -232,20 +232,29 @@ also holds on Avazu (thinner, more diurnal structure -- where the older
 `withinday` V5 result and the AMG-TP line both found a small but real
 effect) is the open question the Avazu final run will answer.
 
-Statistical caveat (unchanged from before): the CI/day-level treatment in
-`run_final.py` pools (seed, day) as the replicate unit -- a reasonable
-extension of this repo's existing machinery, not a verbatim transcription
-of the original spec PDF's own section 12/14 pooling rule (that document
-wasn't available this session). Worth a quick check against the source
-spec before this table goes in the paper.
+Statistical caveat: RESOLVED (2026-09-05, review comment 1). `run_final.py`
+pools (seed, day) as the replicate unit, which over-states precision for a
+temporal claim. `final_experiments/day_level_stats.py` re-does it right --
+`Lbar_{m,d} = mean_s L_{m,d,s}` then bootstrap/sign-test across the D days
+-- see `DAY_LEVEL_STATS.md` (fixed origin) and `DAY_LEVEL_STATS_ROLLING.md`
+(rolling origin, `run_rolling.py`). The Criteo conclusion survives (9/9
+and 15/15 days, day-level CI excludes 0); Avazu is under-powered (D=3
+fixed / D=5 rolling, sign-test floor p >= 0.0625). Use the rolling-origin
+tables, not the "27/27 seed-days" line, as the significance statement.
 
 ## Avazu HPO: DONE (2026-09-05, job 12491538, 4090s)
 
 Full 40M-row Avazu, 3 seeds. `final_experiments/avazu/hpo/selected_configs.json`:
 Best Fixed Window -> roll3, ARW delta=0.05, AdaMoE lambda=0, **shared mixture
-eta=1e6** (the grid's degenerate "weight everything ~equally" extreme --
-consistent with this project's standing finding that the adaptive
-cross-day mixture doesn't help on Avazu), OPS B=0.25/eta0=0.3/const (same
+eta=1e6** -- CORRECTED (review comment 2): this is NOT "approximately equal
+weighting", it is follow-the-leader / winner-take-all (`w_h propto
+exp{-eta*(Lbar_h - min)}`, so eta->inf -> one-hot on the argmin horizon;
+equal weighting is eta->0). Confirmed empirically in
+`avazu/diagnostic/seed*/mixture_weights.csv` (one-hot daily weights, mostly
+roll3). So Avazu's mixture does hard daily horizon *selection* (favouring
+the short window), not blending -- cross-day horizon *blending* and the
+within-day residual module still don't help on Avazu, but cross-day
+*selection* does a little. OPS B=0.25/eta0=0.3/const (same
 as Criteo), DualTime B_w=4.0. `final_avazu.slurm` (job 12491705) submitted
 immediately after -- 3-seed locked test on full data, `--warmup 3`, into
 `final_experiments/avazu/final/`.
@@ -292,11 +301,31 @@ the project's earlier (different-protocol) Avazu results might suggest.
 **This distinction matters for the paper's headline claim and should be
 stated as-is, not smoothed over.**
 
-Still not done (section 19 items 13-18): rolling-origin confirmation
-(different day ranges than the old exploratory `withinday_experiments/
-rolling/` run), day-level stats module wiring beyond what `run_final.py`
-already does inline, tables/figures, paper text (no paper file located in
-this repo -- ask the user where it lives before attempting).
+## Review follow-ups: DONE (2026-09-05) -- see `final_experiments/REVIEW_RESPONSE.md`
+
+Three pre-decision review comments, all addressed:
+
+1. **Day-level statistics** -- `day_level_stats.py` (seeds averaged first,
+   then bootstrap/sign-test across days). `DAY_LEVEL_STATS.md` (fixed
+   origin) + `DAY_LEVEL_STATS_ROLLING.md`. **6-method rolling-origin
+   runner** `run_rolling.py` (job 12496670/12496671): Criteo 15 origins,
+   Avazu 5 origins, 3 seeds, per-origin re-selection of the cheap knobs.
+   Criteo: all adaptive methods beat Expanding 15/15, day-level p 6e-5.
+   Avazu: D=5, AdaMoE 5/5 with CI excluding 0 (p 0.0625 floor); others
+   directional. Across every origin, OPS >= online DualTime-CTR.
+2. **eta=1e6 = follow-the-leader**, not equal weighting (see Avazu HPO
+   section above). FINDINGS.md corrected.
+3. **Frozen V5 vs online DualTime diagnostic** -- `run_diagnostic.py`
+   (job 12496668/12496669), `{criteo,avazu}/diagnostic/`. DEVELOPMENT
+   EVIDENCE ONLY. Criteo: L(frozen V5) ~= L(online DualTime), both < OPS.
+   Avazu: L(frozen V5) < L(online DualTime) but only ties OPS, D=3, ns.
+   **Recommendation: do not present the current w_{d,0}=0 online
+   DualTime-CTR as beating the baselines -- it never beats OPS. Either
+   report it as a negative result or pursue the warm-start refinement and
+   validate on a fresh stream.**
+
+Still not done: rolling-origin figures (CSV tables + day-level stats only),
+paper text (no paper file located in this repo).
 
 ## Suggested resumption order
 

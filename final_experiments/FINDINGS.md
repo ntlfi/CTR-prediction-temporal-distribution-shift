@@ -62,16 +62,38 @@ difference with its 95% bootstrap CI, via `withinday.daystats.day_summary`
 small seed-sd (stable score) yet a wide delta-CI (noisy day-to-day
 comparison against Expanding), as Best Fixed Window's Avazu row shows.
 
+> **Statistical revision (review comment 1).** The `seed-days won` column
+> and the pooled `(seed, test day)` bootstrap CI above **over-state
+> precision** for a temporal claim: the 3 seeds on one calendar day share
+> that day's traffic, drift and label noise, so they are not exchangeable
+> replicates. The calendar day is the unit. `final_experiments/day_level_stats.py`
+> re-does the inference the right way — `Lbar_{m,d} = mean_s L_{m,d,s}`
+> first, then bootstrap / sign-test across the D days — in
+> `final_experiments/DAY_LEVEL_STATS.md`. Headline on the fixed origin:
+> Criteo (D=9) all five adaptive methods still beat Expanding on **9/9
+> days** with a day-level bootstrap CI excluding 0 (sign-test p = 0.004,
+> the D=9 floor) and a cross-seed spread ~10-50× smaller than the effect;
+> Avazu (**D=3**) cannot reach significance by any day-level test (a clean
+> 3/3 sweep is only p = 0.25). The primary temporal-significance statement
+> is therefore the **rolling-origin run** (`final_experiments/{criteo,avazu}/rolling/`,
+> 15 / 5 origins) analysed the same way, not this table.
+
 ## Interpretation
 
 **Criteo carries the adaptive-training story; Avazu does not.** On Criteo
-every adaptive method beats plain Expanding decisively and unanimously
-(27/27 seed-days each); DualTime-CTR is a clear #2, beaten only by OPS's
-plain global online scalar calibration — i.e. DualTime-CTR's online
-within-day residual correction adds nothing over OPS here, consistent with
-this whole project's standing finding of shallow real intraday drift on
-Criteo (same conclusion `twoscale`'s `combined ≈ long_only` and
-`withinday`'s sub-materiality result already reached by a different route).
+every adaptive method beats plain Expanding decisively — at the day level
+(review comment 1) 9/9 fixed-origin and 15/15 rolling-origin days, bootstrap
+CI excluding 0, sign-test p at the D-floor. DualTime-CTR is #2 by headline
+log loss but **OPS's plain global online scalar calibration beats it at the
+day level** (rolling-origin: OPS −0.000257 vs DualTime −0.000140 vs
+`long_only`; DualTime wins 0/9 fixed-origin days head-to-head against OPS).
+The `run_diagnostic.py` arm confirms the mechanism: an *offline-trained,
+frozen* V5 contextual residual model lands in the same place as online
+DualTime-CTR (Criteo `L(frozen V5) ≈ L(online DualTime)`, both below OPS) —
+so there is **no within-day contextual residual signal on Criteo for either
+model to extract**; the whole adaptive-training gain is cross-day horizon
+mixing plus a global online intercept. Consistent with `twoscale`'s
+`combined ≈ long_only` and `withinday`'s sub-materiality result.
 
 On Avazu the picture is much weaker: only AdaMoE clears significance, and
 even that is a small (~0.05%) effect; OPS, ARW, and DualTime-CTR all trend
@@ -99,22 +121,49 @@ leakage_tests.txt`, 17/17 pass).
 | Best Fixed Window | roll7 | roll3 |
 | ARW delta | 0.05 | 0.05 |
 | AdaMoE lambda | 0.0 | 0.0 |
-| shared mixture (eta, halflife) | 150.0, 3.0 | **1e6 (degenerate — ~equal weighting), 3.0** |
+| shared mixture (eta, halflife) | 150.0, 3.0 | **1e6 (degenerate — follow-the-leader / winner-take-all), 3.0** |
 | OPS (B, eta0, schedule) | 0.25, 0.3, const | 0.25, 0.3, const |
 | DualTime B_w | 2.0 | 4.0 |
 
-Avazu's mixture eta landing on the grid's degenerate "weight everything
-~equally" extreme is itself consistent with this project's standing
-finding that the adaptive cross-day mixture doesn't help on Avazu.
+**Correction (review comment 2).** An earlier version of this table read
+Avazu's `eta=1e6` as "approximately equal weighting." That is backwards.
+The weight rule is `w_h ∝ exp{-eta·(Lbar_h − min_j Lbar_j)}`
+(`twoscale/longterm.py::adaptive_weights`), so `eta → ∞` drives every
+non-argmin horizon's weight to 0: it is **follow-the-leader**, hard daily
+selection of the single best-so-far horizon among {roll3, roll7,
+expanding}. Equal weighting is `eta → 0`. Confirmed empirically in
+`final_experiments/*/diagnostic/seed*/mixture_weights.csv`: at `eta=1e6`
+the realised daily weight vector is a one-hot (`(0,0,1)`-type), at `eta=0`
+it is `(1/3,1/3,1/3)`. On Avazu, dev loss genuinely preferred this hard
+daily pick over any blend (0.42168 vs 0.42200 for softer eta; identical
+across all three half-lives — the signature of a hard argmax, where the
+discount is irrelevant). So Avazu's cross-day mixture *is* doing something
+(switching which single horizon to trust each day), it is simply not
+*blending* — the opposite of the "weight everything equally" reading.
+On the Avazu test days it puts 100% weight on `roll3` (days 7, 9), and
+splits `roll7`/`expanding` on day 8 — hard daily selection favouring the
+short window, not a blend.
 
-## What's NOT covered by this document
+The corrected reading does not change the headline conclusion (DualTime-CTR
+shows no reproducible Avazu edge) but it does change the mechanism
+sentence: cross-day horizon *selection* helps a little on Avazu; cross-day
+horizon *blending* and within-day residual correction do not.
 
-- Rolling-origin confirmation (spec section 13, different day ranges than
-  the older exploratory `withinday_experiments/rolling/criteo` run).
-- Day-level statistical tables/figures beyond the inline CIs above
-  (sections 14, 17–18).
+## Review follow-ups (see `final_experiments/REVIEW_RESPONSE.md`)
+
+1. **Day-level statistics** — done. `day_level_stats.py` →
+   `DAY_LEVEL_STATS.md` (fixed origin) and `{criteo,avazu}/rolling/`
+   (rolling origin).
+2. **`eta=1e6` interpretation** — corrected above (follow-the-leader, not
+   equal weighting).
+3. **Frozen V5 vs online DualTime diagnostic** — `run_diagnostic.py` →
+   `{criteo,avazu}/diagnostic/`. Development evidence only (test days
+   already inspected).
+
+## Still not covered
+
+- 6-method rolling-origin figures (only the CSV tables + day-level stats).
 - Paper text (section 20) — no paper source file has been located in this
   repo.
 
-See `final_experiments/PROGRESS.md` for the live status of all of the
-above and how to resume.
+See `final_experiments/PROGRESS.md` for live status and how to resume.

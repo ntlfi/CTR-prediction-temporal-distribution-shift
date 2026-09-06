@@ -1,0 +1,40 @@
+{
+  "seed": 0,
+  "n_rows": 40428967,
+  "test_days": [
+    7,
+    8,
+    9
+  ],
+  "frozen_v5": {
+    "adapter_train_days": [
+      5
+    ],
+    "adapter_dev_days": [
+      6
+    ],
+    "dev_logloss": 0.4166766537158024,
+    "v5_cfg": {
+      "hidden": 32,
+      "n_heads": 2,
+      "mlp_hidden": [
+        64,
+        32
+      ],
+      "rank": 4,
+      "cross_dim": 32,
+      "delta_max": 1.0,
+      "dropout": 0.0,
+      "lr": 0.0003,
+      "weight_decay": 1e-05,
+      "lam_delta": 0.0,
+      "K": 16,
+      "seed": 0
+    }
+  },
+  "mixture": {
+    "eta": 1000000.0,
+    "halflife": 3.0
+  },
+  "runtime_s": 708.4623653888702
+}

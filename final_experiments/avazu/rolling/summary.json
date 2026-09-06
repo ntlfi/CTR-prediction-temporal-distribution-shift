@@ -1,0 +1,36 @@
+{
+  "source": "avazu",
+  "config_used": "final_experiments/avazu/hpo/selected_configs.json",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "outer_days": [
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "inner_k": 3,
+  "code_commit": "8883eade420b48ac562d17df4e156e56c99b9ba9",
+  "frozen_from_selected_configs": [
+    "ops.B",
+    "ops.eta0",
+    "ops.schedule",
+    "dualtime.B_w",
+    "block_sec",
+    "delay_sec",
+    "m",
+    "cross_dim"
+  ],
+  "reselected_per_origin": [
+    "shared_mixture.eta",
+    "shared_mixture.halflife",
+    "best_fixed_window.h_star",
+    "arw.delta",
+    "adamoe.lambda"
+  ],
+  "runtime_s": 3317.1907992362976
+}

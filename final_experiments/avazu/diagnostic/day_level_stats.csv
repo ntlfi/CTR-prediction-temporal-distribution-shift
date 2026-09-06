@@ -1,0 +1,4 @@
+label,baseline,method,n_days,mean_delta_daywt,median_delta,imp_wt_delta,ci95_lo,ci95_hi,ci_excludes_0,n_days_won,n_days_lost,n_days_tied,frac_days_won,sign_test_p,sign_test_p_notie,sign_test_p_floor,mbb_ci_lo,mbb_ci_hi,loo_reverses_sign,per_seed_spread
+Avazu diagnostic (dev evidence),long_only,dualtime,3,-0.0004939830948250864,-0.0003339841610861538,-0.0005441080842341,-0.0009961218015889783,-0.00015184332180012694,True,3,0,0,1.0,0.25,0.25,0.25,,,False,0.0002864331682766452
+Avazu diagnostic (dev evidence),long_only,frozen_v5,3,-0.000683900234646706,-0.0005028270920155453,-0.0007482039748170571,-0.0013216547584291582,-0.00022721885349541449,True,3,0,0,1.0,0.25,0.25,0.25,,,False,0.00020598595802819497
+Avazu diagnostic (dev evidence),long_only,ops,3,-0.0006540847659821288,-0.00046118591725086144,-0.0007106552685501501,-0.001224066507962196,-0.000277001872733329,True,3,0,0,1.0,0.25,0.25,0.25,,,False,0.000295842518541108

@@ -1,0 +1,426 @@
+[
+  {
+    "label": "Criteo (fixed origin, test days 22-30)",
+    "dir": "final_experiments/criteo/final",
+    "days": [
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+    ],
+    "methods": [
+      "adamoe",
+      "arw",
+      "best_fixed",
+      "dualtime",
+      "expanding",
+      "ops"
+    ],
+    "table": [
+      {
+        "label": "Criteo (fixed origin, test days 22-30)",
+        "baseline": "expanding",
+        "method": "adamoe",
+        "n_days": 9,
+        "mean_delta_daywt": -0.0009223280241053752,
+        "median_delta": -0.0008534663251527075,
+        "imp_wt_delta": -0.0009106299042410028,
+        "ci95_lo": -0.0010801995997175733,
+        "ci95_hi": -0.0007801401759218137,
+        "ci_excludes_0": true,
+        "n_days_won": 9,
+        "n_days_lost": 0,
+        "n_days_tied": 0,
+        "frac_days_won": 1.0,
+        "sign_test_p": 0.00390625,
+        "sign_test_p_notie": 0.00390625,
+        "sign_test_p_floor": 0.00390625,
+        "mbb_ci_lo": -0.00108599038225281,
+        "mbb_ci_hi": -0.0007600158622660969,
+        "loo_reverses_sign": false,
+        "per_seed_day_means": {
+          "0": -0.0009201688920151953,
+          "1": -0.0008913301997504927,
+          "2": -0.0009554849805505361
+        },
+        "per_seed_spread": 6.41547808000434e-05
+      },
+      {
+        "label": "Criteo (fixed origin, test days 22-30)",
+        "baseline": "expanding",
+        "method": "arw",
+        "n_days": 9,
+        "mean_delta_daywt": -0.0007816751027133319,
+        "median_delta": -0.0006630002393807066,
+        "imp_wt_delta": -0.0007664563602696289,
+        "ci95_lo": -0.00100852510205229,
+        "ci95_hi": -0.0005794663187234447,
+        "ci_excludes_0": true,
+        "n_days_won": 9,
+        "n_days_lost": 0,
+        "n_days_tied": 0,
+        "frac_days_won": 1.0,
+        "sign_test_p": 0.00390625,
+        "sign_test_p_notie": 0.00390625,
+        "sign_test_p_floor": 0.00390625,
+        "mbb_ci_lo": -0.0010136847144670222,
+        "mbb_ci_hi": -0.0005516372383699325,
+        "loo_reverses_sign": false,
+        "per_seed_day_means": {
+          "0": -0.0008373641475159572,
+          "1": -0.0007597795713813779,
+          "2": -0.0007478815892426605
+        },
+        "per_seed_spread": 8.948255827329673e-05
+      },
+      {
+        "label": "Criteo (fixed origin, test days 22-30)",
+        "baseline": "expanding",
+        "method": "best_fixed",
+        "n_days": 9,
+        "mean_delta_daywt": -0.0007902705214901045,
+        "median_delta": -0.0006630002393807066,
+        "imp_wt_delta": -0.0007774727092522761,
+        "ci95_lo": -0.0010066958598534935,
+        "ci95_hi": -0.0005942703278551997,
+        "ci_excludes_0": true,
+        "n_days_won": 9,
+        "n_days_lost": 0,
+        "n_days_tied": 0,
+        "frac_days_won": 1.0,
+        "sign_test_p": 0.00390625,
+        "sign_test_p_notie": 0.00390625,
+        "sign_test_p_floor": 0.00390625,
+        "mbb_ci_lo": -0.001015836667946937,
+        "mbb_ci_hi": -0.0005673535312746959,
+        "loo_reverses_sign": false,
+        "per_seed_day_means": {
+          "0": -0.0008373641475159572,
+          "1": -0.0007597795713813779,
+          "2": -0.0007736678455730154
+        },
+        "per_seed_spread": 7.758457613457929e-05
+      },
+      {
+        "label": "Criteo (fixed origin, test days 22-30)",
+        "baseline": "expanding",
+        "method": "dualtime",
+        "n_days": 9,
+        "mean_delta_daywt": -0.0010103783219153433,
+        "median_delta": -0.000886520831132831,
+        "imp_wt_delta": -0.0009969569345337369,
+        "ci95_lo": -0.0012160613905994034,
+        "ci95_hi": -0.0008311154097644856,
+        "ci_excludes_0": true,
+        "n_days_won": 9,
+        "n_days_lost": 0,
+        "n_days_tied": 0,
+        "frac_days_won": 1.0,
+        "sign_test_p": 0.00390625,
+        "sign_test_p_notie": 0.00390625,
+        "sign_test_p_floor": 0.00390625,
+        "mbb_ci_lo": -0.0012047119831551335,
+        "mbb_ci_hi": -0.0008019054891703129,
+        "loo_reverses_sign": false,
+        "per_seed_day_means": {
+          "0": -0.0010371498593674995,
+          "1": -0.001016632947679372,
+          "2": -0.0009773521586992073
+        },
+        "per_seed_spread": 5.9797700668292155e-05
+      },
+      {
+        "label": "Criteo (fixed origin, test days 22-30)",
+        "baseline": "expanding",
+        "method": "ops",
+        "n_days": 9,
+        "mean_delta_daywt": -0.0011195154866436236,
+        "median_delta": -0.0011123803486607908,
+        "imp_wt_delta": -0.001108798651646769,
+        "ci95_lo": -0.001315934349095292,
+        "ci95_hi": -0.0009350200111396424,
+        "ci_excludes_0": true,
+        "n_days_won": 9,
+        "n_days_lost": 0,
+        "n_days_tied": 0,
+        "frac_days_won": 1.0,
+        "sign_test_p": 0.00390625,
+        "sign_test_p_notie": 0.00390625,
+        "sign_test_p_floor": 0.00390625,
+        "mbb_ci_lo": -0.0013076561331569635,
+        "mbb_ci_hi": -0.0009112958746359596,
+        "loo_reverses_sign": false,
+        "per_seed_day_means": {
+          "0": -0.0011118302171968025,
+          "1": -0.0011244077008073629,
+          "2": -0.001122308541926779
+        },
+        "per_seed_spread": 1.2577483610560396e-05
+      }
+    ],
+    "seed_averaged_losses": {
+      "adamoe": {
+        "22": 0.6077261628311025,
+        "23": 0.6077936929775043,
+        "24": 0.6141462231944134,
+        "25": 0.6114849597554133,
+        "26": 0.5994774655814158,
+        "27": 0.6021854074665137,
+        "28": 0.606810267545146,
+        "29": 0.6081545382506017,
+        "30": 0.608947479918054
+      },
+      "arw": {
+        "22": 0.6079166289168745,
+        "23": 0.60809934115371,
+        "24": 0.6141015318044731,
+        "25": 0.6115471677481427,
+        "26": 0.5996531724138751,
+        "27": 0.6024269408867408,
+        "28": 0.6070877077839936,
+        "29": 0.6081322589487531,
+        "30": 0.6090273241561303
+      },
+      "best_fixed": {
+        "22": 0.6079166289168745,
+        "23": 0.60809934115371,
+        "24": 0.6141438437713017,
+        "25": 0.6115265716915443,
+        "26": 0.5995540977346538,
+        "27": 0.6024269408867408,
+        "28": 0.6070877077839936,
+        "29": 0.6081322589487531,
+        "30": 0.6090273241561303
+      },
+      "dualtime": {
+        "22": 0.6076931083251224,
+        "23": 0.6078030280370541,
+        "24": 0.6138900816807481,
+        "25": 0.611569621521549,
+        "26": 0.5992294282991325,
+        "27": 0.6023095220098659,
+        "28": 0.606750058301079,
+        "29": 0.6079229621383904,
+        "30": 0.6087659345269336
+      },
+      "expanding": {
+        "22": 0.6085796291562552,
+        "23": 0.6086289155325658,
+        "24": 0.6155183304489554,
+        "25": 0.6126427291769591,
+        "26": 0.6000978270227831,
+        "27": 0.602947364002218,
+        "28": 0.6074809907595072,
+        "29": 0.6090751061268573,
+        "30": 0.6100562575110118
+      },
+      "ops": {
+        "22": 0.6076103663340451,
+        "23": 0.6077284183890677,
+        "24": 0.6138354596630758,
+        "25": 0.6114133811919856,
+        "26": 0.5989854466741223,
+        "27": 0.6022858429135471,
+        "28": 0.6066132593915935,
+        "29": 0.6077818198505858,
+        "30": 0.6086975159492974
+      }
+    }
+  },
+  {
+    "label": "Avazu (fixed origin, test days 7-9)",
+    "dir": "final_experiments/avazu/final",
+    "days": [
+      7,
+      8,
+      9
+    ],
+    "methods": [
+      "adamoe",
+      "arw",
+      "best_fixed",
+      "dualtime",
+      "expanding",
+      "ops"
+    ],
+    "table": [
+      {
+        "label": "Avazu (fixed origin, test days 7-9)",
+        "baseline": "expanding",
+        "method": "adamoe",
+        "n_days": 3,
+        "mean_delta_daywt": -0.00021130800131045438,
+        "median_delta": -0.00021775349254027354,
+        "imp_wt_delta": -0.00019421254122298755,
+        "ci95_lo": -0.0003633392348934006,
+        "ci95_hi": -5.283127649768904e-05,
+        "ci_excludes_0": true,
+        "n_days_won": 3,
+        "n_days_lost": 0,
+        "n_days_tied": 0,
+        "frac_days_won": 1.0,
+        "sign_test_p": 0.25,
+        "sign_test_p_notie": 0.25,
+        "sign_test_p_floor": 0.25,
+        "mbb_ci_lo": null,
+        "mbb_ci_hi": null,
+        "loo_reverses_sign": false,
+        "per_seed_day_means": {
+          "0": -0.000217627588771289,
+          "1": -0.0002633808401691362,
+          "2": -0.00015291557499090094
+        },
+        "per_seed_spread": 0.00011046526517823527
+      },
+      {
+        "label": "Avazu (fixed origin, test days 7-9)",
+        "baseline": "expanding",
+        "method": "arw",
+        "n_days": 3,
+        "mean_delta_daywt": -7.618803255871054e-05,
+        "median_delta": -4.782883680276573e-06,
+        "imp_wt_delta": -6.581150228555775e-05,
+        "ci95_lo": -0.00022378121399585504,
+        "ci95_hi": 0.0,
+        "ci_excludes_0": false,
+        "n_days_won": 2,
+        "n_days_lost": 0,
+        "n_days_tied": 1,
+        "frac_days_won": 0.6666666666666666,
+        "sign_test_p": 1.0,
+        "sign_test_p_notie": 0.5,
+        "sign_test_p_floor": 0.25,
+        "mbb_ci_lo": null,
+        "mbb_ci_hi": null,
+        "loo_reverses_sign": false,
+        "per_seed_day_means": {
+          "0": -0.0001526067751578264,
+          "1": -8.492012482861726e-05,
+          "2": 8.962802310256516e-06
+        },
+        "per_seed_spread": 0.0001615695774680829
+      },
+      {
+        "label": "Avazu (fixed origin, test days 7-9)",
+        "baseline": "expanding",
+        "method": "best_fixed",
+        "n_days": 3,
+        "mean_delta_daywt": 0.0004433163049676521,
+        "median_delta": 5.616030944960437e-05,
+        "imp_wt_delta": 0.0005511082247239982,
+        "ci95_lo": -0.00026080097589759044,
+        "ci95_hi": 0.0015345895813509425,
+        "ci_excludes_0": false,
+        "n_days_won": 1,
+        "n_days_lost": 2,
+        "n_days_tied": 0,
+        "frac_days_won": 0.3333333333333333,
+        "sign_test_p": 1.0,
+        "sign_test_p_notie": 1.0,
+        "sign_test_p_floor": 0.25,
+        "mbb_ci_lo": null,
+        "mbb_ci_hi": null,
+        "loo_reverses_sign": true,
+        "per_seed_day_means": {
+          "0": 0.0003322694967083743,
+          "1": 0.00027051592833486165,
+          "2": 0.000727163489859702
+        },
+        "per_seed_spread": 0.00045664756152484037
+      },
+      {
+        "label": "Avazu (fixed origin, test days 7-9)",
+        "baseline": "expanding",
+        "method": "dualtime",
+        "n_days": 3,
+        "mean_delta_daywt": -4.0520286027578845e-05,
+        "median_delta": -0.0003219487124981879,
+        "imp_wt_delta": 1.4001085876655998e-05,
+        "ci95_lo": -0.00033807992534651277,
+        "ci95_hi": 0.0005384677797619641,
+        "ci_excludes_0": false,
+        "n_days_won": 2,
+        "n_days_lost": 1,
+        "n_days_tied": 0,
+        "frac_days_won": 0.6666666666666666,
+        "sign_test_p": 1.0,
+        "sign_test_p_notie": 1.0,
+        "sign_test_p_floor": 0.25,
+        "mbb_ci_lo": null,
+        "mbb_ci_hi": null,
+        "loo_reverses_sign": true,
+        "per_seed_day_means": {
+          "0": -0.00013924873834606868,
+          "1": -7.075382175016538e-05,
+          "2": 8.844170201346054e-05
+        },
+        "per_seed_spread": 0.00022769044035952923
+      },
+      {
+        "label": "Avazu (fixed origin, test days 7-9)",
+        "baseline": "expanding",
+        "method": "ops",
+        "n_days": 3,
+        "mean_delta_daywt": -0.00020062195718462128,
+        "median_delta": -0.00044710726343138996,
+        "imp_wt_delta": -0.0001525460984393943,
+        "ci95_lo": -0.0004652816815112204,
+        "ci95_hi": 0.0003105230733887465,
+        "ci_excludes_0": false,
+        "n_days_won": 2,
+        "n_days_lost": 1,
+        "n_days_tied": 0,
+        "frac_days_won": 0.6666666666666666,
+        "sign_test_p": 1.0,
+        "sign_test_p_notie": 1.0,
+        "sign_test_p_floor": 0.25,
+        "mbb_ci_lo": null,
+        "mbb_ci_hi": null,
+        "loo_reverses_sign": false,
+        "per_seed_day_means": {
+          "0": -0.00026817804034336606,
+          "1": -0.00024173700235489518,
+          "2": -9.19508288557321e-05
+        },
+        "per_seed_spread": 0.00017622721148763398
+      }
+    ],
+    "seed_averaged_losses": {
+      "adamoe": {
+        "7": 0.373886738712013,
+        "8": 0.38529646686294844,
+        "9": 0.4062508606679245
+      },
+      "arw": {
+        "7": 0.3739395699885107,
+        "8": 0.385436024883846,
+        "9": 0.4064638312767845
+      },
+      "best_fixed": {
+        "7": 0.37547415956986163,
+        "8": 0.38539900512194425,
+        "9": 0.40652477446991436
+      },
+      "dualtime": {
+        "7": 0.37447803776827265,
+        "8": 0.38533785738534365,
+        "9": 0.40613053423511825
+      },
+      "expanding": {
+        "7": 0.3739395699885107,
+        "8": 0.38565980609784184,
+        "9": 0.40646861416046476
+      },
+      "ops": {
+        "7": 0.37425009306189944,
+        "8": 0.38521269883441045,
+        "9": 0.40600333247895354
+      }
+    }
+  }
+]

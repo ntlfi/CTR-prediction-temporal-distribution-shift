@@ -1,0 +1,11 @@
+{
+  "source": "avazu",
+  "config_used": "final_experiments/avazu/hpo/selected_configs.json",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "note": "DEVELOPMENT EVIDENCE ONLY - test days already inspected; not a fresh locked test",
+  "runtime_s": 2067.5573699474335
+}

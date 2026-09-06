@@ -84,7 +84,7 @@ class DualTimeConfig:
 
 
 def replay_day(q: np.ndarray, y: np.ndarray, sec_in_day: np.ndarray, X_day, R_sketch, Ra, Rs,
-               cfg: DualTimeConfig):
+               cfg: DualTimeConfig, csketch: np.ndarray | None = None):
     """Replay one day of DualTime-CTR (protocol section 11): ``w`` resets
     to 0 at the start of the day (so ``p_hat == q`` until the first block
     matures -- the required "no-history identity"), updated once per
@@ -100,7 +100,12 @@ def replay_day(q: np.ndarray, y: np.ndarray, sec_in_day: np.ndarray, X_day, R_sk
     if n == 0:
         return {"p_hat": np.array([]), "w_end": None, "trace": []}
 
-    csketch = context_sketch(X_day, m=cfg.m, R=R_sketch)
+    # ``csketch`` (context sketch) is a pure function of ``X_day`` and
+    # ``R_sketch`` -- mixture-config-independent -- so a caller sweeping
+    # many q's over the same day (e.g. the rolling-origin runner) may pass
+    # it in precomputed. When given it must be row-aligned to the input.
+    if csketch is None:
+        csketch = context_sketch(X_day, m=cfg.m, R=R_sketch)
     tokens = build_block_tokens(q, y, sec, csketch, cfg.block_sec, eps=cfg.eps)
     summary = deterministic_summary(tokens)
     k_avail = last_available_block(sec, cfg.block_sec, cfg.delay_sec)
