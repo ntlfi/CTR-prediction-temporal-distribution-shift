@@ -1,0 +1,50 @@
+{
+  "source": "avazu",
+  "block_sec": 3600,
+  "delay_sec": 1800,
+  "ops_config_ref": "final_experiments/avazu/hpo/selected_configs.json",
+  "shared_mixture": {
+    "eta": 1000000.0,
+    "halflife": 3.0
+  },
+  "ops": {
+    "B": 0.25,
+    "eta0": 0.3,
+    "schedule": "const",
+    "a_bounds": [
+      0.2,
+      5.0
+    ]
+  },
+  "ons_lam": 1.0,
+  "ons_eta": 4.0,
+  "eta_m": 100.0,
+  "switch_half_life_h": 4.0,
+  "short_half_life_h": 4.0,
+  "long_half_life_h": 16.0,
+  "a_bounds": [
+    0.2,
+    5.0
+  ],
+  "b_bounds": [
+    -0.25,
+    0.25
+  ],
+  "single_memory_pick": "L",
+  "init_weights": [
+    0.5,
+    0.25,
+    0.25
+  ],
+  "decision_rule": {
+    "l_ops_dev": 0.42155561570422245,
+    "l_baseq_dev": 0.4216849644395466,
+    "delta_NI": 1.2934873532416403e-05
+  },
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "runtime_s": 2152.3629376888275
+}
