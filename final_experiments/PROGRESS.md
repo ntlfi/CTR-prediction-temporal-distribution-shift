@@ -25,38 +25,81 @@ Verified (2026-09-05): `dualtime/online.py::replay_day`, used by
 **already implements the online version**, not V5's offline/frozen one.
 No code change was needed for this; the module docstring was updated to
 state the distinction explicitly per the user's request. Every
-`final_experiments/` result recorded below (Criteo done, Avazu pending)
-is therefore already the correct final online DualTime-CTR, not V5.
+`final_experiments/` result recorded below (both datasets done) is
+therefore the correct final online DualTime-CTR, not V5. The separate
+`run_diagnostic.py` arm `frozen_v5` is the deliberate V5 comparison
+(review comment 3) and is labelled as such everywhere.
 
-## Current status (read this first)
+## Current status (read this first) -- updated 2026-09-05, commit d5f2f21
 
-- **Full-scale HPO is running right now**: `final_experiments/hpo_criteo.slurm`
-  (job 12491537) and `hpo_avazu.slurm` (job 12491538), both submitted,
-  `--mem` sized to this cluster's confirmed ~250G node cap. Check with
-  `squeue -u $USER` / `sacct -j 12491537,12491538` and read
-  `final_experiments/logs/hpo_{criteo,avazu}_<jobid>.out`. When done, each
-  writes `final_experiments/{criteo,avazu}/hpo/{hpo_best_fixed,hpo_arw,
-  hpo_adamoe,hpo_longterm,hpo_ops,hpo_dualtime}.csv` and
-  `selected_configs.json`.
-- Everything through the HPO pipeline (methods.py, run_hpo.py,
-  leakage_tests.py) is written, unit- and smoke-tested, and committed
-  (commits `3eb8f37`, `fb14f81`, `bd294da`; leakage_tests.txt commit
-  pending as of this edit). **The headline table is still all TBD** --
-  nothing below "primary 3-seed test" in the section-19 checklist has
-  been started.
-- **Not yet built at all**: the primary 3-seed final-test runner (spec
-  section 12 -- reads `selected_configs.json`, runs all 6 methods on the
-  locked test days, produces the 12 headline numbers), the rolling-origin
-  runner for all 6 methods (section 13, different outer-day ranges than
-  the old exploratory `withinday_experiments/rolling/` line -- Criteo
-  16-30 = 15 days, Avazu 5-9 = 5 days), day-level stats wiring (section
-  14 -- reuse `withinday/daystats.py`, don't reimplement), all output
-  tables/figures (sections 17-18), paper text updates (section 20 -- no
-  paper file located in this repo yet, ask the user where it lives).
-- **Next concrete step once HPO finishes**: write
-  `final_experiments/run_final.py` (3-seed locked test, all 6 methods,
-  using frozen `selected_configs.json`) -- this is what actually fills in
-  the 12 TBD cells.
+**All computation is done. Nothing is running.** (`squeue -u $USER` shows
+only an unrelated interactive `bash` job.) The pipeline through the primary
+3-seed locked test AND all three pre-decision review follow-ups are
+finished, committed and pushed to `main`.
+
+### Done and committed
+
+| step | artifacts | commit |
+|---|---|---|
+| HPO (both datasets, 3 seeds, dev-only) | `{criteo,avazu}/hpo/selected_configs.json` + full grid CSVs | c3077b4, 8286b85 |
+| Primary 3-seed locked test, 6 methods | `{criteo,avazu}/final/headline_results.csv` | f011eab |
+| Consolidated 12-cell headline | `FINDINGS.md` | fab81be, 8883ead |
+| **Review 1: day-level stats** | `day_level_stats.py`, `DAY_LEVEL_STATS.md` | d5f2f21 |
+| **Review 1: 6-method rolling-origin** | `run_rolling.py`, `{criteo,avazu}/rolling/`, `DAY_LEVEL_STATS_ROLLING.md` | d5f2f21 |
+| **Review 2: eta=1e6 = follow-the-leader** | corrected `FINDINGS.md` / `PROGRESS.md` | d5f2f21 |
+| **Review 3: frozen-V5-vs-online diagnostic** | `run_diagnostic.py`, `{criteo,avazu}/diagnostic/`, `DAY_LEVEL_STATS_DIAGNOSTIC.md` | d5f2f21 |
+| Overall response + recommendation | `final_experiments/REVIEW_RESPONSE.md` | d5f2f21 |
+
+### Headline numbers to carry forward
+
+- **Criteo:** every adaptive method beats Expanding at the day level --
+  9/9 fixed-origin, 15/15 rolling-origin, bootstrap CI excl. 0, sign-test
+  p at the D-floor. Order by log loss: OPS < DualTime-CTR < AdaMoE ~=
+  long_only < ARW < BestFixed. **OPS beats online DualTime-CTR at the day
+  level** (rolling: -0.000257 vs -0.000140 vs long_only; DualTime 0/9
+  fixed-origin days head-to-head vs OPS).
+- **Avazu:** underpowered -- D=3 fixed / D=5 rolling, sign-test floor
+  p >= 0.0625. AdaMoE is the cleanest (5/5 rolling origins, CI excl. 0).
+  DualTime-CTR shows no reproducible edge; its rolling Expanding CI
+  crosses 0.
+- **Diagnostic:** Criteo `L(frozen V5) ~= L(online DualTime)`, both < OPS
+  -> no within-day contextual signal for either. Avazu `L(frozen V5) <
+  L(online DualTime)` but only ties OPS, not significant.
+
+### The open decision (why this doc still exists)
+
+**Keep online DualTime-CTR as the headline method, or not?** On this
+evidence it never beats OPS. `REVIEW_RESPONSE.md` lays out two honest
+write-ups:
+  (a) report it as a negative result (theory-friendly online contextual
+      model doesn't beat a 2-parameter online scalar), or
+  (b) build the **warm-start refinement** -- `w_{d,1} = w_historical`
+      (offline-learned residual model from previous days) then projected
+      OGD within the current day, instead of `w_{d,0}=0` every morning.
+      The OGD regret bound still holds with non-zero init (constant
+      becomes the initial distance to the comparator). Only Avazu hints
+      it helps, and that hint is NOT significant.
+
+### If you pick (b) -- next concrete steps for the new session
+
+1. Implement warm-started DualTime: extend `dualtime/online.py::replay_day`
+   to take `w_init` (offline-fit `w` over `phi` on the historical days,
+   e.g. logistic regression / the frozen `withinday` V5 weights), keep the
+   projection `||w|| <= B_w` and `eta_k = B_w/sqrt(k)`. Add it as a 5th
+   arm in `run_diagnostic.py`.
+2. **Do NOT re-score it on Criteo days 22-30 / Avazu days 7-9 and call it
+   a locked test** -- those days are now inspected. Use the diagnostic
+   result as development evidence only.
+3. Confirmation must come from a genuinely untouched chronological stream:
+   either a later date range of the same logs if more data exists, or a
+   third dataset. Freeze the protocol before looking (see
+   `withinday_experiments/ROLLING_PROTOCOL_FREEZE.md` for the pattern).
+
+### Still not done (independent of the decision)
+
+- Rolling-origin **figures** (only CSV tables + day-level stats exist).
+- Paper text -- no paper source file has been located in this repo; ask
+  the user where it lives.
 
 ## What's done
 
