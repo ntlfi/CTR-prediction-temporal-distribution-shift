@@ -1,0 +1,10 @@
+=== criteo (seed 0, sample_frac=0.03) ===
+[PASS] anchor-only AP-OPS (1,0,0) reproduces current OPS bit-for-bit
+[PASS] current_ops row == standalone ops_method (golden reference)
+[PASS] flipping labels after t leaves every prediction before t-delay unchanged
+[PASS] all days before the perturbed day are byte-identical
+[PASS] meta weights nonnegative and sum to 1 across all 573 updates
+[PASS] persistent-expert (a, b) stay inside [0.2,5] x [-0.25,0.25]
+[PASS] identical inputs reproduce identical AP-OPS / ablation outputs
+
+7 passed, 0 failed
