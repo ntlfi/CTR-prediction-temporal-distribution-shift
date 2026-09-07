@@ -89,19 +89,19 @@ fraction.
 
 ## IN PROGRESS / NEXT STEPS
 
-1. **Smoke test** `run_apops_nested.py` on 3% Criteo — RUNNING as this doc
-   was written (`/tmp/.../scratchpad/nested_smoke/`, loop 1 done ~7 min,
-   loop 2 running). Verify: `per_day_metrics.csv` has 5 methods × 15 days ×
-   3 seeds; `summary.json` `lambda_ap_selected_per_origin` populated;
-   `run_apops_analysis.py --nested` produces sane tables. Then avazu smoke
-   (`--source avazu --sample-frac 0.05`).
-2. **Submit full jobs** (once smoke is clean, on branch):
-   ```
-   sbatch final_experiments/apops_nested_criteo.slurm   # ~1-3 h est
-   sbatch final_experiments/apops_nested_avazu.slurm    # ~1.5-2 h est
-   ```
-   Both use `final_experiments/{ds}/apops/apops_selected.json` (already
-   committed on main), write to `final_experiments/{ds}/apops/nested/`.
+1. **Smoke test** — DONE. `run_apops_nested.py` on 3% Criteo ran clean in
+   1191 s: 5 methods × 15 origins × 3 seeds in `seed*/per_day_metrics.csv`,
+   `summary.json` has `lambda_ap_selected_per_origin`, `run_apops_analysis.py
+   --nested` produces the table + 3 decision-rule verdicts. (On 3% data the
+   ONS optimizer underperforms proj-gradient and AP-OPS collapses to OPS on
+   10/15 origins via λ_AP=0 — the intended safety behavior; full data is
+   the real test, cf. §5 where persistent ONS clearly beats OPS.)
+2. **Full jobs SUBMITTED 2026-09-06:** `apops_nested_criteo` = **job
+   12515130**, `apops_nested_avazu` = **job 12515131**. Both read
+   `final_experiments/{ds}/apops/apops_selected.json` (on `main`), write
+   `final_experiments/{ds}/apops/nested/`. Est ~3-6 h Criteo, ~2-3 h Avazu
+   (12 h wall). Check: `squeue -u $USER`, logs
+   `final_experiments/logs/apops_nested_{ds}_*.out`.
 3. **Analyse** when both land:
    ```
    PYTHONPATH=. .venv/bin/python final_experiments/run_apops_analysis.py --nested \
