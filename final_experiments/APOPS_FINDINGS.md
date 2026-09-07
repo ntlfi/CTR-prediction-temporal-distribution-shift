@@ -271,7 +271,73 @@ block/delay, S/L half-lives.
 
 ### Results
 
-_pending — jobs `apops_nested_{criteo,avazu}.slurm`_
+Jobs `12515130` (Criteo, 8254 s) / `12515131` (Avazu, 6303 s), full data,
+3 seeds. Day-level inference (seeds averaged within each origin day, then
+bootstrap / sign-test across origins); every row paired against `ops`.
+Full table `APOPS_NESTED.md`, per-origin manifest
+`{ds}/apops/nested/nested_origin_manifest.csv`.
+
+**Criteo (15 origins, days 16–30):**
+
+| row | mean Δ vs OPS (day-wt) | 95 % CI (day bootstrap) | CI excl 0 | origins won |
+|---|---|---|---|---|
+| Reset-ONS | −0.000167 | [−0.000218, −0.000125] | yes | 15/15 |
+| Persistent-ONS | −0.000170 | [−0.000220, −0.000128] | yes | 15/15 |
+| **AP-OPS** | **−0.000172** | [−0.000220, −0.000131] | yes | 15/15 |
+| No-slope | −0.000002 | [−0.000053, +0.000047] | no | 6/15 |
+
+**Avazu (5 origins, days 5–9):**
+
+| row | mean Δ vs OPS (day-wt) | 95 % CI (day bootstrap) | CI excl 0 | origins won |
+|---|---|---|---|---|
+| Reset-ONS | +0.000019 | [−0.000090, +0.000133] | no | 3/5 |
+| Persistent-ONS | −0.000049 | [−0.000143, +0.000057] | no | 3/5 |
+| **AP-OPS** | **−0.000136** | [−0.000181, −0.000098] | yes | 5/5 |
+| No-slope | +0.000229 | [+0.000081, +0.000397] | no (wrong side) | 0/5 |
+
+### Verdict: AP-OPS succeeds on both datasets; the *mechanism* is dataset-specific
+
+**AP-OPS beats OPS on both** — Criteo −0.000172 (15/15 origins, CI excl 0),
+Avazu −0.000136 (5/5, CI excl 0) — with **`λ_AP > 0` on all 20 origins**
+(Criteo mostly 0.75, Avazu 0.25–0.5) and no early-/worst-day regression
+(AP-OPS worst-origin Δ = −0.000046 Criteo, −0.000073 Avazu — still
+improvements). All three success criteria met.
+
+But the ablations show the two datasets are driven by **different**
+sub-mechanisms:
+
+| | Criteo | Avazu |
+|---|---|---|
+| Reset-ONS (ONS optimizer only, daily reset) | −0.000167 — **captures the entire gain** | +0.000019 — **no gain, ≈ OPS** |
+| Persistent-ONS (+ cross-day persistence) | −0.000170 — adds nothing (Δ vs Reset-ONS = 3e-6, noise) | −0.000049 — a real ~7e-5 step (CI still crosses 0 at D=5) |
+| AP-OPS (+ adaptive {R,S,L} aggregation) | −0.000172 — adds nothing | −0.000136 — **adds the rest; ~3× Persistent-ONS, only its CI excludes 0** |
+| what explains AP-OPS > OPS | the projected-gradient → **discounted-ONS optimizer** | **cross-day persistence + adaptive aggregation** (the optimizer alone does nothing) |
+| No-slope | ≈ OPS — fixing `a` erases the gain | worse than OPS |
+
+**Decision rules (spec section 4), applied:**
+- *Cross-day persistence* — **supported on Avazu** (Persistent-ONS
+  materially beats Reset-ONS, and Reset-ONS ≈ OPS there);
+  **indistinguishable on Criteo** (Reset-ONS ≈ Persistent-ONS, both already
+  at the full −0.00017 — the ONS optimizer, not persistence, carries
+  Criteo).
+- *Adaptive aggregation* — **supported**: AP-OPS is non-inferior to
+  Persistent-ONS on both datasets and **materially better on Avazu**
+  (−0.000136 vs −0.000049, only AP-OPS's CI excludes zero). On Criteo it
+  neither helps nor hurts.
+- *Slope* — essential on both (no-slope ≈ OPS on Criteo, +0.00023 on Avazu).
+
+**Why keep the full AP-OPS rather than simplify.** No single sub-variant
+wins on both datasets: Reset-ONS fails on Avazu, Persistent-ONS is
+sub-significant on Avazu, and on Criteo all three ONS variants tie so
+nothing is lost by carrying the extra structure. AP-OPS is the only
+configuration that contains whichever mechanism each dataset needs, wins
+on both, and is protected by the anchor (`λ_AP = 0` reproduces OPS) — the
+nested selector never chose `λ_AP = 0`, but it is there as the floor.
+
+Note the nested per-origin selection also *improved* the Criteo point
+estimate over §5's dev-frozen rolling (−0.000172 vs −0.000119): re-picking
+the mixture, `(λ_AP, τ)` and half-life per origin is not just rigour, it
+recovers a little more.
 
 ### Final confirmation
 
@@ -293,7 +359,9 @@ evidence.
 | fixed test, both datasets, 3 seeds | **done** — `Improves` on both (preliminary) |
 | §5 dev-frozen rolling origin, both datasets | **done** — `Improves` on both (preliminary) |
 | §7 implementation corrections + cross-day test | **done** — 9/9 tests pass |
-| §7 fully-nested rolling origin (4 methods, per-origin selection) | **running** |
+| §7 fully-nested rolling origin (4 methods, per-origin selection) | **done** — AP-OPS beats OPS on both (15/15, 5/5); mechanism dataset-specific |
+| §7 frozen algorithm / grid / rules for future confirmation | **done** — `APOPS_FROZEN.md` |
+| this document | **complete** |
 
 ### Still open / optional (plan does not gate on these)
 

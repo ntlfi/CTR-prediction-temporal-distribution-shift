@@ -147,17 +147,34 @@ def nested_decisions(a: dict, summary: dict | None) -> str:
     by = {r["method"]: r for r in a["table"]}
     def d(name):  # mean day-wt delta vs OPS
         return by.get(name, {}).get("mean_delta_vs_ops")
+    FLOOR = 2e-5   # materiality floor for "these two rows differ"
     L = ["**Decision rules:**", ""]
-    dr, dp = d("Reset-ONS"), d("Persistent-ONS")
+    do = d("OPS") if d("OPS") is not None else 0.0
+    dr, dp, da = d("Reset-ONS"), d("Persistent-ONS"), d("AP-OPS")
+    r_ci, p_ci, a_ci = by.get("Reset-ONS", {}), by.get("Persistent-ONS", {}), by.get("AP-OPS", {})
     if dr is not None and dp is not None:
-        persist = dp < dr
-        L.append(f"- Cross-day persistence: Persistent-ONS {dp:+.6f} vs Reset-ONS {dr:+.6f} vs OPS "
-                 f"-> persistence {'SUPPORTED (Persistent-ONS beats Reset-ONS)' if persist else 'NOT supported (optimizer, not persistence, explains any gain)'}.")
-    da, ci = d("AP-OPS"), by.get("AP-OPS", {})
+        opt_helps = r_ci.get("ci95_hi", 1) < 0
+        if dp - dr < -FLOOR:
+            v = "SUPPORTED -- Persistent-ONS materially beats Reset-ONS"
+        elif abs(dp - dr) <= FLOOR:
+            v = ("indistinguishable from Reset-ONS -- the ONS optimizer, not persistence, carries the gain"
+                 if opt_helps else "indistinguishable from Reset-ONS, and neither beats OPS")
+        else:
+            v = "NOT supported -- Reset-ONS is better"
+        L.append(f"- Cross-day persistence: Persistent-ONS {dp:+.6f} vs Reset-ONS {dr:+.6f} "
+                 f"(vs OPS; Reset-ONS CI excl 0: {opt_helps}) -> {v}.")
     if da is not None and dp is not None:
-        non_inf = (ci.get("ci95_hi", 1) < 0) or (abs(da - dp) < 1e-5) or (da <= dp)
-        L.append(f"- Adaptive aggregation: AP-OPS {da:+.6f} vs Persistent-ONS {dp:+.6f} "
-                 f"-> {'AP-OPS at least matches the single persistent expert' if da <= dp + 1e-6 else 'single persistent expert is better -> simplify to Persistent-ONS'}.")
+        if da - dp < -FLOOR and a_ci.get("ci95_hi", 1) < 0:
+            v = "SUPPORTED -- AP-OPS materially beats the single persistent expert"
+        elif abs(da - dp) <= FLOOR:
+            v = "matches the single persistent expert (no material difference here)"
+        else:
+            v = "single persistent expert is at least as good"
+        L.append(f"- Adaptive aggregation: AP-OPS {da:+.6f} vs Persistent-ONS {dp:+.6f} -> {v}.")
+    if da is not None:
+        beats_ops = a_ci.get("ci95_hi", 1) < 0
+        L.append(f"- AP-OPS vs OPS: {da:+.6f}, CI [{a_ci.get('ci95_lo'):+.6f}, {a_ci.get('ci95_hi'):+.6f}], "
+                 f"{a_ci.get('n_days_won')}/{a_ci.get('n_days')} origins -> {'beats OPS (CI excl 0)' if beats_ops else 'not significant'}.")
     if summary:
         f = summary.get("lambda_ap_gt0_fraction")
         sel = summary.get("lambda_ap_selected_per_origin", [])

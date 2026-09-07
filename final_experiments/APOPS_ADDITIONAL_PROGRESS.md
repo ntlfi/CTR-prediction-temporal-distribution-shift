@@ -1,5 +1,22 @@
 # AP-OPS additional experiments — resumption doc
 
+## STATUS 2026-09-07: COMPLETE. Merged to `main`.
+
+Nested jobs 12515130 (Criteo, 8254 s) / 12515131 (Avazu, 6303 s) done.
+**AP-OPS beats OPS on both** under the fully nested protocol — Criteo
+−0.000172 [−0.000220, −0.000131] 15/15 origins, Avazu −0.000136 [−0.000181,
+−0.000098] 5/5 origins, `λ_AP > 0` on all 20 origins. Mechanism is
+**dataset-specific**: Criteo = the discounted-ONS optimizer (Reset-ONS
+alone already gets the full −0.00017; persistence/aggregation add nothing);
+Avazu = persistence + adaptive aggregation (Reset-ONS ≈ OPS there; AP-OPS
+−0.000136 ≈ 3× Persistent-ONS and only its CI excludes 0). Slope essential
+on both (no-slope ≈ OPS Criteo / +0.00023 Avazu). Full write-up
+`APOPS_FINDINGS.md` §7; per-run tables `APOPS_NESTED.md`; frozen spec
+`APOPS_FROZEN.md`. Everything below is the original plan, kept for context.
+
+---
+
+
 Spec: the user's "Minimal Additional Experiments for AP-OPS" message
 (2026-09-06, in the session that requested it — not saved as a repo file).
 If this session ended: **read this first**, then `APOPS_FINDINGS.md`
