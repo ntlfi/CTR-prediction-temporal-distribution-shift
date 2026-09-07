@@ -1,0 +1,126 @@
+{
+  "source": "criteo",
+  "config": "final_experiments/criteo/apops/apops_selected.json",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "per_seed": [
+    {
+      "current_ops": {
+        "imp_weighted_log_loss": 0.6069536488202358,
+        "daily_mean_log_loss": 0.6072118374792592,
+        "pre_feedback_ll": 0.619304539154116,
+        "first_quarter_ll": 0.6141027512893454,
+        "worst_day_ll": 0.6138537253839915,
+        "n_test_days": 9
+      },
+      "ap_ops": {
+        "imp_weighted_log_loss": 0.6068279100218696,
+        "daily_mean_log_loss": 0.6070856708551061,
+        "pre_feedback_ll": 0.6191833869549975,
+        "first_quarter_ll": 0.613896848492624,
+        "worst_day_ll": 0.6138062068843217,
+        "n_test_days": 9
+      },
+      "single_memory": {
+        "imp_weighted_log_loss": 0.606812918741147,
+        "daily_mean_log_loss": 0.6070713739021478,
+        "pre_feedback_ll": 0.6192602404144472,
+        "first_quarter_ll": 0.6139341943017154,
+        "worst_day_ll": 0.6138339004058941,
+        "n_test_days": 9
+      },
+      "no_slope": {
+        "imp_weighted_log_loss": 0.6069842800006016,
+        "daily_mean_log_loss": 0.6072392853340263,
+        "pre_feedback_ll": 0.6191763627459439,
+        "first_quarter_ll": 0.6138077580432617,
+        "worst_day_ll": 0.6138383913609071,
+        "n_test_days": 9
+      }
+    },
+    {
+      "current_ops": {
+        "imp_weighted_log_loss": 0.6069644011124872,
+        "daily_mean_log_loss": 0.6072221759635044,
+        "pre_feedback_ll": 0.6192958893590276,
+        "first_quarter_ll": 0.6140635674970374,
+        "worst_day_ll": 0.613816558903273,
+        "n_test_days": 9
+      },
+      "ap_ops": {
+        "imp_weighted_log_loss": 0.6068397634244471,
+        "daily_mean_log_loss": 0.6070968518099049,
+        "pre_feedback_ll": 0.6191737927817376,
+        "first_quarter_ll": 0.6138569943995331,
+        "worst_day_ll": 0.6137583091471978,
+        "n_test_days": 9
+      },
+      "single_memory": {
+        "imp_weighted_log_loss": 0.6068242485648785,
+        "daily_mean_log_loss": 0.6070819699100581,
+        "pre_feedback_ll": 0.619188869378441,
+        "first_quarter_ll": 0.6138957542559279,
+        "worst_day_ll": 0.613784130113546,
+        "n_test_days": 9
+      },
+      "no_slope": {
+        "imp_weighted_log_loss": 0.6069935605853584,
+        "daily_mean_log_loss": 0.607249656583271,
+        "pre_feedback_ll": 0.6191886233359252,
+        "first_quarter_ll": 0.6137658986588147,
+        "worst_day_ll": 0.6137948092216285,
+        "n_test_days": 9
+      }
+    },
+    {
+      "current_ops": {
+        "imp_weighted_log_loss": 0.6069573479699,
+        "daily_mean_log_loss": 0.6072164900096766,
+        "pre_feedback_ll": 0.6191355011300742,
+        "first_quarter_ll": 0.6140956581296545,
+        "worst_day_ll": 0.613836094701963,
+        "n_test_days": 9
+      },
+      "ap_ops": {
+        "imp_weighted_log_loss": 0.6068340279573917,
+        "daily_mean_log_loss": 0.6070928850916878,
+        "pre_feedback_ll": 0.6191582767499487,
+        "first_quarter_ll": 0.6138867953881381,
+        "worst_day_ll": 0.613796727369856,
+        "n_test_days": 9
+      },
+      "single_memory": {
+        "imp_weighted_log_loss": 0.6068205842510679,
+        "daily_mean_log_loss": 0.6070801109896655,
+        "pre_feedback_ll": 0.6193009338955726,
+        "first_quarter_ll": 0.6139323128734732,
+        "worst_day_ll": 0.6138246523344733,
+        "n_test_days": 9
+      },
+      "no_slope": {
+        "imp_weighted_log_loss": 0.6069910231368261,
+        "daily_mean_log_loss": 0.6072484124696047,
+        "pre_feedback_ll": 0.6191311569511133,
+        "first_quarter_ll": 0.6137981370254585,
+        "worst_day_ll": 0.6138458762569792,
+        "n_test_days": 9
+      }
+    }
+  ],
+  "decision": {
+    "delta_NI": 3.25078398833667e-05,
+    "ap_ops_mean_delta_vs_ops": -0.00012503189858040735,
+    "ap_ops_ci95": [
+      -0.0001485908040706367,
+      -0.0001008799946580645
+    ],
+    "point_estimate_no_worse_than_delta_NI": true,
+    "ci_upper_below_delta_NI": true,
+    "ci_upper_below_zero": true,
+    "verdict": "Improves"
+  },
+  "runtime_s": 735.1547381877899
+}

@@ -1,0 +1,12 @@
+{
+  "delta_NI": 3.25078398833667e-05,
+  "ap_ops_mean_delta_vs_ops": -0.00012503189858040735,
+  "ap_ops_ci95": [
+    -0.0001485908040706367,
+    -0.0001008799946580645
+  ],
+  "point_estimate_no_worse_than_delta_NI": true,
+  "ci_upper_below_delta_NI": true,
+  "ci_upper_below_zero": true,
+  "verdict": "Improves"
+}

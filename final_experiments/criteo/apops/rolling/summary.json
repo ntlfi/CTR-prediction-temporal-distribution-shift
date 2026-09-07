@@ -1,0 +1,29 @@
+{
+  "source": "criteo",
+  "config_used": "final_experiments/criteo/apops/apops_selected.json",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "outer_days": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "code_commit": "93fbea08fa3353dc4bfce5bbfd979f139f83f0ce",
+  "reselected_per_origin": [],
+  "runtime_s": 1489.3775894641876
+}

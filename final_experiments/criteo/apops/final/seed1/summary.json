@@ -1,0 +1,49 @@
+{
+  "seed": 1,
+  "n_rows": 16468027,
+  "test_days": [
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "methods": {
+    "current_ops": {
+      "imp_weighted_log_loss": 0.6069644011124872,
+      "daily_mean_log_loss": 0.6072221759635044,
+      "pre_feedback_ll": 0.6192958893590276,
+      "first_quarter_ll": 0.6140635674970374,
+      "worst_day_ll": 0.613816558903273,
+      "n_test_days": 9
+    },
+    "ap_ops": {
+      "imp_weighted_log_loss": 0.6068397634244471,
+      "daily_mean_log_loss": 0.6070968518099049,
+      "pre_feedback_ll": 0.6191737927817376,
+      "first_quarter_ll": 0.6138569943995331,
+      "worst_day_ll": 0.6137583091471978,
+      "n_test_days": 9
+    },
+    "single_memory": {
+      "imp_weighted_log_loss": 0.6068242485648785,
+      "daily_mean_log_loss": 0.6070819699100581,
+      "pre_feedback_ll": 0.619188869378441,
+      "first_quarter_ll": 0.6138957542559279,
+      "worst_day_ll": 0.613784130113546,
+      "n_test_days": 9
+    },
+    "no_slope": {
+      "imp_weighted_log_loss": 0.6069935605853584,
+      "daily_mean_log_loss": 0.607249656583271,
+      "pre_feedback_ll": 0.6191886233359252,
+      "first_quarter_ll": 0.6137658986588147,
+      "worst_day_ll": 0.6137948092216285,
+      "n_test_days": 9
+    }
+  }
+}
