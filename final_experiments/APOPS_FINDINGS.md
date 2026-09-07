@@ -220,6 +220,69 @@ the day level. The effect is small in absolute terms (sub-0.0003 log
 loss) but directionally unanimous, present on the rolling-origin
 evaluation, and mechanistically clean.
 
+## 7. Additional experiments (2026-09-06 spec) — fully nested rolling origin
+
+The fixed-test days above were already inspected by the DualTime-CTR
+experiment, and §5's rolling-origin runner used the dev-frozen config
+(not re-selected per origin). The additional-experiments spec closes both
+gaps and sharpens the mechanism question into three decision rules.
+
+**Implementation corrections applied (`apops/experts.py`, `apops/aggregate.py`):**
+
+1. **Absolute-time feedback queue for the persistent experts.** The
+   day-local maturation pointer dropped labels from the last ~2 blocks of
+   each day (they mature after midnight). Now `replay_ons_stream` does a
+   single chronological pass with a `d*86400 + (k+1)*block_sec + delay`
+   maturation clock, so a block near a day boundary updates the persistent
+   expert on the *following* day. Regression test added (`apops_tests.py`
+   #7, 9/9 pass): a flipped last-block label leaves its own day unchanged
+   and changes the persistent expert on the next day.
+2. **Adaptive-mass parameter `λ_AP ∈ [0,1]`.** Prior
+   `π(λ_AP) = (1−λ_AP, λ_AP/2, λ_AP/2)` over `(R,S,L)`; `w₁ = π(λ_AP)`;
+   prior-centered fixed share `w_{r+1} = (1−α) w̃_{r+1} + α·π(λ_AP)`.
+   `λ_AP = 0` pins `w` to `(1,0,0)` forever → AP-OPS ≡ OPS prediction by
+   prediction (checked bit-for-bit). `λ_AP` is now the single tuned knob
+   for "how much of the extension is used"; the nested grid contains 0.
+
+**Four headline methods** (`apops/method.py::build_nested_rows`), identical
+`q_{d,i}`: `ops` (proj-gradient, reset daily — reference), `reset_ons`
+(discounted ONS, reset daily — isolates the optimizer), `persistent_ons`
+(discounted ONS, carried — isolates persistence), `ap_ops` (reset R +
+persistent S/L, aggregated). `reset_ons` and `persistent_ons` share one
+half-life selected on validation, so their only difference is
+reset-vs-carry. No-slope kept as a supporting ablation.
+
+**Nested protocol** (`run_apops_nested.py`): outer origins Criteo 16–30 /
+Avazu 5–9; per origin, history = days < d, inner validation = trailing 3
+days; select ONE common config for all 3 seeds by mean inner-validation
+loss. Re-selected per origin: shared mixture (`η × halflife`, 15), `λ_AP ∈
+{0,.25,.5,.75,1}` × `τ ∈ {4,16,∞}h` (15), persistent/reset half-life
+(`{4,16}h`). Frozen (dev only): `η_m`, ONS `(λ,η)`, OPS `(B,η0,schedule)`,
+block/delay, S/L half-lives.
+
+**Decision rules:**
+- *Persistence* is supported only if `persistent_ons` improves on `reset_ons`.
+- *Adaptive aggregation* is supported if `ap_ops` is non-inferior to
+  `persistent_ons` on both datasets and better on ≥1; else simplify to the
+  single persistent calibrator.
+- AP-OPS succeeds if it beats OPS on both datasets in paired rolling-origin
+  log loss, with no early-/worst-day regression, and selects `λ_AP > 0` on
+  a non-trivial fraction of origins.
+
+### Results
+
+_pending — jobs `apops_nested_{criteo,avazu}.slurm`_
+
+### Final confirmation
+
+Per the decision recorded this session: **the fully-nested rolling-origin
+analysis is the confirmation** — no genuinely-unseen temporal stream
+exists in this repo (Criteo 31 days / Avazu 10 days, all used). The
+algorithm, hyper-parameter grid, and decision rules above are frozen so a
+future dataset can be run once with zero tuning. The §5 fixed-test /
+dev-frozen-rolling results are retained as preliminary supporting
+evidence.
+
 ## Status
 
 | step | state |
@@ -227,9 +290,10 @@ evaluation, and mechanistically clean.
 | implementation + unit/leakage tests (7/7) | **done** — commit `9b93394` |
 | dev HPO, both datasets | **done** — `apops_selected.json` frozen |
 | golden check (R alone == saved OPS; anchor-only == R) | **passed on every run** |
-| fixed test, both datasets, 3 seeds | **done** — `Improves` on both |
-| rolling origin, both datasets, 3 seeds | **done** — `Improves` on both |
-| this document | **complete** |
+| fixed test, both datasets, 3 seeds | **done** — `Improves` on both (preliminary) |
+| §5 dev-frozen rolling origin, both datasets | **done** — `Improves` on both (preliminary) |
+| §7 implementation corrections + cross-day test | **done** — 9/9 tests pass |
+| §7 fully-nested rolling origin (4 methods, per-origin selection) | **running** |
 
 ### Still open / optional (plan does not gate on these)
 

@@ -1,31 +1,32 @@
-"""Persistent full-Platt calibration experts updated by discounted Online
-Newton Step (plan section 2, "Delayed second-order expert update").
+"""Full-Platt calibration experts updated by discounted Online Newton Step
+(plan section 2, "Delayed second-order expert update").
 
-State ``theta = (a, b)`` and the 2x2 curvature ``A`` are carried
-*continuously across days* -- unlike the reset anchor R (which is just
-``twoscale.calib.replay_day`` with a daily reset and is built elsewhere
-via ``methods.ops_method``).  Each persistent expert forgets old
-curvature at a fixed physical rate::
+Chronological single pass over the whole ``days`` stream with an
+**absolute-time feedback queue** (implementation correction, 2026-09-06):
+a block's labels mature at ``d*86400 + (k+1)*block_sec + delay_sec`` in
+absolute time, so a block near a day boundary is scored on the *following*
+day rather than dropped. Each block ``r`` contributes exactly one delayed
+ONS step, from its own impressions' mean gradient, once every one of its
+labels has matured::
 
     gamma = 2 ** (-block_sec / half_life)                 # per block
-    g_r   = grad_theta L_r(theta_r)                       # mean block log-loss grad
-    A_r   = gamma A_{r-1} + g_r g_r^T + (1 - gamma) lambda I
-    theta_{r+1} = Proj_Theta( theta_r - eta_ons A_r^{-1} g_r )
+    g_r   = mean_{i in block r} (p_i - y_i) * (z_i, 1)    # grad of mean block log loss
+    A_r   = gamma A_{r-1} + g_r g_rᵀ + (1-gamma) lambda I
+    theta_{r+1} = Proj_Theta( theta_r - eta_ons A_r⁻¹ g_r ),  Theta = a∈a_bounds, b∈b_bounds
 
-with ``L_r`` the mean log loss over block ``r``'s impressions, computed
-only once every label in the block has matured under the feedback delay.
-The projection ``Proj_Theta`` is the cheap coordinate-wise clip onto the
-box ``a in a_bounds``, ``b in b_bounds`` (same choice ``dualtime.online``
-makes for its norm ball -- documented deviation from the exact
-``A``-metric projection; every clip is counted in ``proj_events``).
+``reset_daily=False`` (default) carries ``theta`` and ``A`` continuously
+across days -- the *persistent* expert. ``reset_daily=True`` re-initialises
+``theta=(1,0)``, ``A=lambda I`` at every day boundary (Reset-ONS): a
+label that matured after midnight still updates that new day's fresh
+state, so Reset-ONS vs the persistent expert is a clean single-axis
+comparison (reset vs carry, identical maturation).
 
-Causality mirrors ``twoscale.calib.replay_day`` exactly: block ``k`` is
-predicted with the state produced by strictly-earlier matured feedback,
-and a label at within-day time ``tau`` only enters a gradient at
-``tau + delay_sec``.
+The projection is the coordinate-wise clip onto the box (same choice
+``dualtime.online`` makes for its norm ball); every clip is counted.
 """
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass
 
 import numpy as np
@@ -53,89 +54,95 @@ class OnsConfig:
     a_bounds: tuple = (0.2, 5.0)      # plan section 2: a in [0.2, 5]
     b_bounds: tuple = (-0.25, 0.25)   # plan section 2: b in [-0.25, 0.25]
     learn_slope: bool = True          # False => no-slope ablation (a fixed at 1)
+    reset_daily: bool = False         # False = persistent; True = Reset-ONS
 
 
 def replay_ons_stream(q_by_day: dict, bank: dict, days, cfg: OnsConfig):
-    """Replay one persistent ONS expert over the whole chronological
-    ``days`` stream.  Returns ``(records, trace)`` where ``records`` is the
-    familiar ``{"day","y","p","sec_in_day"}`` list (``p`` row-aligned to
-    each day's input order) and ``trace`` carries the per-day end state and
-    projection-event count."""
+    """Replay one ONS expert over the whole chronological ``days`` stream.
+    Returns ``(records, trace)`` -- ``records`` the familiar
+    ``{"day","y","p","sec_in_day"}`` list (``p`` row-aligned to each day's
+    input order), ``trace`` the per-day end state + projection count."""
     days = sorted(int(d) for d in days if d in q_by_day and d in bank)
     gamma = 2.0 ** (-cfg.block_sec / (cfg.half_life_h * 3600.0))
     n_blocks = int(np.ceil(SECONDS_PER_DAY / cfg.block_sec))
     lo_a, hi_a = cfg.a_bounds
     lo_b, hi_b = cfg.b_bounds
+    lam_I = cfg.lam * np.eye(2)
 
-    theta = np.array([1.0, 0.0])                 # (a, b)
+    theta = np.array([1.0, 0.0])
     A = cfg.lam * np.eye(2)
     step = 0
     proj_events = 0
 
-    records, trace = [], []
-    for d in days:
+    pending = deque()          # (mature_abs, z_blk, y_blk)
+    p_hat = {}
+    trace = []
+
+    def apply_block(z_blk, y_blk):
+        nonlocal theta, A, step, proj_events
+        step += 1
+        p_m = _sigmoid(theta[0] * z_blk + theta[1])
+        resid = p_m - y_blk
+        if cfg.learn_slope:
+            g = np.array([float((resid * z_blk).mean()), float(resid.mean())])
+        else:
+            g = np.array([0.0, float(resid.mean())])
+        A = gamma * A + np.outer(g, g) + (1.0 - gamma) * lam_I
+        try:
+            A_inv = np.linalg.inv(A + 1e-12 * np.eye(2))
+        except np.linalg.LinAlgError:
+            A_inv = np.linalg.pinv(A)
+        theta_new = theta - cfg.eta_ons * (A_inv @ g)
+        clipped = np.array([
+            min(max(theta_new[0], lo_a), hi_a) if cfg.learn_slope else 1.0,
+            min(max(theta_new[1], lo_b), hi_b),
+        ])
+        if not np.array_equal(clipped, theta_new):
+            proj_events += 1
+        theta = clipped
+
+    for di, d in enumerate(days):
         q = np.asarray(q_by_day[d], float)
         y = np.asarray(bank[d].y, float)
         sec = np.asarray(bank[d].sec_in_day, float)
         n = len(q)
+        ph = np.full(n, np.nan)
         if n == 0:
-            records.append({"day": d, "y": bank[d].y, "p": np.array([]),
-                            "sec_in_day": bank[d].sec_in_day})
+            p_hat[d] = ph
             continue
+        z = _logit(q, cfg.eps)
+        blk = np.minimum((sec // cfg.block_sec).astype(int), n_blocks - 1)
+        day_proj0 = proj_events
 
-        order = np.argsort(sec, kind="stable")
-        inv = np.empty(n, dtype=int)
-        inv[order] = np.arange(n)
-        z = _logit(q[order], cfg.eps)
-        ys = y[order]
-        ts = sec[order]
-
-        mature = ts + cfg.delay_sec
-        mat_order = np.argsort(mature, kind="stable")
-        mature_sorted = mature[mat_order]
-
-        blk = np.minimum((ts // cfg.block_sec).astype(int), n_blocks - 1)
-        p_hat = np.full(n, np.nan)
-        mp = 0
-        day_proj = 0
         for k in range(n_blocks):
+            block_start_abs = d * SECONDS_PER_DAY + k * cfg.block_sec
+            while pending and pending[0][0] <= block_start_abs:
+                _, z_blk, y_blk = pending.popleft()
+                apply_block(z_blk, y_blk)
+            if cfg.reset_daily and di != 0 and k == 0:
+                theta = np.array([1.0, 0.0])
+                A = cfg.lam * np.eye(2)
+                step = 0
             in_blk = np.where(blk == k)[0]
-            if len(in_blk):
-                p_hat[in_blk] = _sigmoid(theta[0] * z[in_blk] + theta[1])
-            block_end = (k + 1) * cfg.block_sec
-            hi = int(np.searchsorted(mature_sorted, block_end, side="right"))
-            newly = mat_order[mp:hi]
-            mp = hi
-            if len(newly):
-                step += 1
-                p_m = _sigmoid(theta[0] * z[newly] + theta[1])
-                resid = p_m - ys[newly]
-                if cfg.learn_slope:
-                    g = np.array([float((resid * z[newly]).mean()), float(resid.mean())])
-                else:
-                    g = np.array([0.0, float(resid.mean())])
-                A = gamma * A + np.outer(g, g) + (1.0 - gamma) * cfg.lam * np.eye(2)
-                try:
-                    A_inv = np.linalg.inv(A + 1e-12 * np.eye(2))
-                except np.linalg.LinAlgError:
-                    A_inv = np.linalg.pinv(A)
-                theta_new = theta - cfg.eta_ons * (A_inv @ g)
-                clipped = np.array([
-                    min(max(theta_new[0], lo_a), hi_a) if cfg.learn_slope else 1.0,
-                    min(max(theta_new[1], lo_b), hi_b),
-                ])
-                if not np.array_equal(clipped, theta_new):
-                    proj_events += 1
-                    day_proj += 1
-                theta = clipped
+            if len(in_blk) == 0:
+                continue
+            ph[in_blk] = _sigmoid(theta[0] * z[in_blk] + theta[1])
+            mature_abs = d * SECONDS_PER_DAY + (k + 1) * cfg.block_sec + cfg.delay_sec
+            pending.append((mature_abs, z[in_blk].copy(), y[in_blk].copy()))
 
-        miss = np.where(np.isnan(p_hat))[0]
+        miss = np.where(np.isnan(ph))[0]
         if len(miss):
-            p_hat[miss] = _sigmoid(theta[0] * z[miss] + theta[1])
-
-        records.append({"day": d, "y": bank[d].y, "p": p_hat[inv],
-                        "sec_in_day": bank[d].sec_in_day})
+            ph[miss] = _sigmoid(theta[0] * z[miss] + theta[1])
+        p_hat[d] = ph
         trace.append({"day": d, "a_end": float(theta[0]), "b_end": float(theta[1]),
-                      "proj_events_day": day_proj, "cum_steps": step,
+                      "proj_events_day": proj_events - day_proj0, "cum_steps": step,
                       "cond_A": float(np.linalg.cond(A))})
+
+    # drain the tail for trace completeness (does not touch any emitted pred)
+    while pending:
+        _, z_blk, y_blk = pending.popleft()
+        apply_block(z_blk, y_blk)
+
+    records = [{"day": d, "y": bank[d].y, "p": p_hat[d], "sec_in_day": bank[d].sec_in_day}
+               for d in days]
     return records, trace

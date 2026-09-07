@@ -6,5 +6,7 @@
 [PASS] meta weights nonnegative and sum to 1 across all 573 updates
 [PASS] persistent-expert (a, b) stay inside [0.2,5] x [-0.25,0.25]
 [PASS] identical inputs reproduce identical AP-OPS / ablation outputs
+[PASS] cross-midnight label leaves its own day's predictions unchanged
+[PASS] cross-midnight label updates the persistent expert on the following day
 
-7 passed, 0 failed
+9 passed, 0 failed
