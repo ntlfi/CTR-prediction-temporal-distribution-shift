@@ -101,55 +101,150 @@ mixture).
 
 ## 5. Results
 
-### Criteo — dev tuning
+All numbers are the frozen-config runs — HPO on dev only (jobs
+12513590 Criteo / 12513591 Avazu), fixed test (12514073 / 12514074),
+rolling origin (12514084 / 12514085). Golden check passed on every run
+(`current_ops` reproduced the saved headline OPS number to `< 5e-4`;
+anchor-only AP-OPS bit-identical to it). Frozen configs:
 
-_pending — `apops_hpo_criteo.slurm`, job 12513590_
+| | Criteo | Avazu |
+|---|---|---|
+| ONS `λ`, `η_ons` | 0.1, 0.25 | 1.0, 4.0 |
+| meta `η_m`, switching half-life `τ` | 100, 4 h | 100, 4 h |
+| single-memory pick (on dev) | **S** (4 h) | **L** (16 h) |
+| `δ_NI` | 3.25e-5 | 1.29e-5 |
 
-### Criteo — fixed test (test days 22–30, 3 seeds)
+Both datasets picked the most aggressive meta settings on dev (`η_m = 100`,
+shortest `τ`).
 
-_pending — `apops_final_criteo.slurm`_
+### Headline — impression-weighted log loss (mean over 3 seeds)
 
-### Criteo — rolling origin (origins 16–30, 3 seeds)
+**Criteo** (test days 22–30):
 
-_pending — `apops_rolling_criteo.slurm`_
+| row | log loss | Δ vs OPS (day-level 95 % CI) | days won | verdict |
+|---|---|---|---|---|
+| Current OPS | 0.606958 | — | — | — |
+| **AP-OPS** | **0.606834** | −0.000125 [−0.000149, −0.000101] | 9/9 | **Improves** |
+| Single-memory (S) | 0.606819 | −0.000139 [−0.000198, −0.000082] | 9/9 | Improves |
+| No-slope | 0.606990 | +0.000029 [−0.000017, +0.000081] | 4/9 | worse point estimate, CI crosses 0 |
 
-### Avazu — dev tuning
+**Avazu** (test days 7–9):
 
-_pending — `apops_hpo_avazu.slurm`, job 12513591_
+| row | log loss | Δ vs OPS (day-level 95 % CI) | days won | verdict |
+|---|---|---|---|---|
+| Current OPS | 0.387443 | — | — | — |
+| **AP-OPS** | **0.387171** | −0.000270 [−0.000306, −0.000238] | 3/3 | **Improves** (D = 3, sign p at floor) |
+| Single-memory (L) | 0.387269 | −0.000176 [−0.000296, −0.000135] | 3/3 | Improves |
+| No-slope | 0.387736 | +0.000277 [+0.000174, +0.000437] | 0/3 | clearly worse than OPS |
 
-### Avazu — fixed test (test days 7–9, 3 seeds)
+### Rolling origin — the primary temporal-adaptation evidence
 
-_pending — `apops_final_avazu.slurm`_
+Day-level inference: seeds averaged within each origin day, then bootstrap
+/ sign-test across origins.
 
-### Avazu — rolling origin (origins 5–9, 3 seeds)
+**Criteo** (15 origins, days 16–30):
 
-_pending — `apops_rolling_avazu.slurm`_
+| row | Δ vs OPS (day-wt) | 95 % CI (day bootstrap) | CI excl 0 | origins won | sign p |
+|---|---|---|---|---|---|
+| **AP-OPS** | −0.000119 | [−0.000145, −0.000092] | yes | 15/15 | 6.1e-5 |
+| Single-memory (S) | −0.000127 | [−0.000163, −0.000092] | yes | 15/15 | 6.1e-5 |
+| No-slope | +0.000037 | [−0.000006, +0.000081] | no | 6/15 | 0.61 |
 
-### Decision
+**Avazu** (5 origins, days 5–9):
 
-_pending_
+| row | Δ vs OPS (day-wt) | 95 % CI (day bootstrap) | CI excl 0 | origins won | sign p |
+|---|---|---|---|---|---|
+| **AP-OPS** | −0.000281 | [−0.000356, −0.000217] | yes | 5/5 | 0.062 (D=5 floor) |
+| Single-memory (L) | −0.000227 | [−0.000337, −0.000146] | yes | 5/5 | 0.062 |
+| No-slope | +0.000131 | [−0.000039, +0.000302] | no | 2/5 | 1.00 |
+
+### Temporal / shift-sensitive metrics (fixed test, pooled log loss)
+
+AP-OPS is at least as good as OPS in **every** sub-window on both
+datasets — there is no early-day or worst-day regression:
+
+| | pre-feedback | first quarter | worst day |
+|---|---|---|---|
+| Criteo OPS → AP-OPS | 0.619245 → 0.619172 | 0.614087 → 0.613880 | 0.613835 → 0.613787 |
+| Avazu OPS → AP-OPS | 0.408304 → 0.407788 | 0.385674 → 0.385359 | 0.406003 → 0.405769 |
+
+The largest AP-OPS gains on Avazu are exactly in the pre-feedback window
+(−0.0005), which is the regime the plan's motivation predicted persistence
+would help — cross-day calibration state carries information into the
+start of a new day before that day's own feedback matures.
+
+### Mechanism (AP-OPS expert weights, seed 0)
+
+- **Criteo:** final weights R/S/L ≈ 0.28 / 0.36 / 0.36; the aggregator
+  *downweights the reset anchor* and the weight vector ranges over
+  [0.06, 0.87] across 1432 meta updates — it genuinely moves, and it
+  learns that the persistent experts beat the daily-reset one on Criteo.
+- **Avazu:** weights stay near uniform, [0.25, 0.47] over 118 updates
+  (only 3 test days × 24 blocks) — too few blocks for the meta layer to
+  concentrate; the gain here is carried by the persistent experts
+  themselves, not by weight movement.
+- Persistent-expert `(a, b)` end near `(1.05, 0.03)` with `~0` projection
+  events — a mild, stable correction that a daily reset throws away every
+  midnight.
+
+## 6. Decision (plan section 4)
+
+**Both datasets: "Improves."** AP-OPS is non-inferior to OPS (trivially —
+it is strictly better), improves the point estimate on both, the paired
+daily CI vs OPS lies **entirely below zero** on both the fixed test and
+the rolling-origin evaluation, the result is unanimous across seeds and
+origins (Criteo 15/15, Avazu 5/5), and there is no early-day or worst-day
+regression. Advance AP-OPS; calibrate the claim to the interval
+(≈ −0.00012 log loss on Criteo, ≈ −0.00028 on Avazu).
+
+**Two mechanism findings from the ablations:**
+
+1. **The learned slope is essential.** The no-slope variant (`a ≡ 1`,
+   update only `b`) is *worse than plain OPS* on both datasets
+   (Criteo +0.00003, Avazu +0.00028) — fixing the slope removes an
+   important degree of correction, exactly as section 1 anticipated.
+2. **The win is persistence, not the memory-scale mixture.** The
+   single-memory ablation (one persistent full-Platt expert, the better
+   of S/L chosen on dev, no meta layer) matches AP-OPS on Criteo
+   (−0.00013 vs −0.00012) and is close on Avazu (−0.00018 vs −0.00027).
+   Carrying full slope-and-intercept calibration state across the day
+   boundary via discounted ONS is what beats the daily-reset anchor; the
+   fixed-share meta layer over {reset, short, long} adds **robustness**
+   (no need to commit to S vs L on dev — the dev pick actually differs by
+   dataset) and the switching-comparator guarantee, and a small extra
+   gain on Avazu, rather than a large accuracy improvement.
+
+This is the first method in the whole AMG-TP / twoscale / withinday /
+DualTime-CTR line to **beat OPS reproducibly on both public datasets** at
+the day level. The effect is small in absolute terms (sub-0.0003 log
+loss) but directionally unanimous, present on the rolling-origin
+evaluation, and mechanistically clean.
 
 ## Status
 
 | step | state |
 |---|---|
-| implementation + unit/leakage tests | **done** (commit `9b93394`, branch `apops-experiment`) |
-| end-to-end smoke on 3 % Criteo | **done** — full pipeline runs, golden check + decision rule fire correctly |
-| Criteo dev HPO | **running** — job 12513590 |
-| Avazu dev HPO | **running** — job 12513591 |
-| fixed test (both) | queued behind HPO |
-| rolling origin (both) | queued behind fixed test |
-| this document's Results section | filled as jobs land |
+| implementation + unit/leakage tests (7/7) | **done** — commit `9b93394` |
+| dev HPO, both datasets | **done** — `apops_selected.json` frozen |
+| golden check (R alone == saved OPS; anchor-only == R) | **passed on every run** |
+| fixed test, both datasets, 3 seeds | **done** — `Improves` on both |
+| rolling origin, both datasets, 3 seeds | **done** — `Improves` on both |
+| this document | **complete** |
 
-**Prior on the outcome.** Every line in this repo — AMG-TP, twoscale
-(`combined ≈ long_only`), the capacity-ladder V5 (sub-materiality on
-Criteo), and DualTime-CTR itself (OPS beats it on Criteo, no reproducible
-edge on Avazu) — has found only shallow exploitable intraday / cross-day
-calibration drift on these public datasets. The realistic expectation is
-**"Retains performance"**: AP-OPS non-inferior to OPS, its value resting
-on the adaptive-memory mechanism and the switching-comparator guarantee
-(`S = 0` in the theory target immediately gives the OPS-anchor bound)
-rather than a headline log-loss win. The rolling-origin weight paths are
-designed to be informative either way — they show whether the aggregator
-actually returns to R after a regime change and whether S/L ever earn
-their weight.
+### Still open / optional (plan does not gate on these)
+
+- **Rolling-origin figures** — only CSV tables + day-level stats exist
+  (`{ds}/apops/rolling/seed*/per_day_metrics.csv`,
+  `{ds}/apops/{final,rolling}/apops_day_level.csv`). The weight-path CSVs
+  (`{ds}/apops/final/seed*/apops_weight_path.csv`) are ready to plot.
+- **Fresh-stream confirmation.** The fixed-test days were already
+  inspected by the DualTime-CTR experiment; the AP-OPS *config* was frozen
+  on dev only, so the fixed-test result is honest, but the cleanest
+  confirmation would still be a genuinely untouched date range or a third
+  dataset with the already-frozen shared config and no retuning.
+- **Theorem** against the exact implemented algorithm (exp-concave base
+  ONS → log static regret in dim 2; delayed fixed-share meta → switching
+  bound `Loss_AP ≤ min_paths Σ + Meta(T,K=3,S) + Delay(T,D)`; `S = 0`
+  gives the OPS-anchor guarantee). The code is written to match the proof
+  conventions (block-mean loss, clip `ε = 1e-5`, `Proj` after the ONS
+  step, `γ` discount, daily R reset, fixed-share timing).
