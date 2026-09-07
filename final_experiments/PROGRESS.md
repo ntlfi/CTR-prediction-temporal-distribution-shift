@@ -30,6 +30,86 @@ therefore the correct final online DualTime-CTR, not V5. The separate
 `run_diagnostic.py` arm `frozen_v5` is the deliberate V5 comparison
 (review comment 3) and is labelled as such everywhere.
 
+## AP-OPS follow-on: DONE and merged to main (2026-09-06, merge commit cdb9d14)
+
+New plan `final_experiments/AP_OPS_Minimal_Experiment_Plan.pdf` (uploaded
+to origin/main commit 3680a26; a longer `PLAN_.md` uploaded then deleted
+-- **the minimal PDF is the spec**). Follow-on to the DualTime result
+below: since full OPS was the strongest calibrator everywhere, AP-OPS
+("Adaptive-Persistence OPS") keeps the 2-parameter Platt map but makes its
+*temporal memory* adaptive -- one reset anchor R (= exact current OPS,
+`twoscale.calib.replay_day`) + two persistent full-Platt experts S/L
+(discounted **Online Newton Step**, 4h / 16h half-life, state carried
+across days) combined by a **delayed fixed-share** meta rule over matured
+block losses. Only the calibration layer is replayed; the frozen shared
+cross-day mixture + locked OPS hyperparams are reused from each dataset's
+`selected_configs.json` (nothing upstream of calibration re-tuned).
+
+**Code:** `final_experiments/apops/{experts,aggregate,method}.py` +
+`run_apops_{hpo,final,rolling,analysis}.py` + `apops_tests.py` (7/7:
+anchor-equivalence, future/unmatured-label leakage, weight simplex, param
+bounds, determinism) + `apops_{hpo,final,rolling}_{criteo,avazu}.slurm`.
+Write-up `APOPS_FINDINGS.md`; day-level tables `APOPS_DAY_LEVEL.md`;
+per-run `{criteo,avazu}/apops/{hpo-outputs, final/, rolling/}`.
+
+**Golden check passed on every run:** R alone reproduced the saved
+headline OPS `mean_imp_wt_ll` to `<5e-4`; anchor-only AP-OPS (weights
+pinned to (1,0,0)) is bit-identical to R.
+
+**Jobs (all DONE):** HPO 12513590 (criteo) / 12513591 (avazu); fixed test
+12514073 / 12514074; rolling origin 12514084 / 12514085. Frozen configs:
+Criteo ONS lam=0.1/eta=0.25, Avazu lam=1.0/eta=4.0; both eta_m=100, tau=4h
+(most aggressive on dev); single-memory dev pick S (criteo) / L (avazu).
+delta_NI = 3.25e-5 (criteo) / 1.29e-5 (avazu) -- tight, because OPS barely
+beats the raw mixture on dev.
+
+### AP-OPS RESULT: decision-rule verdict "Improves" on BOTH datasets
+
+First method in the whole AMG-TP / twoscale / withinday / DualTime line to
+**beat current OPS reproducibly on both public datasets** at the day level.
+
+| dataset | current OPS | AP-OPS | day-level delta vs OPS (95% CI) | fixed | rolling |
+|---|---|---|---|---|---|
+| Criteo | 0.606958 | **0.606834** | -0.000125 [-0.000149, -0.000101] | 9/9 days | 15/15 origins, sign p 6e-5 |
+| Avazu  | 0.387443 | **0.387171** | -0.000270 [-0.000306, -0.000238] | 3/3 days | 5/5 origins, sign p 0.062 (D-floor) |
+
+CI entirely below zero on both the fixed test and rolling origin; unanimous
+across seeds and origins; no early-day or worst-day regression (Avazu's
+biggest AP-OPS gain, -0.0005, is in the pre-feedback window -- the
+persistence-helps-early-day story the plan's motivation predicted).
+
+**Two ablation findings (plan's two mechanism claims):**
+1. **No-slope (a fixed at 1, update only b) is WORSE than plain OPS** on
+   both datasets (criteo +0.00003, avazu +0.00028) -> the learned slope
+   DOF is essential.
+2. **Single persistent expert (no meta-mix) ~= AP-OPS**: criteo -0.00013
+   vs -0.00012, avazu -0.00018 vs -0.00027. -> **the win is cross-day
+   persistence** (carrying full slope+intercept calibration state across
+   the day boundary via discounted ONS), NOT the memory-scale mixture. The
+   fixed-share meta layer buys robustness (dev-optimal single expert
+   differs by dataset) + the switching-comparator guarantee + a small
+   extra avazu gain, not a large accuracy improvement.
+
+Mechanism: Criteo meta weights move a lot (R/S/L final ~0.28/0.36/0.36,
+range [0.06,0.87] over 1432 updates) and downweight the reset anchor;
+Avazu weights stay near uniform (only 3 test days = too few blocks).
+
+**Still open (plan does NOT gate on these):** rolling-origin figures (CSV
++ day-level stats + weight-path CSVs exist, no plots); fresh-stream
+confirmation (fixed-test days already inspected by DualTime -- AP-OPS
+config was frozen on dev only, so the result is honest, but a clean
+untouched stream / 3rd dataset would be the cleanest confirmation); the
+switching-regret theorem against the exact implemented algorithm (code
+written to match proof conventions -- block-mean loss, clip eps=1e-5, Proj
+after ONS step, gamma discount, daily R reset, fixed-share timing).
+
+Consistent with the repo's "shallow real drift" standing finding: the
+effect is small (<3e-4 log loss) -- but unlike every prior method it is
+directionally unanimous, present on rolling origin, and mechanistically
+clean.
+
+---
+
 ## Current status (read this first) -- updated 2026-09-05, commit d5f2f21
 
 **All computation is done. Nothing is running.** (`squeue -u $USER` shows
