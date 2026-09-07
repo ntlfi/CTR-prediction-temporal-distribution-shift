@@ -94,14 +94,34 @@ Mechanism: Criteo meta weights move a lot (R/S/L final ~0.28/0.36/0.36,
 range [0.06,0.87] over 1432 updates) and downweight the reset anchor;
 Avazu weights stay near uniform (only 3 test days = too few blocks).
 
-**Still open (plan does NOT gate on these):** rolling-origin figures (CSV
-+ day-level stats + weight-path CSVs exist, no plots); fresh-stream
-confirmation (fixed-test days already inspected by DualTime -- AP-OPS
-config was frozen on dev only, so the result is honest, but a clean
-untouched stream / 3rd dataset would be the cleanest confirmation); the
-switching-regret theorem against the exact implemented algorithm (code
-written to match proof conventions -- block-mean loss, clip eps=1e-5, Proj
-after ONS step, gamma discount, daily R reset, fixed-share timing).
+### AP-OPS additional experiments: DONE (2026-09-07, merge e3f52b6..8e76107)
+
+User's "Minimal Additional Experiments" spec: implementation corrections
+(absolute-time feedback queue; `lambda_AP in [0,1]` adaptive mass with
+`lambda_AP=0` == OPS) + a fully **nested** rolling-origin comparison of
+4 methods (`ops` / `reset_ons` / `persistent_ons` / `ap_ops`) to split the
+gain into optimizer vs persistence vs aggregation. Code
+`apops/{experts,aggregate,method}.py` + `run_apops_nested.py`; jobs
+12515130 (Criteo) / 12515131 (Avazu). Write-up `APOPS_FINDINGS.md` §7,
+`APOPS_NESTED.md`, frozen spec `APOPS_FROZEN.md`, resumption doc
+`APOPS_ADDITIONAL_PROGRESS.md`.
+
+**AP-OPS beats OPS on both** (nested): Criteo -0.000172 [-0.000220,
+-0.000131] 15/15 origins; Avazu -0.000136 [-0.000181, -0.000098] 5/5;
+`lambda_AP > 0` on all 20 origins. **Mechanism is dataset-specific:**
+Criteo = the discounted-ONS optimizer alone (`reset_ons` -0.000167 gets
+the full gain); Avazu = persistence + adaptive aggregation (`reset_ons`
+~= OPS there; only `ap_ops`'s CI excludes 0). Slope essential on both.
+Keep the full AP-OPS -- no single sub-variant wins on both datasets.
+Final confirmation = the nested analysis itself (user decision; no
+untouched stream exists). `APOPS_FROZEN.md` records the frozen
+algo+grid+rules for a future dataset.
+
+**Still open (nothing gates on these):** rolling-origin / weight-path
+figures (all CSVs exist, no plots); the switching-regret theorem against
+the exact implemented algorithm (code written to match proof conventions
+-- block-mean loss, clip eps=1e-5, Proj after ONS step, gamma discount,
+daily R reset, fixed-share timing).
 
 Consistent with the repo's "shallow real drift" standing finding: the
 effect is small (<3e-4 log loss) -- but unlike every prior method it is
