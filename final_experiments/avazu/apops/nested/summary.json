@@ -1,0 +1,60 @@
+{
+  "source": "avazu",
+  "config": "final_experiments/avazu/apops/apops_selected.json",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "outer_days": [
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "inner_k": 3,
+  "code_commit": "e3f52b6f82f2c45ab755eaf13407c7e6a6a13e82",
+  "frozen": {
+    "eta_m": 100.0,
+    "ons_lam": 1.0,
+    "ons_eta": 4.0,
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "block_sec": 3600,
+    "delay_sec": 1800,
+    "S_L_half_lives_h": [
+      4.0,
+      16.0
+    ]
+  },
+  "reselected_per_origin": [
+    "shared_mixture(eta,halflife)",
+    "lambda_AP",
+    "tau",
+    "persistent/reset ONS half-life"
+  ],
+  "lambda_ap_grid": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "lambda_ap_selected_per_origin": [
+    0.25,
+    0.25,
+    0.5,
+    0.5,
+    0.5
+  ],
+  "lambda_ap_gt0_fraction": 1.0,
+  "runtime_s": 6302.641189575195
+}

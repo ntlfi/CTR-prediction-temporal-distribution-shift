@@ -1,0 +1,6 @@
+origin,mix_eta,mix_halflife,persist_half_life,ap_ops_cfg,lambda_ap
+5,10.0,3.0,hl16,lam0.25_tau4,0.25
+6,10.0,10.0,hl16,lam0.25_tau4,0.25
+7,1000000.0,10.0,hl16,lam0.5_tau4,0.5
+8,10.0,10.0,hl16,lam0.5_tau4,0.5
+9,10.0,10.0,hl16,lam0.5_tau4,0.5
