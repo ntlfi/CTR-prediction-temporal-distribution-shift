@@ -12,6 +12,10 @@ fixed-test / rolling-origin AP-OPS number is accepted.  Writes
   4. meta weights stay nonnegative and sum to one throughout
   5. Platt parameters stay inside the stated bounds throughout
   6. same seed + cached base-prediction stream => identical outputs
+  7. cross-day-boundary maturation (2026-09-06 correction): a label in the
+     last block of an interior day matures *after midnight* and must (a)
+     leave that day's predictions unchanged, (b) change the persistent
+     expert's predictions on the following day
 """
 from __future__ import annotations
 
@@ -127,6 +131,34 @@ def run(source, sample_frac, n_features, warmup, n_jobs, seed=0):
     rows_again, _ = build_rows(bank, days, q_by_day, cfg, OPS_HP)
     det = all(np.array_equal(_concat(rows[k]), _concat(rows_again[k])) for k in rows)
     check("identical inputs reproduce identical AP-OPS / ablation outputs", det)
+
+    # 7. cross-day-boundary maturation
+    if len(days) >= 2:
+        d0 = days[len(days) // 2]          # an interior day
+        d1 = days[days.index(d0) + 1]
+        n_blocks = int(np.ceil(86400 / block_sec))
+        sec0 = bank[d0].sec_in_day
+        last_blk = np.minimum((sec0 // block_sec).astype(int), n_blocks - 1) == (n_blocks - 1)
+        if last_blk.any():
+            b3 = {d: bank[d] for d in bank}
+            db0 = bank[d0]
+            y3 = np.array(db0.y, float).copy()
+            y3[last_blk] = 1.0 - y3[last_blk]
+            b3[d0] = dc_replace(db0, y=y3.astype(db0.y.dtype))
+            s_a, _ = replay_ons_stream(q_by_day, bank, days, cfg.ons_cfg(4.0))
+            s_b, _ = replay_ons_stream(q_by_day, b3, days, cfg.ons_cfg(4.0))
+            pa = {r["day"]: np.asarray(r["p"]) for r in s_a}
+            pb = {r["day"]: np.asarray(r["p"]) for r in s_b}
+            same_d0 = np.array_equal(pa[d0], pb[d0])
+            # first block of d1 predicted before the cross-midnight labels mature -> unchanged;
+            # a later block of d1 must differ (the last-block-of-d0 labels were consumed)
+            sec1 = bank[d1].sec_in_day
+            blk1 = np.minimum((sec1 // block_sec).astype(int), n_blocks - 1)
+            early_d1 = blk1 <= int(np.ceil(cfg.delay_sec / block_sec))
+            late_d1 = ~early_d1
+            changed_later = late_d1.any() and not np.allclose(pa[d1][late_d1], pb[d1][late_d1], atol=1e-12)
+            check("cross-midnight label leaves its own day's predictions unchanged", same_d0)
+            check("cross-midnight label updates the persistent expert on the following day", changed_later)
 
 
 def main():

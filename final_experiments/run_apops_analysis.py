@@ -22,9 +22,14 @@ import pandas as pd
 
 from withinday.daystats import day_summary
 
-ROWS = ["current_ops", "ap_ops", "single_memory", "no_slope"]
-LABEL = {"current_ops": "Current OPS", "ap_ops": "AP-OPS",
-         "single_memory": "Single-memory", "no_slope": "No-slope"}
+LABEL = {"current_ops": "Current OPS", "ops": "OPS", "ap_ops": "AP-OPS",
+         "single_memory": "Single-memory", "no_slope": "No-slope",
+         "reset_ons": "Reset-ONS", "persistent_ons": "Persistent-ONS"}
+FIXED_ROWS = ["current_ops", "ap_ops", "single_memory", "no_slope"]
+NESTED_ROWS = ["ops", "reset_ons", "persistent_ons", "ap_ops", "no_slope"]
+
+ROWS = FIXED_ROWS
+BASELINE = "current_ops"
 
 
 def seed_avg_by_day(result_dir: Path) -> pd.DataFrame:
@@ -42,19 +47,21 @@ def seed_avg_by_day(result_dir: Path) -> pd.DataFrame:
                                               n=("n", "mean")).reset_index()
 
 
-def analyse(result_dir: Path, label: str) -> dict:
+def analyse(result_dir: Path, label: str, rows=None, baseline=None) -> dict:
+    rows = rows or ROWS
+    baseline = baseline or BASELINE
     sa = seed_avg_by_day(result_dir)
     piv = sa.pivot_table(index="day", columns="method", values="lbar").sort_index()
     n_by_day = sa.groupby("day")["n"].first().reindex(piv.index).to_numpy()
     days = [int(d) for d in piv.index]
 
     table = []
-    for m in ROWS:
+    for m in rows:
         if m not in piv:
             continue
-        row = {"method": LABEL[m], "seed_avg_mean_ll": float(piv[m].mean())}
-        if m != "current_ops" and "current_ops" in piv:
-            deltas = (piv[m] - piv["current_ops"]).to_numpy()
+        row = {"method": LABEL.get(m, m), "seed_avg_mean_ll": float(piv[m].mean())}
+        if m != baseline and baseline in piv:
+            deltas = (piv[m] - piv[baseline]).to_numpy()
             s = day_summary(deltas, seed=0)
             row.update({
                 "mean_delta_vs_ops": s["mean_delta"],
@@ -78,9 +85,9 @@ def analyse(result_dir: Path, label: str) -> dict:
         if mj.exists():
             mech[sd.name] = json.loads(mj.read_text())
     if seed_summ:
-        for m in ROWS:
+        for m in rows:
             if all(m in s for s in seed_summ):
-                temporal[LABEL[m]] = {
+                temporal[LABEL.get(m, m)] = {
                     k: float(np.mean([s[m][k] for s in seed_summ]))
                     for k in ("pre_feedback_ll", "first_quarter_ll", "worst_day_ll")
                     if k in seed_summ[0][m]}
@@ -135,6 +142,31 @@ def md_section(a: dict, delta_ni: float | None, decision: dict | None) -> str:
     return "\n".join(L)
 
 
+def nested_decisions(a: dict, summary: dict | None) -> str:
+    """The 2026-09-06 spec's three decision rules."""
+    by = {r["method"]: r for r in a["table"]}
+    def d(name):  # mean day-wt delta vs OPS
+        return by.get(name, {}).get("mean_delta_vs_ops")
+    L = ["**Decision rules:**", ""]
+    dr, dp = d("Reset-ONS"), d("Persistent-ONS")
+    if dr is not None and dp is not None:
+        persist = dp < dr
+        L.append(f"- Cross-day persistence: Persistent-ONS {dp:+.6f} vs Reset-ONS {dr:+.6f} vs OPS "
+                 f"-> persistence {'SUPPORTED (Persistent-ONS beats Reset-ONS)' if persist else 'NOT supported (optimizer, not persistence, explains any gain)'}.")
+    da, ci = d("AP-OPS"), by.get("AP-OPS", {})
+    if da is not None and dp is not None:
+        non_inf = (ci.get("ci95_hi", 1) < 0) or (abs(da - dp) < 1e-5) or (da <= dp)
+        L.append(f"- Adaptive aggregation: AP-OPS {da:+.6f} vs Persistent-ONS {dp:+.6f} "
+                 f"-> {'AP-OPS at least matches the single persistent expert' if da <= dp + 1e-6 else 'single persistent expert is better -> simplify to Persistent-ONS'}.")
+    if summary:
+        f = summary.get("lambda_ap_gt0_fraction")
+        sel = summary.get("lambda_ap_selected_per_origin", [])
+        L.append(f"- Extension used: lambda_AP > 0 on {sum(1 for x in sel if x > 0)}/{len(sel)} origins "
+                 f"(fraction {f:.2f}); per-origin lambda_AP = {sel}.")
+    L.append("")
+    return "\n".join(L)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dir", action="append", dest="dirs", required=True)
@@ -143,17 +175,25 @@ def main():
                     help="apops_selected.json per dir (for delta_NI), same order; optional")
     ap.add_argument("--decision", action="append", dest="decision", default=[],
                     help="decision.json per dir, same order; optional")
+    ap.add_argument("--nested", action="store_true",
+                    help="4-method nested comparison (ops/reset_ons/persistent_ons/ap_ops), baseline=ops")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
+    rows = NESTED_ROWS if args.nested else FIXED_ROWS
+    baseline = "ops" if args.nested else "current_ops"
     sels = [json.loads(Path(p).read_text()) if p and Path(p).exists() else None for p in args.selected]
     decs = [json.loads(Path(p).read_text()) if p and Path(p).exists() else None for p in args.decision]
-    blocks = ["## Results (day-level inference: seeds averaged within day, then bootstrap over days)", ""]
+    hdr = "## Nested rolling-origin results" if args.nested else "## Results"
+    blocks = [f"{hdr} (day-level inference: seeds averaged within day, then bootstrap over days)", ""]
     for i, (d, lab) in enumerate(zip(args.dirs, args.labels)):
-        a = analyse(Path(d), lab)
+        a = analyse(Path(d), lab, rows=rows, baseline=baseline)
         dni = sels[i]["decision_rule"]["delta_NI"] if i < len(sels) and sels[i] else None
         dec = decs[i] if i < len(decs) else None
         blocks.append(md_section(a, dni, dec))
+        if args.nested:
+            sm = Path(d) / "summary.json"
+            blocks.append(nested_decisions(a, json.loads(sm.read_text()) if sm.exists() else None))
         pd.DataFrame(a["table"]).to_csv(Path(d) / "apops_day_level.csv", index=False)
     Path(args.out).write_text("\n".join(blocks) + "\n")
     print(f"wrote {args.out}")

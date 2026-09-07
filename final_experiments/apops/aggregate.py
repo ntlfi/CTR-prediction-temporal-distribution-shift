@@ -8,18 +8,24 @@ persist across days -- and, for block ``r``:
   1. emit ``p^AP = sum_k w_k p^(k)`` using the *current* weights only;
   2. queue the block; no unmatured label may touch the weights;
   3. once every label in a queued block has matured, score each expert on
-     its stored block predictions (pre-update losses) and update:
+     its stored block predictions (pre-update losses) and update, with a
+     **prior-centered** fixed share (implementation correction 2026-09-06):
 
-         w_tilde_k  proportional to  w_k exp(-eta_m L_{r,k})
-         w_k        =  (1 - alpha) w_tilde_k + alpha / K
+         pi(lambda_AP) = (1 - lambda_AP, lambda_AP/2, lambda_AP/2)     # (R, S, L)
+         w_1           = pi(lambda_AP)
+         w_tilde_k     proportional to  w_k exp(-eta_m L_{r,k})
+         w_{r+1}       = (1 - alpha) w_tilde_k + alpha * pi(lambda_AP)
+
+The adaptive-mass parameter ``lambda_AP in [0, 1]`` is the single knob for
+"how much of AP-OPS beyond OPS is used": ``lambda_AP = 0`` pins ``w`` to
+``(1, 0, 0)`` forever, so AP-OPS reproduces OPS prediction by prediction.
 
 Absolute time ``d * 86400 + sec`` is used for maturation so a block near a
 day boundary is scored at the correct wall-clock moment (its labels
 mature into the next day) rather than being dropped.
 
-``fixed_weights`` forces a constant weight vector (no meta update at all)
--- with ``(1, 0, 0)`` this makes AP-OPS bit-identical to expert R, the
-anchor-equivalence golden check.
+``fixed_weights`` forces a constant weight vector (bypasses the meta
+update); ``(1, 0, 0)`` is equivalent to ``lambda_AP = 0``.
 """
 from __future__ import annotations
 
@@ -38,13 +44,17 @@ class MetaConfig:
     switch_half_life_h: float = 16.0  # fixed-share via alpha(tau) = 1 - 2 ** (-block_sec/tau)
     block_sec: int = 900
     delay_sec: int = 1800
-    init_weights: tuple = (0.50, 0.25, 0.25)   # (R, S, L)
+    lambda_ap: float = 0.5            # adaptive mass; 0 => AP-OPS == OPS
 
     def alpha(self) -> float:
         tau = self.switch_half_life_h * 3600.0
         if not np.isfinite(tau):
             return 0.0
         return 1.0 - 2.0 ** (-self.block_sec / tau)
+
+    def prior(self) -> np.ndarray:
+        lam = float(np.clip(self.lambda_ap, 0.0, 1.0))
+        return np.array([1.0 - lam, lam / 2.0, lam / 2.0])
 
 
 def _block_logloss(y, p):
@@ -65,8 +75,8 @@ def aggregate(expert_records: dict, bank: dict, days, cfg: MetaConfig,
 
     n_blocks = int(np.ceil(SECONDS_PER_DAY / cfg.block_sec))
     alpha = cfg.alpha()
-    w = np.array(cfg.init_weights, float)
-    w = w / w.sum()
+    prior = cfg.prior()
+    w = prior.copy()
 
     queue = deque()                       # (mature_abs, y_blk, [p_blk per expert])
     weight_path = []                      # one row per meta update
@@ -92,8 +102,8 @@ def aggregate(expert_records: dict, bank: dict, days, cfg: MetaConfig,
                 if fixed_weights is None:
                     w_tilde = w * np.exp(-cfg.eta_m * (L - L.min()))
                     s = w_tilde.sum()
-                    w_tilde = w_tilde / s if s > 0 else np.full(K, 1.0 / K)
-                    w = (1.0 - alpha) * w_tilde + alpha / K
+                    w_tilde = w_tilde / s if s > 0 else prior.copy()
+                    w = (1.0 - alpha) * w_tilde + alpha * prior
                     n_updates += 1
                     min_w, max_w = min(min_w, w.min()), max(max_w, w.max())
                     weight_path.append({"day": d, "block": k, **{names[j]: float(w[j]) for j in range(K)},
@@ -130,6 +140,7 @@ def aggregate(expert_records: dict, bank: dict, days, cfg: MetaConfig,
         "n_meta_updates": n_updates,
         "weight_min": float(min_w) if n_updates else float(w.min()),
         "weight_max": float(max_w) if n_updates else float(w.max()),
-        "alpha": alpha,
+        "alpha": alpha, "lambda_ap": float(cfg.lambda_ap),
+        "prior": {names[j]: float(prior[j]) for j in range(K)},
     }
     return records, info
