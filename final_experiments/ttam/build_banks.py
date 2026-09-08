@@ -53,8 +53,11 @@ def save_context(path: Path, ds, days) -> None:
 
 
 def load_context(path: Path) -> dict:
+    # kept float32 in-memory (the sketch is a projected feature summary; AMG-TP
+    # upcasts one day at a time to float64 in run_amgtp5). float32 halves the
+    # resident context so the nested runner can fan origins out to more workers.
     z = np.load(path)
-    return {int(d): z[f"c_{d}"].astype(np.float64) for d in z["days"] if f"c_{d}" in z}
+    return {int(d): z[f"c_{d}"].astype(np.float32) for d in z["days"] if f"c_{d}" in z}
 
 
 def save_bank(path: Path, bank: dict):
