@@ -6,6 +6,66 @@ Window, ARW, AdaMoE, OPS, DualTime-CTR; Criteo + Avazu; seeds 0,1,2). If
 this session ends before the plan is finished, **read this file first**,
 then the spec (in the conversation that requested it) for exact formulas.
 
+## TTAM revised Section 6 -- IN PROGRESS (branch `ttam-additional-experiments`, started 2026-09-08)
+
+New plan `final_experiments/TTAM_Additional_Experiments_Plan.pdf` (8 Sep
+2026): evaluate the integrated **AMG-TP + AP-OPS** pipeline ("TTAM") under
+one *corrected* fully-nested rolling-origin protocol -- every data-tuned
+setting reselected from data strictly before each evaluated origin, no
+inheritance from a frozen file whose dev window overlaps early outer days.
+Six-method main table + four-variant ablation + Criteo bidding replay.
+**This document specifies work to run; it does not report new results.**
+
+**Done (commits 5761624, 754bfec):**
+- `final_experiments/ttam/` package: `bank.py` (shared 5-horizon expert
+  bank {1,3,7,14,expanding}, tie-aliased), `fixed_mix.py` (constant
+  validation-fitted simplex mixture = no-AMG-TP control), `amgtp.py`
+  (causal AMG-TP on the 5-horizon bank: sample gate + learned persistence
+  + deployed-weight memory, maturation-aware), `method.py` (nine variants:
+  expanding / best_fixed_window / arw / adamoe / ops / ttam / without_both
+  / amgtp_only / apops_only), `build_banks.py` (bank + context-sketch disk
+  cache).
+- `run_ttam_nested.py` -- 3-pass nested runner (module selection on
+  uncalibrated inner loss -> calibration selection on the chosen module's
+  causal stream -> replay winners + score origin once). **Origins within
+  each pass run in parallel** (`--n-workers`, deterministic, joblib
+  processes, results-identical to serial). `ttam_stats.py` (paired
+  day-level gain, 95% paired day-bootstrap + block-2 MBB, seed 20260908,
+  seeds averaged first), `ttam_figure.py` (Section 6.2 two-panel figure),
+  `run_ttam_bidding.py` (Criteo bidding replay, recorded display cost as
+  price proxy, changes only the prediction input).
+- `TTAM_FROZEN.md` -- frozen grids / staged-selection rule / statistics +
+  bidding protocol / reuse audit, fixed before any TTAM result.
+- `ttam_tests.py` 10/10: lambda_AP=0 => AP-OPS==OPS; causal invariance;
+  cross-midnight maturation; simplex/param bounds; deployed-weight memory
+  update; determinism.
+- Criteo 3-seed expert banks cached (`_bankcache/`, gitignored). Full
+  pipeline (nested runner -> stats -> figure) validated on a 3% Criteo
+  smoke (193s, all 9 variants, 15 origins x 3 seeds). Bidding replay
+  asserts row alignment which only holds at `sample_frac=1.0` -- it
+  errors on the subsampled smoke by design; verified `load_criteo`
+  (twoscale) and the bidding cost loader do the identical
+  `(day, sec_in_day)` stable sort with no row filtering at full data.
+
+**Running now:** full-data Criteo nested run --
+`final_experiments/ttam/criteo/nested/` (job = local background pid, log
+`nested_run.log`), `--n-workers 6`. No Slurm on this machine; the runner
+was parallelized specifically so a full Criteo run finishes here in hours
+rather than ~a day.
+
+**Not done:**
+- Full Criteo nested run completion + `ttam_stats.py` / `ttam_figure.py` /
+  `run_ttam_bidding.py` over its output (`TTAM_SECTION6_STATS.md`,
+  `section6_figure.png`, `criteo/bidding/`).
+- **Avazu** nested run -- Avazu banks not built; full 40M-row Avazu risks
+  OOM at 62 GB with no Slurm here. Deferred; needs the cluster or a
+  seed-serial low-memory bank build first.
+- Manuscript placeholders (plan section 6.x) -- no paper source file in
+  this repo (same standing note as below); the `.md` + figure are the
+  deliverables produced here.
+
+---
+
 ## IMPORTANT: DualTime-CTR is not the capacity-ladder V5 (user clarification, 2026-09-05)
 
 DualTime-CTR's within-day residual model uses an ONLINE-updated `w`:
