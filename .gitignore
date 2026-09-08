@@ -17,6 +17,10 @@ withinday_experiments/_smoke*/
 withinday_experiments/dev/
 final_experiments/logs/
 slurm-*.out
+# TTAM: cached expert banks / context sketches (~280MB each, regenerable
+# from final_experiments/ttam/build_banks.py) and dataset-download logs
+final_experiments/ttam/_bankcache/
+_dl_logs/
 # large regenerable per-day metric dumps -- summary.json + comparison_table.csv
 # + oracle_per_day.csv + gate_dynamics.csv keep the distilled results
 amgtp_experiments/**/per_day_metrics.csv
