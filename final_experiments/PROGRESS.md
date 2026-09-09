@@ -6,7 +6,7 @@ Window, ARW, AdaMoE, OPS, DualTime-CTR; Criteo + Avazu; seeds 0,1,2). If
 this session ends before the plan is finished, **read this file first**,
 then the spec (in the conversation that requested it) for exact formulas.
 
-## TTAM revised Section 6 -- Criteo DONE, Avazu deferred (branch `ttam-additional-experiments`, started 2026-09-08)
+## TTAM revised Section 6 -- Criteo + Avazu DONE (2026-09-09) (branch `ttam-additional-experiments`, started 2026-09-08)
 
 New plan `final_experiments/TTAM_Additional_Experiments_Plan.pdf` (8 Sep
 2026): evaluate the integrated **AMG-TP + AP-OPS** pipeline ("TTAM") under
@@ -74,13 +74,36 @@ outer days -- it survives reselecting every knob pre-origin).
 than every baseline (-0.02% vs OPS to -0.07% vs AdaMoE), all CIs below
 zero. The log-loss edge does not convert to bidding value.
 
+### AVAZU NESTED RUN: DONE (2026-09-09, commit 220a4d6, local ~77 min)
+
+Needed `twoscale.data.load_avazu` made chunk-hashed (commit c1b4c9e) --
+the old path materialised the full 40M-row string frame (~50GB peak,
+needed a 150-230GB node); now each read chunk is hashed to a sparse block
+and the strings dropped, bit-identical output, ~25GB peak. Banks built
+one seed per process (`--n-jobs 1`, ~24 min each) then
+`run_ttam_nested.py --source avazu --n-workers 3`. `final_predictions/`
+(1.8GB) deleted after -- Avazu bidding is pending (no price field).
+
+**Same conclusion as Criteo.** Prediction (equal-day mean log loss, D=5):
+TTAM 0.400934 < OPS 0.401147 < AdaMoE 0.401538 < Expanding 0.402094 <
+BestFixedWindow 0.402213 < ARW 0.402359. TTAM beats every baseline (5/5
+vs Expanding/AdaMoE/OPS, 4/5 vs BFW/ARW); margin over OPS +2.1e-4
+(Criteo +1.7e-4). **Ablation:** `AP-OPS only` 0.400940 == TTAM (gain
++5.6e-6, CI [-1.8e-5,+3.1e-5], 4/5); `AMG-TP only` 0.401514 ==
+`without both` 0.401535. **On BOTH public datasets the entire TTAM gain
+over OPS is the AP-OPS calibration layer; the AMG-TP historical module
+adds nothing. No synergy.** `apops_fixed` == `apops_amgtp` config at
+every origin on both datasets.
+
+**Verdict:** AP-OPS re-confirmed under the corrected fully-nested
+protocol on two datasets; clean negative result on the two-timescale
+historical short/long adaptive-memory module (M1-M6 / AMG-TP line).
+Full write-up `TTAM_SECTION6_FINDINGS.md`; two-panel figure
+`ttam/section6_figure.png`.
+
 **Not done:**
-- **Avazu** nested run -- Avazu banks not built; full 40M-row Avazu risks
-  OOM at 62 GB with no Slurm on the run host. Deferred; use
-  `ttam_banks_avazu.slurm` + `ttam_nested_avazu.slurm` on the cluster, or
-  a seed-serial low-memory bank build first. Re-running
-  `run_ttam_section6.sh` after `avazu/nested/` exists adds the Avazu panel
-  to the stats + figure automatically.
+- Avazu downstream bidding -- needs a frozen simulated-price spec (plan
+  section 10); Criteo replay is the primary downstream result.
 - Manuscript placeholders (plan section 6.x) -- no paper source file in
   this repo (same standing note as below); the `.md` + figure are the
   deliverables produced here.
