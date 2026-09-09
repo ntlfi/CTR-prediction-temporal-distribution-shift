@@ -1,0 +1,87 @@
+{
+  "source": "avazu",
+  "code_commit": "4a65e914e0cce61d6c9551f6d2f05e62d9efddac",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "outer_days": [
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "inner_k": 3,
+  "n_features": 262144,
+  "sample_frac": 1.0,
+  "block_sec": 3600,
+  "delay_sec": 1800,
+  "variants": [
+    "expanding",
+    "best_fixed_window",
+    "arw",
+    "adamoe",
+    "ops",
+    "ttam",
+    "amgtp_only",
+    "expanding_apops"
+  ],
+  "runtime_s": 3121.2737114429474,
+  "grids": {
+    "arw_delta": [
+      0.05,
+      0.1,
+      0.2
+    ],
+    "adamoe_lambda": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      0.99
+    ],
+    "amgtp_rho": [
+      0.2,
+      0.3,
+      0.5
+    ],
+    "ops_B": [
+      0.25,
+      0.5,
+      1.0
+    ],
+    "ops_eta0": [
+      0.03,
+      0.1,
+      0.3
+    ],
+    "ops_sched": [
+      "const",
+      "inv_sqrt"
+    ],
+    "ons_lam": [
+      0.1,
+      1.0
+    ],
+    "ons_eta": [
+      0.25,
+      1.0,
+      4.0
+    ],
+    "apops_lambda": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "apops_tau": [
+      "4",
+      "16",
+      "inf"
+    ],
+    "eta_m_fixed": 100.0
+  }
+}

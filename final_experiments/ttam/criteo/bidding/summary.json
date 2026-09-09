@@ -1,0 +1,465 @@
+{
+  "source": "criteo",
+  "primary_budget_frac": 0.25,
+  "reference_cost": "sum of recorded display cost over each origin day's impressions",
+  "budgets_reset": "daily; identical across paired methods per origin",
+  "auction_rule": "b_i = scale * pctr_i ; win iff b_i >= cost_i ; pay cost_i on win",
+  "interpolation": "clicks interpolated to the common spend on each method's own global-scale frontier; bracketed on spend only; never on test clicks",
+  "origins": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "resample_seed": 20260908,
+  "n_boot": 10000,
+  "main_table_primary": [
+    {
+      "method": "Expanding",
+      "ttam_clicks": 133881.70050100636,
+      "baseline_clicks": 133964.23846482523,
+      "mean_extra_clicks": -82.53796381886156,
+      "extra_clicks_ci95": [
+        -117.64610190908772,
+        -49.42183683873938
+      ],
+      "aggregate_click_gain_pct": -0.0616119382043423,
+      "click_gain_pct_ci95": [
+        -0.08559610457373745,
+        -0.03775445817262302
+      ],
+      "origins_won_by_ttam": 1,
+      "D": 15
+    },
+    {
+      "method": "Best Fixed Window",
+      "ttam_clicks": 133881.70050100636,
+      "baseline_clicks": 133955.55349109854,
+      "mean_extra_clicks": -73.85299009220519,
+      "extra_clicks_ci95": [
+        -111.96259305553548,
+        -33.37368792958515
+      ],
+      "aggregate_click_gain_pct": -0.05513245861591409,
+      "click_gain_pct_ci95": [
+        -0.08225478269309194,
+        -0.024909835892494847
+      ],
+      "origins_won_by_ttam": 2,
+      "D": 15
+    },
+    {
+      "method": "ARW",
+      "ttam_clicks": 133881.70050100636,
+      "baseline_clicks": 133952.3155963489,
+      "mean_extra_clicks": -70.61509534253759,
+      "extra_clicks_ci95": [
+        -100.320577710094,
+        -39.68286820450005
+      ],
+      "aggregate_click_gain_pct": -0.05271659174247434,
+      "click_gain_pct_ci95": [
+        -0.07428289966556756,
+        -0.02953666535981947
+      ],
+      "origins_won_by_ttam": 2,
+      "D": 15
+    },
+    {
+      "method": "AdaMoE",
+      "ttam_clicks": 133881.70050100636,
+      "baseline_clicks": 133969.87806132084,
+      "mean_extra_clicks": -88.17756031450602,
+      "extra_clicks_ci95": [
+        -119.24403889627862,
+        -59.263038185725115
+      ],
+      "aggregate_click_gain_pct": -0.06581894496771046,
+      "click_gain_pct_ci95": [
+        -0.0872982043265691,
+        -0.044850612782676436
+      ],
+      "origins_won_by_ttam": 0,
+      "D": 15
+    },
+    {
+      "method": "OPS",
+      "ttam_clicks": 133881.70050100636,
+      "baseline_clicks": 133913.42914553315,
+      "mean_extra_clicks": -31.72864452677216,
+      "extra_clicks_ci95": [
+        -41.727692178954264,
+        -22.096379917322885
+      ],
+      "aggregate_click_gain_pct": -0.023693400078861337,
+      "click_gain_pct_ci95": [
+        -0.03104620851369644,
+        -0.01661700533823751
+      ],
+      "origins_won_by_ttam": 1,
+      "D": 15
+    }
+  ],
+  "appendix_tables": {
+    "10pct": [
+      {
+        "method": "Expanding",
+        "ttam_clicks": 88806.49120128686,
+        "baseline_clicks": 88808.1395526533,
+        "mean_extra_clicks": -1.6483513664531833,
+        "extra_clicks_ci95": [
+          -29.212100852773148,
+          25.83903750122931
+        ],
+        "aggregate_click_gain_pct": -0.0018560814073476095,
+        "click_gain_pct_ci95": [
+          -0.0321555764563386,
+          0.029707067030648737
+        ],
+        "origins_won_by_ttam": 9,
+        "D": 15
+      },
+      {
+        "method": "Best Fixed Window",
+        "ttam_clicks": 88806.49120128686,
+        "baseline_clicks": 88789.0612022697,
+        "mean_extra_clicks": 17.4299990171392,
+        "extra_clicks_ci95": [
+          -1.4805514996434548,
+          37.68173532590513
+        ],
+        "aggregate_click_gain_pct": 0.019630795484415486,
+        "click_gain_pct_ci95": [
+          -0.0016889886750637295,
+          0.042142631491826066
+        ],
+        "origins_won_by_ttam": 11,
+        "D": 15
+      },
+      {
+        "method": "ARW",
+        "ttam_clicks": 88806.49120128686,
+        "baseline_clicks": 88795.71182628929,
+        "mean_extra_clicks": 10.779374997547711,
+        "extra_clicks_ci95": [
+          -7.239858118961687,
+          28.988418215790706
+        ],
+        "aggregate_click_gain_pct": 0.01213952202856472,
+        "click_gain_pct_ci95": [
+          -0.008213180266047893,
+          0.03258768165494974
+        ],
+        "origins_won_by_ttam": 11,
+        "D": 15
+      },
+      {
+        "method": "AdaMoE",
+        "ttam_clicks": 88806.49120128686,
+        "baseline_clicks": 88817.25463952232,
+        "mean_extra_clicks": -10.763438235477468,
+        "extra_clicks_ci95": [
+          -24.46581470159627,
+          1.0456781209879378
+        ],
+        "aggregate_click_gain_pct": -0.012118634244151494,
+        "click_gain_pct_ci95": [
+          -0.027125284532625304,
+          0.001216743509413476
+        ],
+        "origins_won_by_ttam": 6,
+        "D": 15
+      },
+      {
+        "method": "OPS",
+        "ttam_clicks": 88806.49120128686,
+        "baseline_clicks": 88808.04212778219,
+        "mean_extra_clicks": -1.550926495360909,
+        "extra_clicks_ci95": [
+          -8.763258660261029,
+          5.619588009955378
+        ],
+        "aggregate_click_gain_pct": -0.0017463806859963071,
+        "click_gain_pct_ci95": [
+          -0.009696835592032382,
+          0.006438474212511203
+        ],
+        "origins_won_by_ttam": 7,
+        "D": 15
+      }
+    ],
+    "25pct": [
+      {
+        "method": "Expanding",
+        "ttam_clicks": 133881.70050100636,
+        "baseline_clicks": 133964.23846482523,
+        "mean_extra_clicks": -82.53796381886156,
+        "extra_clicks_ci95": [
+          -117.64610190908772,
+          -49.42183683873938
+        ],
+        "aggregate_click_gain_pct": -0.0616119382043423,
+        "click_gain_pct_ci95": [
+          -0.08559610457373745,
+          -0.03775445817262302
+        ],
+        "origins_won_by_ttam": 1,
+        "D": 15
+      },
+      {
+        "method": "Best Fixed Window",
+        "ttam_clicks": 133881.70050100636,
+        "baseline_clicks": 133955.55349109854,
+        "mean_extra_clicks": -73.85299009220519,
+        "extra_clicks_ci95": [
+          -111.96259305553548,
+          -33.37368792958515
+        ],
+        "aggregate_click_gain_pct": -0.05513245861591409,
+        "click_gain_pct_ci95": [
+          -0.08225478269309194,
+          -0.024909835892494847
+        ],
+        "origins_won_by_ttam": 2,
+        "D": 15
+      },
+      {
+        "method": "ARW",
+        "ttam_clicks": 133881.70050100636,
+        "baseline_clicks": 133952.3155963489,
+        "mean_extra_clicks": -70.61509534253759,
+        "extra_clicks_ci95": [
+          -100.320577710094,
+          -39.68286820450005
+        ],
+        "aggregate_click_gain_pct": -0.05271659174247434,
+        "click_gain_pct_ci95": [
+          -0.07428289966556756,
+          -0.02953666535981947
+        ],
+        "origins_won_by_ttam": 2,
+        "D": 15
+      },
+      {
+        "method": "AdaMoE",
+        "ttam_clicks": 133881.70050100636,
+        "baseline_clicks": 133969.87806132084,
+        "mean_extra_clicks": -88.17756031450602,
+        "extra_clicks_ci95": [
+          -119.24403889627862,
+          -59.263038185725115
+        ],
+        "aggregate_click_gain_pct": -0.06581894496771046,
+        "click_gain_pct_ci95": [
+          -0.0872982043265691,
+          -0.044850612782676436
+        ],
+        "origins_won_by_ttam": 0,
+        "D": 15
+      },
+      {
+        "method": "OPS",
+        "ttam_clicks": 133881.70050100636,
+        "baseline_clicks": 133913.42914553315,
+        "mean_extra_clicks": -31.72864452677216,
+        "extra_clicks_ci95": [
+          -41.727692178954264,
+          -22.096379917322885
+        ],
+        "aggregate_click_gain_pct": -0.023693400078861337,
+        "click_gain_pct_ci95": [
+          -0.03104620851369644,
+          -0.01661700533823751
+        ],
+        "origins_won_by_ttam": 1,
+        "D": 15
+      }
+    ],
+    "50pct": [
+      {
+        "method": "Expanding",
+        "ttam_clicks": 168318.75867888954,
+        "baseline_clicks": 168384.0365792404,
+        "mean_extra_clicks": -65.27790035082532,
+        "extra_clicks_ci95": [
+          -91.42489456693151,
+          -35.19698887063574
+        ],
+        "aggregate_click_gain_pct": -0.038767273713691264,
+        "click_gain_pct_ci95": [
+          -0.05360969571617247,
+          -0.021156972167879484
+        ],
+        "origins_won_by_ttam": 2,
+        "D": 15
+      },
+      {
+        "method": "Best Fixed Window",
+        "ttam_clicks": 168318.75867888954,
+        "baseline_clicks": 168404.96056338958,
+        "mean_extra_clicks": -86.2018844999955,
+        "extra_clicks_ci95": [
+          -119.13099787241138,
+          -50.878037178920806
+        ],
+        "aggregate_click_gain_pct": -0.05118725969333049,
+        "click_gain_pct_ci95": [
+          -0.06978124625498516,
+          -0.030334922472441406
+        ],
+        "origins_won_by_ttam": 3,
+        "D": 15
+      },
+      {
+        "method": "ARW",
+        "ttam_clicks": 168318.75867888954,
+        "baseline_clicks": 168402.85388617293,
+        "mean_extra_clicks": -84.09520728338393,
+        "extra_clicks_ci95": [
+          -108.9428721215051,
+          -57.31158766907535
+        ],
+        "aggregate_click_gain_pct": -0.049936925261495624,
+        "click_gain_pct_ci95": [
+          -0.06403778856879372,
+          -0.034150935584964515
+        ],
+        "origins_won_by_ttam": 2,
+        "D": 15
+      },
+      {
+        "method": "AdaMoE",
+        "ttam_clicks": 168318.75867888954,
+        "baseline_clicks": 168402.44719988725,
+        "mean_extra_clicks": -83.68852099768313,
+        "extra_clicks_ci95": [
+          -110.67504857770983,
+          -57.51092389794436
+        ],
+        "aggregate_click_gain_pct": -0.049695549197315,
+        "click_gain_pct_ci95": [
+          -0.06433697725548582,
+          -0.03480060321917611
+        ],
+        "origins_won_by_ttam": 1,
+        "D": 15
+      },
+      {
+        "method": "OPS",
+        "ttam_clicks": 168318.75867888954,
+        "baseline_clicks": 168354.55274994607,
+        "mean_extra_clicks": -35.79407105651723,
+        "extra_clicks_ci95": [
+          -45.71227950595101,
+          -25.96517496371404
+        ],
+        "aggregate_click_gain_pct": -0.02126112449698514,
+        "click_gain_pct_ci95": [
+          -0.02712360533329017,
+          -0.01537159106501651
+        ],
+        "origins_won_by_ttam": 1,
+        "D": 15
+      }
+    ],
+    "75pct": [
+      {
+        "method": "Expanding",
+        "ttam_clicks": 183552.99176217816,
+        "baseline_clicks": 183581.25914966376,
+        "mean_extra_clicks": -28.26738748557788,
+        "extra_clicks_ci95": [
+          -41.85898435152344,
+          -14.379656259613657
+        ],
+        "aggregate_click_gain_pct": -0.015397752263235365,
+        "click_gain_pct_ci95": [
+          -0.022601841053282445,
+          -0.007883228834415501
+        ],
+        "origins_won_by_ttam": 2,
+        "D": 15
+      },
+      {
+        "method": "Best Fixed Window",
+        "ttam_clicks": 183552.99176217816,
+        "baseline_clicks": 183594.5690070499,
+        "mean_extra_clicks": -41.57724487172285,
+        "extra_clicks_ci95": [
+          -59.561596365691855,
+          -23.271370592698275
+        ],
+        "aggregate_click_gain_pct": -0.022646228097378263,
+        "click_gain_pct_ci95": [
+          -0.031799480046967865,
+          -0.012780141076351725
+        ],
+        "origins_won_by_ttam": 3,
+        "D": 15
+      },
+      {
+        "method": "ARW",
+        "ttam_clicks": 183552.99176217816,
+        "baseline_clicks": 183593.8140940645,
+        "mean_extra_clicks": -40.8223318862787,
+        "extra_clicks_ci95": [
+          -54.987521661730526,
+          -26.20260542453936
+        ],
+        "aggregate_click_gain_pct": -0.02223513471178995,
+        "click_gain_pct_ci95": [
+          -0.02956742162235626,
+          -0.014404048807747927
+        ],
+        "origins_won_by_ttam": 2,
+        "D": 15
+      },
+      {
+        "method": "AdaMoE",
+        "ttam_clicks": 183552.99176217816,
+        "baseline_clicks": 183592.2244743863,
+        "mean_extra_clicks": -39.232712208110996,
+        "extra_clicks_ci95": [
+          -53.808506947763384,
+          -25.470295978263803
+        ],
+        "aggregate_click_gain_pct": -0.02136948463937749,
+        "click_gain_pct_ci95": [
+          -0.028727266153016906,
+          -0.014132858284332528
+        ],
+        "origins_won_by_ttam": 1,
+        "D": 15
+      },
+      {
+        "method": "OPS",
+        "ttam_clicks": 183552.99176217816,
+        "baseline_clicks": 183572.2627176343,
+        "mean_extra_clicks": -19.270955456106456,
+        "extra_clicks_ci95": [
+          -23.759515849301096,
+          -14.861708566953945
+        ],
+        "aggregate_click_gain_pct": -0.010497749044879878,
+        "click_gain_pct_ci95": [
+          -0.01289476149514135,
+          -0.008133448654601416
+        ],
+        "origins_won_by_ttam": 1,
+        "D": 15
+      }
+    ]
+  },
+  "avazu": "pending -- no recorded price field; a simulated price model would need a separate frozen specification (plan section 10)."
+}

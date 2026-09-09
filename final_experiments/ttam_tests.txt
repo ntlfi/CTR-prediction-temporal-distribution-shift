@@ -1,0 +1,13 @@
+[PASS] lambda_AP=0 -> AP-OPS == daily-reset OPS on q_fixed
+[PASS] lambda_AP=0 -> AP-OPS == daily-reset OPS on q_expanding
+[PASS] lambda_AP=0 -> AP-OPS == daily-reset OPS on q_amgtp
+[PASS] fixed-mixture weights nonnegative and sum to 1
+[PASS] AP-OPS meta weights on the simplex across 1149 updates
+[PASS] persistent Platt experts keep (a, b) in [0.2,5] x [-0.25,0.25]
+[PASS] flipping the last prefix day's labels leaves every earlier TTAM prediction identical
+[PASS] cross-midnight label leaves its own day's ONS predictions unchanged
+[PASS] cross-midnight label updates the persistent expert on the next day
+[PASS] AMG-TP memory m_t = (1-rho) m_{t-1} + rho * mean_x pi_deployed_t
+[PASS] identical inputs reproduce identical TTAM outputs
+
+11 passed, 0 failed

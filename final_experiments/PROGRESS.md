@@ -6,6 +6,126 @@ Window, ARW, AdaMoE, OPS, DualTime-CTR; Criteo + Avazu; seeds 0,1,2). If
 this session ends before the plan is finished, **read this file first**,
 then the spec (in the conversation that requested it) for exact formulas.
 
+## TTAM revised Section 6 -- Criteo + Avazu DONE; ablation revised to 2x2 (2026-09-09) (branch `ttam-additional-experiments`, started 2026-09-08)
+
+New plan `final_experiments/TTAM_Additional_Experiments_Plan.pdf` (8 Sep
+2026): evaluate the integrated **AMG-TP + AP-OPS** pipeline ("TTAM") under
+one *corrected* fully-nested rolling-origin protocol -- every data-tuned
+setting reselected from data strictly before each evaluated origin, no
+inheritance from a frozen file whose dev window overlaps early outer days.
+Six-method main table + four-variant ablation + Criteo bidding replay.
+**This document specifies work to run; it does not report new results.**
+
+**Done (commits 5761624, 754bfec):**
+- `final_experiments/ttam/` package: `bank.py` (shared 5-horizon expert
+  bank {1,3,7,14,expanding}, tie-aliased), `fixed_mix.py` (constant
+  validation-fitted simplex mixture = no-AMG-TP control), `amgtp.py`
+  (causal AMG-TP on the 5-horizon bank: sample gate + learned persistence
+  + deployed-weight memory, maturation-aware), `method.py` (nine variants:
+  expanding / best_fixed_window / arw / adamoe / ops / ttam / without_both
+  / amgtp_only / apops_only), `build_banks.py` (bank + context-sketch disk
+  cache).
+- `run_ttam_nested.py` -- 3-pass nested runner (module selection on
+  uncalibrated inner loss -> calibration selection on the chosen module's
+  causal stream -> replay winners + score origin once). **Origins within
+  each pass run in parallel** (`--n-workers`, deterministic, joblib
+  processes, results-identical to serial). `ttam_stats.py` (paired
+  day-level gain, 95% paired day-bootstrap + block-2 MBB, seed 20260908,
+  seeds averaged first), `ttam_figure.py` (Section 6.2 two-panel figure),
+  `run_ttam_bidding.py` (Criteo bidding replay, recorded display cost as
+  price proxy, changes only the prediction input).
+- `TTAM_FROZEN.md` -- frozen grids / staged-selection rule / statistics +
+  bidding protocol / reuse audit, fixed before any TTAM result.
+- `ttam_tests.py` 10/10: lambda_AP=0 => AP-OPS==OPS; causal invariance;
+  cross-midnight maturation; simplex/param bounds; deployed-weight memory
+  update; determinism.
+- Criteo 3-seed expert banks cached (`_bankcache/`, gitignored). Full
+  pipeline (nested runner -> stats -> figure) validated on a 3% Criteo
+  smoke (193s, all 9 variants, 15 origins x 3 seeds). Bidding replay
+  asserts row alignment which only holds at `sample_frac=1.0` -- it
+  errors on the subsampled smoke by design; verified `load_criteo`
+  (twoscale) and the bidding cost loader do the identical
+  `(day, sec_in_day)` stable sort with no row filtering at full data.
+
+### CRITEO NESTED RUN: DONE (2026-09-08, commit 45e50a6, local run ~1h)
+
+`final_experiments/ttam/criteo/nested/` (`run_ttam_nested.py --n-workers 4`;
+had to drop from 6 -> 4 after loky worker deaths under memory pressure --
+a root `java` job appeared using 26 GB; per-seed checkpointing added so
+the restart resumed at pass 2). Section 6: `TTAM_SECTION6_FINDINGS.md`,
+`TTAM_SECTION6_STATS.md`, `ttam/section6_figure.png`,
+`ttam/criteo/{nested,bidding}/`.
+
+**Prediction (equal-day mean log loss, D=15):** TTAM 0.608029 < OPS
+0.608201 < AdaMoE 0.608410 < ARW 0.608631 < BestFixedWindow 0.608744 <
+Expanding 0.609475. TTAM beats every baseline 15/15 origins, all CIs
+exclude 0; margin over OPS = 1.7e-4 (small, directionally unanimous).
+
+**Downstream bidding (Criteo, matched spend):** TTAM wins FEWER clicks
+than every baseline (-0.02% vs OPS to -0.07% vs AdaMoE), all CIs below
+zero. The log-loss edge does not convert to bidding value.
+
+### AVAZU NESTED RUN: DONE (2026-09-09, commit 220a4d6, local ~77 min)
+
+Needed `twoscale.data.load_avazu` made chunk-hashed (commit c1b4c9e) --
+the old path materialised the full 40M-row string frame (~50GB peak,
+needed a 150-230GB node); now each read chunk is hashed to a sparse block
+and the strings dropped, bit-identical output, ~25GB peak. Banks built
+one seed per process (`--n-jobs 1`, ~24 min each) then
+`run_ttam_nested.py --source avazu --n-workers 3`.
+
+Prediction (equal-day mean log loss, D=5): TTAM 0.400934 < OPS 0.401147
+< AdaMoE 0.401538 < Expanding 0.402094 < BestFixedWindow 0.402213 < ARW
+0.402359. TTAM beats every baseline (5/5 vs Expanding/AdaMoE/OPS, 4/5 vs
+BFW/ARW); margin over OPS +2.1e-4 (Criteo +1.7e-4).
+
+### ABLATION REVISED TO 2x2 + BOTH DATASETS RE-RUN (2026-09-09, commit 4a65e91 + rerun)
+
+User revised the ablation to a clean **2x2: historical predictor
+{AMG-TP, expanding-history} x calibration {AP-OPS, none}**. Window
+baseline = expanding history, pre-registered. Dropped the two
+fixed-simplex-mixture arms (`without_both`, `apops_only`), added
+`expanding_apops`. `ttam_stats.py::factorial_2x2` reports the four
+marginal effects + interaction with paired day-bootstrap CIs
+(`section6_factorial.json`, "6.3 Ablation -- 2x2" in
+`TTAM_SECTION6_STATS.md`). Both datasets re-run (pass 1 unchanged ->
+resumed from checkpoint); the main table (6 methods) is byte-identical.
+
+**This changed the ablation conclusion.** Against a plain
+expanding-history baseline (not the fitted mixture the old arms used --
+itself an adaptive multi-horizon combination), **BOTH components
+contribute significantly on both datasets**:
+
+| | Criteo A_m | Avazu A_m |
+|---|---|---|
+| expanding | 0.609475 | 0.402094 |
+| expanding + AP-OPS | 0.608807 | 0.401737 |
+| AMG-TP (amgtp_only) | 0.608401 | 0.401514 |
+| AMG-TP + AP-OPS (TTAM) | 0.608029 | 0.400934 |
+
+All 8 marginal-effect CIs clear zero, 15/15 & 5/5 origins: AMG-TP
+-0.5..1.1e-3, AP-OPS -0.4..0.6e-3. **Interaction disagrees by dataset:**
+Criteo +3.0e-4 [+1.5e-4,+4.6e-4] = *substitutes* (each recovers most of
+the gain alone; stacking gives less than the sum); Avazu -2.2e-4
+[-3.3e-4,-1.1e-4] = *synergy*. The earlier "AMG-TP adds nothing" reading
+was an artefact of ablating against the fitted mixture.
+
+**Verdict:** TTAM (both timescales) is best on both datasets; both the
+AMG-TP historical model and the AP-OPS calibrator carry real weight
+against a naive baseline; they are non-additive with opposite sign
+across the two datasets. Full write-up `TTAM_SECTION6_FINDINGS.md` §6.3;
+two-panel figure `ttam/section6_figure.png`. `final_predictions/`
+(Criteo 0.6GB + Avazu 1.6GB) deleted after -- gitignored, regenerable.
+
+**Not done:**
+- Avazu downstream bidding -- needs a frozen simulated-price spec (plan
+  section 10); Criteo replay is the primary downstream result.
+- Manuscript placeholders (plan section 6.x) -- no paper source file in
+  this repo (same standing note as below); the `.md` + figure are the
+  deliverables produced here.
+
+---
+
 ## IMPORTANT: DualTime-CTR is not the capacity-ladder V5 (user clarification, 2026-09-05)
 
 DualTime-CTR's within-day residual model uses an ONLINE-updated `w`:
