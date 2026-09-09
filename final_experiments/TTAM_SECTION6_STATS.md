@@ -21,29 +21,27 @@ metrics only (see the CSVs) and are not mixed with the equal-day gain.
 | OPS | 0.608201 | +0.000172 | [+0.000133, +0.000219] | [+0.000134, +0.000212] | 15/15 |
 | TTAM | 0.608029 | (reference) | -- | -- | -- |
 
-### 6.3 Ablation (gain of TTAM over each ablation)
+### 6.3 Ablation -- 2x2: historical predictor x calibration
 
-| variant | mean score A_m | mean gain G_m | 95% day-bootstrap CI | block-2 MBB CI | origins won by TTAM |
+Mean score A_m per cell (lower = better):
+
+| historical \ calibration | none | AP-OPS |
+|---|---|---|
+| **expanding history** | 0.609475 | 0.608807 |
+| **AMG-TP** | 0.608401 | 0.608029 (= TTAM) |
+
+Marginal effects (mean difference, negative => the added component lowers loss;
+95% paired day-bootstrap CI; "excl. 0" = interval does not contain zero):
+
+| effect | at | mean | 95% day-bootstrap CI | lower on | excl. 0 |
 |---|---|---|---|---|---|
-| Without both modules | 0.608408 | +0.000379 | [+0.000298, +0.000473] | [+0.000290, +0.000471] | 15/15 |
-| AMG-TP only | 0.608401 | +0.000372 | [+0.000291, +0.000465] | [+0.000284, +0.000461] | 15/15 |
-| AP-OPS only | 0.608031 | +0.000002 | [-0.000001, +0.000005] | [-0.000001, +0.000005] | 11/15 |
+| AP-OPS (calibration) | historical = expanding | -6.68e-04 | [-8.74e-04, -5.04e-04] | 15/15 | yes |
+| AP-OPS (calibration) | historical = AMG-TP | -3.72e-04 | [-4.65e-04, -2.91e-04] | 15/15 | yes |
+| AMG-TP (historical) | calibration = none | -1.07e-03 | [-1.23e-03, -9.26e-04] | 15/15 | yes |
+| AMG-TP (historical) | calibration = AP-OPS | -7.78e-04 | [-8.58e-04, -7.04e-04] | 15/15 | yes |
+| interaction | (t-a) - (ea-e) | +2.96e-04 | [+1.46e-04, +4.58e-04] | 1/15 | yes |
 
-### 6.3b Internal contrasts (mean difference `a - b`, paired day-bootstrap)
-
-Not anchored on TTAM. `a - b` negative => `a` has the lower loss; the
-CI is the 95% paired day-bootstrap interval for that mean difference.
-"excl. 0" means the interval does not contain zero -- a *detectable*
-ordering on these origins, which at magnitudes <1e-4 need not be a
-*material* one.
-
-| a | b | mean `a - b` | 95% day-bootstrap CI | block-2 MBB CI | `a` better on | excl. 0 |
-|---|---|---|---|---|---|---|
-| AP-OPS only | OPS | -1.70e-04 | [-2.17e-04, -1.30e-04] | [-2.11e-04, -1.31e-04] | 15/15 | yes |
-| AMG-TP only | Without both modules | -7.43e-06 | [-1.44e-05, -8.23e-07] | [-1.47e-05, +6.37e-08] | 10/15 | yes |
-| TTAM | AP-OPS only | -2.23e-06 | [-5.25e-06, +1.00e-06] | [-4.89e-06, +1.00e-06] | 11/15 | no |
-| TTAM | AMG-TP only | -3.72e-04 | [-4.65e-04, -2.91e-04] | [-4.61e-04, -2.84e-04] | 15/15 | yes |
-| Without both modules | AdaMoE | -1.74e-06 | [-3.19e-06, -4.74e-07] | [-3.32e-06, -5.35e-07] | 13/15 | yes |
+Interaction < 0 would mean AMG-TP makes AP-OPS help more (synergy); a CI containing 0 means the two timescales are additive.
 
 ## Avazu  (D = 5 origins: [5, 6, 7, 8, 9])
 
@@ -60,26 +58,24 @@ ordering on these origins, which at magnitudes <1e-4 need not be a
 | OPS | 0.401147 | +0.000213 | [+0.000137, +0.000281] | [+0.000165, +0.000248] | 5/5 |
 | TTAM | 0.400934 | (reference) | -- | -- | -- |
 
-### 6.3 Ablation (gain of TTAM over each ablation)
+### 6.3 Ablation -- 2x2: historical predictor x calibration
 
-| variant | mean score A_m | mean gain G_m | 95% day-bootstrap CI | block-2 MBB CI | origins won by TTAM |
+Mean score A_m per cell (lower = better):
+
+| historical \ calibration | none | AP-OPS |
+|---|---|---|
+| **expanding history** | 0.402094 | 0.401737 |
+| **AMG-TP** | 0.401514 | 0.400934 (= TTAM) |
+
+Marginal effects (mean difference, negative => the added component lowers loss;
+95% paired day-bootstrap CI; "excl. 0" = interval does not contain zero):
+
+| effect | at | mean | 95% day-bootstrap CI | lower on | excl. 0 |
 |---|---|---|---|---|---|
-| Without both modules | 0.401535 | +0.000600 | [+0.000332, +0.000903] | [+0.000332, +0.000886] | 5/5 |
-| AMG-TP only | 0.401514 | +0.000580 | [+0.000305, +0.000897] | [+0.000304, +0.000871] | 5/5 |
-| AP-OPS only | 0.400940 | +0.000006 | [-0.000018, +0.000031] | [-0.000013, +0.000024] | 4/5 |
+| AP-OPS (calibration) | historical = expanding | -3.57e-04 | [-5.48e-04, -1.81e-04] | 5/5 | yes |
+| AP-OPS (calibration) | historical = AMG-TP | -5.80e-04 | [-8.97e-04, -3.05e-04] | 5/5 | yes |
+| AMG-TP (historical) | calibration = none | -5.80e-04 | [-9.18e-04, -2.71e-04] | 5/5 | yes |
+| AMG-TP (historical) | calibration = AP-OPS | -8.02e-04 | [-1.13e-03, -5.35e-04] | 5/5 | yes |
+| interaction | (t-a) - (ea-e) | -2.22e-04 | [-3.33e-04, -1.12e-04] | 5/5 | yes |
 
-### 6.3b Internal contrasts (mean difference `a - b`, paired day-bootstrap)
-
-Not anchored on TTAM. `a - b` negative => `a` has the lower loss; the
-CI is the 95% paired day-bootstrap interval for that mean difference.
-"excl. 0" means the interval does not contain zero -- a *detectable*
-ordering on these origins, which at magnitudes <1e-4 need not be a
-*material* one.
-
-| a | b | mean `a - b` | 95% day-bootstrap CI | block-2 MBB CI | `a` better on | excl. 0 |
-|---|---|---|---|---|---|---|
-| AP-OPS only | OPS | -2.07e-04 | [-2.77e-04, -1.31e-04] | [-2.43e-04, -1.50e-04] | 5/5 | yes |
-| AMG-TP only | Without both modules | -2.08e-05 | [-4.00e-05, -2.48e-06] | [-3.13e-05, -5.83e-06] | 4/5 | yes |
-| TTAM | AP-OPS only | -5.56e-06 | [-3.13e-05, +1.80e-05] | [-2.44e-05, +1.28e-05] | 4/5 | no |
-| TTAM | AMG-TP only | -5.80e-04 | [-8.97e-04, -3.05e-04] | [-8.71e-04, -3.04e-04] | 5/5 | yes |
-| Without both modules | AdaMoE | -3.23e-06 | [-1.01e-05, +3.55e-06] | [-1.06e-05, +2.94e-06] | 4/5 | no |
+Interaction < 0 would mean AMG-TP makes AP-OPS help more (synergy); a CI containing 0 means the two timescales are additive.

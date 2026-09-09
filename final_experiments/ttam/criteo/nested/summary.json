@@ -1,6 +1,6 @@
 {
   "source": "criteo",
-  "code_commit": "e6f8930341f384f26dc6dc1217ec6b6cb2c1de78",
+  "code_commit": "4a65e914e0cce61d6c9551f6d2f05e62d9efddac",
   "seeds": [
     0,
     1,
@@ -35,11 +35,10 @@
     "adamoe",
     "ops",
     "ttam",
-    "without_both",
     "amgtp_only",
-    "apops_only"
+    "expanding_apops"
   ],
-  "runtime_s": 3504.1171894073486,
+  "runtime_s": 3514.377175807953,
   "grids": {
     "arw_delta": [
       0.05,

@@ -1,6 +1,6 @@
 {
   "source": "avazu",
-  "code_commit": "c1b4c9e54dcb1b193b4194111649053aff9722dc",
+  "code_commit": "4a65e914e0cce61d6c9551f6d2f05e62d9efddac",
   "seeds": [
     0,
     1,
@@ -25,11 +25,10 @@
     "adamoe",
     "ops",
     "ttam",
-    "without_both",
     "amgtp_only",
-    "apops_only"
+    "expanding_apops"
   ],
-  "runtime_s": 4641.294849872589,
+  "runtime_s": 3121.2737114429474,
   "grids": {
     "arw_delta": [
       0.05,

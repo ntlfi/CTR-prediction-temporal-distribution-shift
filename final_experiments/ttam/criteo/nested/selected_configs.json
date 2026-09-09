@@ -1,6 +1,6 @@
 {
   "source": "criteo",
-  "code_commit": "e6f8930341f384f26dc6dc1217ec6b6cb2c1de78",
+  "code_commit": "4a65e914e0cce61d6c9551f6d2f05e62d9efddac",
   "outer_days": [
     16,
     17,
@@ -78,7 +78,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.75,
@@ -143,11 +143,11 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.75,
-        "tau_h": 16.0
+        "tau_h": 4.0
       },
       "apops_amgtp": {
         "ons_lam": 0.1,
@@ -208,7 +208,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.75,
@@ -273,7 +273,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.75,
@@ -338,7 +338,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.75,
@@ -403,7 +403,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.75,
@@ -468,7 +468,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.75,
@@ -533,7 +533,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.75,
@@ -598,7 +598,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.75,
@@ -663,7 +663,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.75,
@@ -728,7 +728,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 1.0,
         "ons_eta": 1.0,
         "lambda_ap": 0.25,
@@ -793,7 +793,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 1.0,
         "ons_eta": 1.0,
         "lambda_ap": 0.25,
@@ -858,7 +858,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.25,
@@ -923,7 +923,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.25,
@@ -988,7 +988,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.25,

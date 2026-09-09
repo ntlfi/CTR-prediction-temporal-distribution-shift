@@ -1,6 +1,6 @@
 {
   "source": "avazu",
-  "code_commit": "c1b4c9e54dcb1b193b4194111649053aff9722dc",
+  "code_commit": "4a65e914e0cce61d6c9551f6d2f05e62d9efddac",
   "outer_days": [
     5,
     6,
@@ -67,7 +67,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.25,
@@ -132,10 +132,10 @@
           5.0
         ]
       },
-      "apops_fixed": {
-        "ons_lam": 0.1,
-        "ons_eta": 0.25,
-        "lambda_ap": 0.5,
+      "apops_expanding": {
+        "ons_lam": 1.0,
+        "ons_eta": 4.0,
+        "lambda_ap": 0.25,
         "tau_h": 4.0
       },
       "apops_amgtp": {
@@ -197,7 +197,7 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.5,
@@ -262,11 +262,11 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.75,
-        "tau_h": 16.0
+        "tau_h": 4.0
       },
       "apops_amgtp": {
         "ons_lam": 0.1,
@@ -327,11 +327,11 @@
           5.0
         ]
       },
-      "apops_fixed": {
+      "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
-        "lambda_ap": 0.75,
-        "tau_h": 4.0
+        "lambda_ap": 0.5,
+        "tau_h": 16.0
       },
       "apops_amgtp": {
         "ons_lam": 0.1,
