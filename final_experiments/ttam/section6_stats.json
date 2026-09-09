@@ -213,6 +213,68 @@
         "appendix_ece_ttam": 0.006125124488743184
       }
     ],
+    "contrasts": [
+      {
+        "a": "AP-OPS only",
+        "b": "OPS",
+        "mean_diff (a - b)": -0.00016951463967432485,
+        "ci95_lo": -0.00021732188283297833,
+        "ci95_hi": -0.00013032857104018693,
+        "mbb_ci95_lo": -0.00021114148698458217,
+        "mbb_ci95_hi": -0.0001310507923382409,
+        "a_better_days": 15,
+        "D": 15,
+        "ci_excludes_0": true
+      },
+      {
+        "a": "AMG-TP only",
+        "b": "Without both modules",
+        "mean_diff (a - b)": -7.427561901211336e-06,
+        "ci95_lo": -1.4384876710868965e-05,
+        "ci95_hi": -8.231933358054951e-07,
+        "mbb_ci95_lo": -1.466809675283176e-05,
+        "mbb_ci95_hi": 6.373254419007994e-08,
+        "a_better_days": 10,
+        "D": 15,
+        "ci_excludes_0": true
+      },
+      {
+        "a": "TTAM",
+        "b": "AP-OPS only",
+        "mean_diff (a - b)": -2.227448007655989e-06,
+        "ci95_lo": -5.251678651834179e-06,
+        "ci95_hi": 1.0039888498462407e-06,
+        "mbb_ci95_lo": -4.885470182390457e-06,
+        "mbb_ci95_hi": 1.0044712564682972e-06,
+        "a_better_days": 11,
+        "D": 15,
+        "ci_excludes_0": false
+      },
+      {
+        "a": "TTAM",
+        "b": "AMG-TP only",
+        "mean_diff (a - b)": -0.00037190271018224436,
+        "ci95_lo": -0.0004654140322696091,
+        "ci95_hi": -0.00029088537129869476,
+        "mbb_ci95_lo": -0.00046053838713822407,
+        "mbb_ci95_hi": -0.0002843330392638418,
+        "a_better_days": 15,
+        "D": 15,
+        "ci_excludes_0": true
+      },
+      {
+        "a": "Without both modules",
+        "b": "AdaMoE",
+        "mean_diff (a - b)": -1.7390857879107101e-06,
+        "ci95_lo": -3.192752499013296e-06,
+        "ci95_hi": -4.744621522684292e-07,
+        "mbb_ci95_lo": -3.3193611325871285e-06,
+        "mbb_ci95_hi": -5.35014907941019e-07,
+        "a_better_days": 13,
+        "D": 15,
+        "ci_excludes_0": true
+      }
+    ],
     "seed_averaged_log_loss": {
       "adamoe": {
         "16": 0.6098644403634466,
@@ -571,6 +633,68 @@
         "appendix_brier_ttam": 0.1253044316171982,
         "appendix_ece": 0.008227607317965522,
         "appendix_ece_ttam": 0.008227607317965522
+      }
+    ],
+    "contrasts": [
+      {
+        "a": "AP-OPS only",
+        "b": "OPS",
+        "mean_diff (a - b)": -0.0002071247085224992,
+        "ci95_lo": -0.00027727295690045396,
+        "ci95_hi": -0.00013132501297521414,
+        "mbb_ci95_lo": -0.0002428546690647293,
+        "mbb_ci95_hi": -0.00014989581424406094,
+        "a_better_days": 5,
+        "D": 5,
+        "ci_excludes_0": true
+      },
+      {
+        "a": "AMG-TP only",
+        "b": "Without both modules",
+        "mean_diff (a - b)": -2.0779619556798855e-05,
+        "ci95_lo": -4.004824238130755e-05,
+        "ci95_hi": -2.4759372460492203e-06,
+        "mbb_ci95_lo": -3.126719050036142e-05,
+        "mbb_ci95_hi": -5.8345964035311225e-06,
+        "a_better_days": 4,
+        "D": 5,
+        "ci_excludes_0": true
+      },
+      {
+        "a": "TTAM",
+        "b": "AP-OPS only",
+        "mean_diff (a - b)": -5.563058838120583e-06,
+        "ci95_lo": -3.128896409079207e-05,
+        "ci95_hi": 1.7983475480209954e-05,
+        "mbb_ci95_lo": -2.437137473836337e-05,
+        "mbb_ci95_hi": 1.2757865750734344e-05,
+        "a_better_days": 4,
+        "D": 5,
+        "ci_excludes_0": false
+      },
+      {
+        "a": "TTAM",
+        "b": "AMG-TP only",
+        "mean_diff (a - b)": -0.0005796024319016047,
+        "ci95_lo": -0.0008967275635289207,
+        "ci95_hi": -0.0003053196100673561,
+        "mbb_ci95_lo": -0.0008713406561533743,
+        "mbb_ci95_hi": -0.00030354920962921694,
+        "a_better_days": 5,
+        "D": 5,
+        "ci_excludes_0": true
+      },
+      {
+        "a": "Without both modules",
+        "b": "AdaMoE",
+        "mean_diff (a - b)": -3.2320200097024633e-06,
+        "ci95_lo": -1.0093363063878869e-05,
+        "ci95_hi": 3.5542034696800505e-06,
+        "mbb_ci95_lo": -1.0649468103318683e-05,
+        "mbb_ci95_hi": 2.9360204849115943e-06,
+        "a_better_days": 4,
+        "D": 5,
+        "ci_excludes_0": false
       }
     ],
     "seed_averaged_log_loss": {

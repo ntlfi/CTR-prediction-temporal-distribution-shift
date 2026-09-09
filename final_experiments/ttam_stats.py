@@ -128,6 +128,43 @@ def paired_table(wide_ll: pd.DataFrame, methods: list, wide_secondary: dict) -> 
     return pd.DataFrame(rows)
 
 
+# internal contrasts (a - b, a worse when positive) that are NOT "vs TTAM"
+# -- the ones the ablation turns on: does the calibration layer beat plain
+# OPS, does the historical module beat a fixed mixture, does either module
+# add anything on top of the other, and the fixed-mixture vs AdaMoE question.
+CONTRASTS = [
+    ("apops_only", "ops"),           # AP-OPS calibration vs plain OPS
+    ("amgtp_only", "without_both"),   # AMG-TP historical module vs fixed mixture
+    ("ttam", "apops_only"),           # AMG-TP on top of AP-OPS
+    ("ttam", "amgtp_only"),           # AP-OPS on top of AMG-TP
+    ("without_both", "adamoe"),       # fixed mixture vs AdaMoE
+]
+
+
+def contrast_table(wide_ll: pd.DataFrame, pairs: list) -> pd.DataFrame:
+    """Paired day-bootstrap for arbitrary method pairs (a - b): same
+    seeds-averaged-first, resample-the-D-days machinery as `paired_table`,
+    just not anchored on TTAM. Positive mean => `a` has the higher loss."""
+    days = list(wide_ll.index)
+    D = len(days)
+    rows = []
+    for a, b in pairs:
+        if a not in wide_ll.columns or b not in wide_ll.columns:
+            continue
+        diff = wide_ll[a].to_numpy() - wide_ll[b].to_numpy()
+        rng = np.random.default_rng(RESAMPLE_SEED)
+        lo, hi = _boot_ci(diff, rng)
+        mlo, mhi = _mbb_ci(diff, rng)
+        rows.append({
+            "a": PRETTY.get(a, a), "b": PRETTY.get(b, b),
+            "mean_diff (a - b)": float(diff.mean()),
+            "ci95_lo": lo, "ci95_hi": hi, "mbb_ci95_lo": mlo, "mbb_ci95_hi": mhi,
+            "a_better_days": int(np.sum(diff < 0)), "D": D,
+            "ci_excludes_0": bool(lo * hi > 0),
+        })
+    return pd.DataFrame(rows)
+
+
 def analyse(result_dir: Path, label: str) -> dict:
     raw = load_per_seed(result_dir)
     wide_ll = seed_average(raw, "log_loss")
@@ -144,10 +181,11 @@ def analyse(result_dir: Path, label: str) -> dict:
 
     main = paired_table(wide_ll, MAIN_METHODS, secondary)
     ablation = paired_table(wide_ll, ABLATION_METHODS, secondary)
+    contrasts = contrast_table(wide_ll, CONTRASTS)
     return {
         "label": label, "dir": str(result_dir),
         "days": [int(d) for d in wide_ll.index],
-        "main": main, "ablation": ablation,
+        "main": main, "ablation": ablation, "contrasts": contrasts,
         "seed_averaged_log_loss": {m: {int(d): float(wide_ll[m][d]) for d in wide_ll.index}
                                    for m in wide_ll.columns},
     }
@@ -194,6 +232,19 @@ def to_markdown(analyses: list) -> str:
             if r["method"] == "TTAM":
                 continue
             L.append(_fmt_row(r))
+        L += ["", "### 6.3b Internal contrasts (mean difference `a - b`, paired day-bootstrap)", "",
+              "Not anchored on TTAM. `a - b` negative => `a` has the lower loss; the",
+              "CI is the 95% paired day-bootstrap interval for that mean difference.",
+              "\"excl. 0\" means the interval does not contain zero -- a *detectable*",
+              "ordering on these origins, which at magnitudes <1e-4 need not be a",
+              "*material* one.", "",
+              "| a | b | mean `a - b` | 95% day-bootstrap CI | block-2 MBB CI | `a` better on | excl. 0 |",
+              "|---|---|---|---|---|---|---|"]
+        for _, r in a["contrasts"].iterrows():
+            L.append(f"| {r['a']} | {r['b']} | {r['mean_diff (a - b)']:+.2e} | "
+                     f"[{r['ci95_lo']:+.2e}, {r['ci95_hi']:+.2e}] | "
+                     f"[{r['mbb_ci95_lo']:+.2e}, {r['mbb_ci95_hi']:+.2e}] | "
+                     f"{r['a_better_days']}/{r['D']} | {'yes' if r['ci_excludes_0'] else 'no'} |")
         L.append("")
     return "\n".join(L)
 
@@ -212,7 +263,8 @@ def main():
     for a in analyses:
         a["main"].to_csv(Path(a["dir"]) / "section6_main.csv", index=False)
         a["ablation"].to_csv(Path(a["dir"]) / "section6_ablation.csv", index=False)
-        print(f"wrote {a['dir']}/section6_main.csv + section6_ablation.csv")
+        a["contrasts"].to_csv(Path(a["dir"]) / "section6_contrasts.csv", index=False)
+        print(f"wrote {a['dir']}/section6_{{main,ablation,contrasts}}.csv")
 
     md = to_markdown(analyses)
     if args.out:
