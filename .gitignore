@@ -21,6 +21,12 @@ slurm-*.out
 # from final_experiments/ttam/build_banks.py) and dataset-download logs
 final_experiments/ttam/_bankcache/
 _dl_logs/
+# TTAM nested run: per-impression prediction dumps (~15MB x 45, needed only
+# for the bidding replay) + the per-cell bidding frontier dump. The seed
+# per_day_metrics.csv + selected_*.json + summary + tables are kept.
+final_experiments/ttam/**/final_predictions/
+final_experiments/ttam/**/bidding_cells.csv
+final_experiments/ttam/criteo/nested_run.log
 # large regenerable per-day metric dumps -- summary.json + comparison_table.csv
 # + oracle_per_day.csv + gate_dynamics.csv keep the distilled results
 amgtp_experiments/**/per_day_metrics.csv
