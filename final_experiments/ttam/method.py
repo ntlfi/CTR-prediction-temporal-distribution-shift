@@ -1,6 +1,7 @@
-"""The nine method variants (plan section 5), all on identical five-horizon
-expert predictions, identical evaluation impressions, identical origin
-dates and seed IDs.
+"""The method variants, all on identical five-horizon expert predictions,
+identical evaluation impressions, identical origin dates and seed IDs.
+
+Main table (6):
 
     variant              historical prediction                 calibration
     -------------------  ------------------------------------   --------------
@@ -10,9 +11,20 @@ dates and seed IDs.
     adamoe               causal mature-loss mixture             none
     ops                  validation-fitted fixed mixture        daily-reset OPS (free a, b)
     ttam                 AMG-TP                                  AP-OPS
-    without_both         validation-fitted fixed mixture        none          (ablation)
-    amgtp_only           AMG-TP                                  none          (ablation)
-    apops_only           validation-fitted fixed mixture        AP-OPS        (ablation)
+
+Ablation -- a 2x2 crossing historical predictor {AMG-TP, expanding-history}
+with calibration {AP-OPS, none} (TTAM_FROZEN.md sec. 4):
+
+    cell                 historical prediction   calibration    also in
+    -------------------  ---------------------   -----------    --------------
+    ttam                 AMG-TP                  AP-OPS         main table
+    amgtp_only           AMG-TP                  none           --
+    expanding_apops      expanding-history       AP-OPS         --
+    expanding            expanding-history       none           main table
+
+Identical historical predictions are shared within each row of the 2x2:
+``amgtp_only`` / ``ttam`` both feed the AMG-TP q-stream, ``expanding`` /
+``expanding_apops`` both feed ``bank[d].preds["expanding"]``.
 
 Every function returns a ``records`` list ``[{"day", "y", "p",
 "sec_in_day"}, ...]`` over the days it is given; the nested runner slices
@@ -23,8 +35,8 @@ scored origin day.
 ``dualtime.arw`` / ``dualtime.adamoe`` (whose algorithm building blocks
 are horizon-agnostic and reused directly). ``ops`` / the AP-OPS arms
 reuse ``final_experiments/apops`` unchanged -- ``lambda_AP = 0`` makes
-``apops_only`` / ``ttam``'s calibration reproduce ``ops`` prediction by
-prediction, which is the plan's identity check.
+the AP-OPS calibration reproduce ``ops`` prediction by prediction, which
+is the plan's identity check.
 """
 from __future__ import annotations
 

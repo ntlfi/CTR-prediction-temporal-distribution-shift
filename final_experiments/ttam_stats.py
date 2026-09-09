@@ -44,12 +44,20 @@ N_BOOT = 10_000
 TTAM = "ttam"
 
 MAIN_METHODS = ["expanding", "best_fixed_window", "arw", "adamoe", "ops", "ttam"]
-ABLATION_METHODS = ["without_both", "amgtp_only", "apops_only", "ttam"]
+
+# 2x2 ablation: historical predictor {AMG-TP, expanding-history}
+#             x calibration {AP-OPS, none}.
+#   (AMG-TP,     AP-OPS) = ttam            (AMG-TP,     none) = amgtp_only
+#   (expanding,  AP-OPS) = expanding_apops (expanding,  none) = expanding
+ABLATION_METHODS = ["expanding", "amgtp_only", "expanding_apops", "ttam"]
+CELL = {                                    # 2x2 cell labels (for the factorial table)
+    ("expanding", "none"): "expanding", ("expanding", "apops"): "expanding_apops",
+    ("amgtp", "none"): "amgtp_only", ("amgtp", "apops"): "ttam",
+}
 PRETTY = {
     "expanding": "Expanding", "best_fixed_window": "Best Fixed Window", "arw": "ARW",
     "adamoe": "AdaMoE", "ops": "OPS", "ttam": "TTAM",
-    "without_both": "Without both modules", "amgtp_only": "AMG-TP only",
-    "apops_only": "AP-OPS only",
+    "amgtp_only": "AMG-TP only", "expanding_apops": "Expanding + AP-OPS",
 }
 
 
@@ -128,17 +136,49 @@ def paired_table(wide_ll: pd.DataFrame, methods: list, wide_secondary: dict) -> 
     return pd.DataFrame(rows)
 
 
-# internal contrasts (a - b, a worse when positive) that are NOT "vs TTAM"
-# -- the ones the ablation turns on: does the calibration layer beat plain
-# OPS, does the historical module beat a fixed mixture, does either module
-# add anything on top of the other, and the fixed-mixture vs AdaMoE question.
+# The four 2x2 marginal contrasts (a - b, `a` better when negative): each
+# factor's effect at both levels of the other factor.
 CONTRASTS = [
-    ("apops_only", "ops"),           # AP-OPS calibration vs plain OPS
-    ("amgtp_only", "without_both"),   # AMG-TP historical module vs fixed mixture
-    ("ttam", "apops_only"),           # AMG-TP on top of AP-OPS
-    ("ttam", "amgtp_only"),           # AP-OPS on top of AMG-TP
-    ("without_both", "adamoe"),       # fixed mixture vs AdaMoE
+    ("expanding_apops", "expanding"),   # AP-OPS effect | historical = expanding
+    ("ttam", "amgtp_only"),             # AP-OPS effect | historical = AMG-TP
+    ("amgtp_only", "expanding"),        # AMG-TP effect | calibration = none
+    ("ttam", "expanding_apops"),        # AMG-TP effect | calibration = AP-OPS
 ]
+
+
+def factorial_2x2(wide_ll: pd.DataFrame) -> dict:
+    """The 2x2 ablation as marginal effects + interaction, all with a
+    paired day-bootstrap CI (seeds already averaged into `wide_ll`).
+
+    cells:  e = expanding, ea = expanding+AP-OPS, a = amgtp_only, t = ttam
+    AP-OPS effect  given expanding = ea - e ;  given AMG-TP = t - a
+    AMG-TP effect  given none      = a  - e ;  given AP-OPS = t - ea
+    interaction    = (t - a) - (ea - e)   [ == (t - ea) - (a - e) ]
+      < 0 : AMG-TP makes AP-OPS help more (synergy)
+      ~ 0 : the two timescales are additive
+    """
+    need = ["expanding", "expanding_apops", "amgtp_only", "ttam"]
+    if any(c not in wide_ll.columns for c in need):
+        return {}
+    e, ea = wide_ll["expanding"].to_numpy(), wide_ll["expanding_apops"].to_numpy()
+    a, t = wide_ll["amgtp_only"].to_numpy(), wide_ll["ttam"].to_numpy()
+    D = len(e)
+
+    def ci(vec):
+        rng = np.random.default_rng(RESAMPLE_SEED)
+        lo, hi = _boot_ci(vec, rng)
+        return {"mean": float(vec.mean()), "ci95": [lo, hi],
+                "neg_days": int(np.sum(vec < 0)), "D": D, "excl_0": bool(lo * hi > 0)}
+
+    return {
+        "cell_scores": {"expanding": float(e.mean()), "expanding_apops": float(ea.mean()),
+                        "amgtp_only": float(a.mean()), "ttam": float(t.mean())},
+        "apops_given_expanding": ci(ea - e),
+        "apops_given_amgtp": ci(t - a),
+        "amgtp_given_none": ci(a - e),
+        "amgtp_given_apops": ci(t - ea),
+        "interaction": ci((t - a) - (ea - e)),
+    }
 
 
 def contrast_table(wide_ll: pd.DataFrame, pairs: list) -> pd.DataFrame:
@@ -182,10 +222,11 @@ def analyse(result_dir: Path, label: str) -> dict:
     main = paired_table(wide_ll, MAIN_METHODS, secondary)
     ablation = paired_table(wide_ll, ABLATION_METHODS, secondary)
     contrasts = contrast_table(wide_ll, CONTRASTS)
+    factorial = factorial_2x2(wide_ll)
     return {
         "label": label, "dir": str(result_dir),
         "days": [int(d) for d in wide_ll.index],
-        "main": main, "ablation": ablation, "contrasts": contrasts,
+        "main": main, "ablation": ablation, "contrasts": contrasts, "factorial": factorial,
         "seed_averaged_log_loss": {m: {int(d): float(wide_ll[m][d]) for d in wide_ll.index}
                                    for m in wide_ll.columns},
     }
@@ -225,27 +266,32 @@ def to_markdown(analyses: list) -> str:
         ttam_row = a["main"][a["main"]["method"] == "TTAM"]
         if len(ttam_row):
             L.append(f"| TTAM | {ttam_row.iloc[0]['A_m (mean score)']:.6f} | (reference) | -- | -- | -- |")
-        L += ["", "### 6.3 Ablation (gain of TTAM over each ablation)", "",
-              "| variant | mean score A_m | mean gain G_m | 95% day-bootstrap CI | block-2 MBB CI | origins won by TTAM |",
-              "|---|---|---|---|---|---|"]
-        for _, r in a["ablation"].iterrows():
-            if r["method"] == "TTAM":
-                continue
-            L.append(_fmt_row(r))
-        L += ["", "### 6.3b Internal contrasts (mean difference `a - b`, paired day-bootstrap)", "",
-              "Not anchored on TTAM. `a - b` negative => `a` has the lower loss; the",
-              "CI is the 95% paired day-bootstrap interval for that mean difference.",
-              "\"excl. 0\" means the interval does not contain zero -- a *detectable*",
-              "ordering on these origins, which at magnitudes <1e-4 need not be a",
-              "*material* one.", "",
-              "| a | b | mean `a - b` | 95% day-bootstrap CI | block-2 MBB CI | `a` better on | excl. 0 |",
-              "|---|---|---|---|---|---|---|"]
-        for _, r in a["contrasts"].iterrows():
-            L.append(f"| {r['a']} | {r['b']} | {r['mean_diff (a - b)']:+.2e} | "
-                     f"[{r['ci95_lo']:+.2e}, {r['ci95_hi']:+.2e}] | "
-                     f"[{r['mbb_ci95_lo']:+.2e}, {r['mbb_ci95_hi']:+.2e}] | "
-                     f"{r['a_better_days']}/{r['D']} | {'yes' if r['ci_excludes_0'] else 'no'} |")
-        L.append("")
+        f = a.get("factorial") or {}
+        if f:
+            cs = f["cell_scores"]
+            L += ["", "### 6.3 Ablation -- 2x2: historical predictor x calibration", "",
+                  "Mean score A_m per cell (lower = better):", "",
+                  "| historical \\ calibration | none | AP-OPS |",
+                  "|---|---|---|",
+                  f"| **expanding history** | {cs['expanding']:.6f} | {cs['expanding_apops']:.6f} |",
+                  f"| **AMG-TP** | {cs['amgtp_only']:.6f} | {cs['ttam']:.6f} (= TTAM) |",
+                  "",
+                  "Marginal effects (mean difference, negative => the added component lowers loss;",
+                  "95% paired day-bootstrap CI; \"excl. 0\" = interval does not contain zero):", "",
+                  "| effect | at | mean | 95% day-bootstrap CI | lower on | excl. 0 |",
+                  "|---|---|---|---|---|---|"]
+            def frow(name, at, c):
+                return (f"| {name} | {at} | {c['mean']:+.2e} | "
+                        f"[{c['ci95'][0]:+.2e}, {c['ci95'][1]:+.2e}] | "
+                        f"{c['neg_days']}/{c['D']} | {'yes' if c['excl_0'] else 'no'} |")
+            L += [frow("AP-OPS (calibration)", "historical = expanding", f["apops_given_expanding"]),
+                  frow("AP-OPS (calibration)", "historical = AMG-TP", f["apops_given_amgtp"]),
+                  frow("AMG-TP (historical)", "calibration = none", f["amgtp_given_none"]),
+                  frow("AMG-TP (historical)", "calibration = AP-OPS", f["amgtp_given_apops"]),
+                  frow("interaction", "(t-a) - (ea-e)", f["interaction"]),
+                  "",
+                  "Interaction < 0 would mean AMG-TP makes AP-OPS help more (synergy); "
+                  "a CI containing 0 means the two timescales are additive.", ""]
     return "\n".join(L)
 
 
@@ -264,7 +310,9 @@ def main():
         a["main"].to_csv(Path(a["dir"]) / "section6_main.csv", index=False)
         a["ablation"].to_csv(Path(a["dir"]) / "section6_ablation.csv", index=False)
         a["contrasts"].to_csv(Path(a["dir"]) / "section6_contrasts.csv", index=False)
-        print(f"wrote {a['dir']}/section6_{{main,ablation,contrasts}}.csv")
+        (Path(a["dir"]) / "section6_factorial.json").write_text(
+            json.dumps(a["factorial"], indent=2, default=float))
+        print(f"wrote {a['dir']}/section6_{{main,ablation,contrasts}}.csv + section6_factorial.json")
 
     md = to_markdown(analyses)
     if args.out:

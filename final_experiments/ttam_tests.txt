@@ -1,4 +1,5 @@
 [PASS] lambda_AP=0 -> AP-OPS == daily-reset OPS on q_fixed
+[PASS] lambda_AP=0 -> AP-OPS == daily-reset OPS on q_expanding
 [PASS] lambda_AP=0 -> AP-OPS == daily-reset OPS on q_amgtp
 [PASS] fixed-mixture weights nonnegative and sum to 1
 [PASS] AP-OPS meta weights on the simplex across 1149 updates
@@ -9,4 +10,4 @@
 [PASS] AMG-TP memory m_t = (1-rho) m_{t-1} + rho * mean_x pi_deployed_t
 [PASS] identical inputs reproduce identical TTAM outputs
 
-10 passed, 0 failed
+11 passed, 0 failed

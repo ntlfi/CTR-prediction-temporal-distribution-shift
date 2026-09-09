@@ -1,7 +1,7 @@
 """Downstream bidding replay for the TTAM revised Section 6 (plan section
 10).
 
-The nine-variant nested run's frozen origin-day predictions
+The nested run's frozen origin-day predictions
 (``<nested_out>/final_predictions/origin{d}_seed{k}.npz``) are each fed
 into the **same** auction and pacing policy; only the prediction input
 changes.  The main table compares TTAM with the same five headline

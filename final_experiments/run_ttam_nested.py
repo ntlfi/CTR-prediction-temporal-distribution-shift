@@ -86,8 +86,17 @@ APOPS_ETA_M = 100.0                                 # fixed a priori (dataset-in
 SEL_BOUNDS = {"a_bounds": [0.2, 5.0], "b_bounds": [-0.25, 0.25]}
 OPS_HP_BASE = {"a_bounds": (0.2, 5.0)}
 S_L_HALF_LIVES = (4.0, 16.0)
+# Main table (6) + the 2x2 ablation. The ablation crosses
+#   historical predictor in {AMG-TP, expanding-history}  x  calibration in {AP-OPS, none}
+# giving: ttam (AMG-TP + AP-OPS) / amgtp_only (AMG-TP + none) /
+#         expanding_apops (expanding + AP-OPS) / expanding (expanding + none).
+# ``expanding`` and ``ttam`` are shared with the main table, so only
+# ``expanding_apops`` and ``amgtp_only`` are ablation-only. Identical
+# historical predictions are shared within each row: amgtp_only and ttam
+# both feed q_amgtp; expanding and expanding_apops both feed
+# bank[d].preds["expanding"].
 ALL_VARIANTS = ["expanding", "best_fixed_window", "arw", "adamoe", "ops",
-                "ttam", "without_both", "amgtp_only", "apops_only"]
+                "ttam", "amgtp_only", "expanding_apops"]
 
 
 def git_commit() -> str:
@@ -205,11 +214,20 @@ def pick_modules(pass1: dict, outer_days) -> dict:
 # --------------------------------------------------------------------------- #
 #  pass 2 -- calibration selection on the chosen module's inner stream         #
 # --------------------------------------------------------------------------- #
+def _q_expanding(bank, days) -> dict:
+    """The plain expanding-history expert prediction as a q-stream -- the
+    2x2 ablation's fixed 'window' predictor, shared verbatim by its
+    calibrated (expanding_apops) and uncalibrated (expanding) cells."""
+    return {int(e): np.asarray(bank[e].preds["expanding"], float)
+            for e in sorted(int(x) for x in days if x in bank)}
+
+
 def _q_streams(bank, ctx, days, modsel, seed):
     w = np.asarray(modsel["simplex_w"], float)
-    q_fixed = fixed_mixture_q(bank, days, w)
+    q_fixed = fixed_mixture_q(bank, days, w)              # for the main-table `ops` arm
+    q_exp = _q_expanding(bank, days)                      # for the 2x2 expanding cells
     qa, _ = run_amgtp5(bank, ctx, days, amgtp_cfg(modsel["amgtp_rho"], DELAY_SEC), seed=seed)
-    return q_fixed, qa
+    return q_fixed, q_exp, qa
 
 
 def _ops_grid_inner(bank, days, q_by_day, iset, block_sec):
@@ -247,11 +265,11 @@ def _pass2_origin(bank, ctx, d, bank_days, warmup, modsel, block_sec, seed):
     inner = inner_days_for(d, bank_days, warmup)
     iset = set(inner)
     hist = [e for e in bank_days if e < d]
-    q_fixed, q_amgtp = _q_streams(bank, ctx, hist, modsel, seed)
+    q_fixed, q_exp, q_amgtp = _q_streams(bank, ctx, hist, modsel, seed)
 
     rec = {}
     rec["ops_fixed"] = {k: v[0] for k, v in _ops_grid_inner(bank, hist, q_fixed, iset, block_sec).items()}
-    rec["apops_fixed"] = {k: v[0] for k, v in _apops_grid_inner(bank, hist, q_fixed, iset, block_sec).items()}
+    rec["apops_expanding"] = {k: v[0] for k, v in _apops_grid_inner(bank, hist, q_exp, iset, block_sec).items()}
     rec["apops_amgtp"] = {k: v[0] for k, v in _apops_grid_inner(bank, hist, q_amgtp, iset, block_sec).items()}
     print(f"    pass2 origin {d}: seed {seed}", flush=True)
     return d, rec
@@ -291,7 +309,7 @@ def pick_calibration(pass2: dict, modules: dict, outer_days) -> dict:
 
         cfg = dict(modules[str(d)])
         cfg["ops"] = _decode_ops(best("ops_fixed"))
-        cfg["apops_fixed"] = _decode_apops(best("apops_fixed"))
+        cfg["apops_expanding"] = _decode_apops(best("apops_expanding"))
         cfg["apops_amgtp"] = _decode_apops(best("apops_amgtp"))
         sel[str(d)] = cfg
     return sel
@@ -305,13 +323,14 @@ def score_origin(bank, ctx, d, warmup, sel, block_sec, seed):
     prefix = [e for e in bank_days if e <= d]
     hist = [e for e in bank_days if e < d]
     w = np.asarray(sel["simplex_w"], float)
-    q_fixed = fixed_mixture_q(bank, prefix, w)
+    q_fixed = fixed_mixture_q(bank, prefix, w)            # main-table `ops` arm only
+    q_exp = _q_expanding(bank, prefix)                    # 2x2 expanding cells
     q_amgtp, amg_trace = run_amgtp5(bank, ctx, prefix, amgtp_cfg(sel["amgtp_rho"], DELAY_SEC), seed=seed)
 
-    ac_fixed = apops_config(SEL_BOUNDS, block_sec, DELAY_SEC,
-                            ons_lam=sel["apops_fixed"]["ons_lam"], ons_eta=sel["apops_fixed"]["ons_eta"],
-                            eta_m=APOPS_ETA_M, lambda_ap=sel["apops_fixed"]["lambda_ap"],
-                            tau_h=sel["apops_fixed"]["tau_h"], persist_hl_h=S_L_HALF_LIVES[0])
+    ac_exp = apops_config(SEL_BOUNDS, block_sec, DELAY_SEC,
+                          ons_lam=sel["apops_expanding"]["ons_lam"], ons_eta=sel["apops_expanding"]["ons_eta"],
+                          eta_m=APOPS_ETA_M, lambda_ap=sel["apops_expanding"]["lambda_ap"],
+                          tau_h=sel["apops_expanding"]["tau_h"], persist_hl_h=S_L_HALF_LIVES[0])
     ac_amgtp = apops_config(SEL_BOUNDS, block_sec, DELAY_SEC,
                             ons_lam=sel["apops_amgtp"]["ons_lam"], ons_eta=sel["apops_amgtp"]["ons_eta"],
                             eta_m=APOPS_ETA_M, lambda_ap=sel["apops_amgtp"]["lambda_ap"],
@@ -323,9 +342,9 @@ def score_origin(bank, ctx, d, warmup, sel, block_sec, seed):
         "arw": V.arw(bank, prefix, delta=sel["arw_delta"])[0],
         "adamoe": V.adamoe(bank, prefix, lam=sel["adamoe_lambda"])[0],
         "ops": V.ops(bank, prefix, q_fixed, sel["ops"], block_sec, DELAY_SEC),
-        "without_both": V.q_records(bank, prefix, q_fixed),
+        # 2x2 ablation: {AMG-TP, expanding} x {AP-OPS, none}
         "amgtp_only": V.q_records(bank, prefix, q_amgtp),
-        "apops_only": apops_on(bank, prefix, q_fixed, ac_fixed, ANCHOR_OPS_HP)[0],
+        "expanding_apops": apops_on(bank, prefix, q_exp, ac_exp, ANCHOR_OPS_HP)[0],
         "ttam": apops_on(bank, prefix, q_amgtp, ac_amgtp, ANCHOR_OPS_HP)[0],
     }
     day_rows, preds = [], {}
@@ -360,7 +379,7 @@ def _pass3_origin(bank, ctx, d, warmup, sc, block_sec, seed, pred_dir, want_mani
             "n_effective_experts": bank[d].n_effective,
             "simplex_w": str([round(x, 4) for x in sc["simplex_w"]]),
             "fixed_effective_w": str(effective_weight_report(bank, d, np.asarray(sc["simplex_w"]))),
-            "ops": str(sc["ops"]), "apops_fixed": str(sc["apops_fixed"]),
+            "ops": str(sc["ops"]), "apops_expanding": str(sc["apops_expanding"]),
             "apops_amgtp": str(sc["apops_amgtp"]), "ttam_beta_origin": round(float(beta_d), 4)}
     print(f"    pass3 seed {seed} origin {d}: scored", flush=True)
     return d, day_rows, mrow

@@ -23,5 +23,5 @@ Modules:
   fixed_mix.py -- constant validation-fitted simplex mixture (no-AMG-TP control)
   amgtp.py     -- causal AMG-TP on the five-horizon bank, maturation-aware,
                   deployed-weight memory update (plan section 4)
-  method.py    -- the nine method variants on identical expert predictions
+  method.py    -- the eight method variants (6 main + 2x2 ablation) on identical expert predictions
 """

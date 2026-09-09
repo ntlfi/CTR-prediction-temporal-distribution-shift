@@ -70,11 +70,13 @@ def run(data_path, sample_frac, n_features, n_jobs):
 
     w = fit_simplex_weights(bank, inner)
     q_fixed = fixed_mixture_q(bank, days, w)
+    q_expanding = {int(d): np.asarray(bank[d].preds["expanding"], float) for d in days}
     acfg = AMGTPConfig(rho=0.3, delay_sec=delay_sec, epochs_per_day=2)
     q_amgtp, trace = run_amgtp5(bank, ctx, days, acfg, seed=0)
 
-    # 1. lambda_AP = 0 identity
-    for label, q in (("q_fixed", q_fixed), ("q_amgtp", q_amgtp)):
+    # 1. lambda_AP = 0 identity -- on every frozen calibration input stream
+    #    (ops arm: q_fixed ; 2x2 ablation: q_expanding and q_amgtp)
+    for label, q in (("q_fixed", q_fixed), ("q_expanding", q_expanding), ("q_amgtp", q_amgtp)):
         ops_recs = V.ops(bank, days, q, OPS_HP, block_sec, delay_sec)
         ac0 = apops_config(SEL, block_sec, delay_sec, ons_lam=0.1, ons_eta=0.25, eta_m=100.0,
                            lambda_ap=0.0, tau_h=4.0, persist_hl_h=4.0)

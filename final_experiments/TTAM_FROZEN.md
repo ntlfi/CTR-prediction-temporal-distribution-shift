@@ -41,24 +41,47 @@ Code commit at freeze: see `git rev-parse HEAD` recorded inside every
   `min(means, key=means.get)` returns the first key at equal value (insertion order of
   the frozen grid lists below).
 
-## 2. Nine method variants (identical expert predictions, impressions, origins, seeds)
+## 2. Method variants (identical expert predictions, impressions, origins, seeds)
 
-| variant | historical prediction | calibration | role |
-|---|---|---|---|
-| `expanding` | expanding-history expert | none | main |
-| `best_fixed_window` | horizon `h*` on inner validation, frozen for day `d` | none | main |
-| `arw` | causal single-elimination tournament over the 5 horizons | none | main |
-| `adamoe` | causal EMA of inverse-loss softmax over mature past losses | none | main |
-| `ops` | validation-fitted fixed simplex mixture `q` | daily-reset OPS (free `a`, `b`) | main |
-| `ttam` | AMG-TP on the 5-horizon bank | AP-OPS | main + ablation |
-| `without_both` | validation-fitted fixed simplex mixture `q` | none | ablation |
-| `amgtp_only` | AMG-TP | none | ablation |
-| `apops_only` | validation-fitted fixed simplex mixture `q` | AP-OPS | ablation |
+### 2a. Main table (6)
+
+| variant | historical prediction | calibration |
+|---|---|---|
+| `expanding` | expanding-history expert | none |
+| `best_fixed_window` | horizon `h*` on inner validation, frozen for day `d` | none |
+| `arw` | causal single-elimination tournament over the 5 horizons | none |
+| `adamoe` | causal EMA of inverse-loss softmax over mature past losses | none |
+| `ops` | validation-fitted fixed simplex mixture `q` | daily-reset OPS (free `a`, `b`) |
+| `ttam` | AMG-TP on the 5-horizon bank | AP-OPS |
+
+### 2b. Ablation — 2×2 (revised 2026-09-09)
+
+Cross **historical predictor ∈ {AMG-TP, expanding-history}** with
+**calibration ∈ {AP-OPS, none}**. This measures each timescale's contribution
+*with and without* the other, against a single pre-registered window baseline
+rather than the validation-fitted mixture.
+
+| | calibration = none | calibration = AP-OPS |
+|---|---|---|
+| **historical = expanding** | `expanding` (= main table) | `expanding_apops` |
+| **historical = AMG-TP** | `amgtp_only` | `ttam` (= main table) |
+
+- **The window baseline is expanding history**, chosen before examining the
+  final results: the canonical B0 "train on all past data" predictor, zero
+  tuning DOF, and the natural long-timescale counterpart to AMG-TP's adaptive
+  memory.
+- **Identical historical predictions are shared within each row**:
+  `expanding` and `expanding_apops` both use `bank[d].preds["expanding"]`;
+  `amgtp_only` and `ttam` both use the same selected AMG-TP q-stream. The
+  AP-OPS algorithm + tuning rule is applied to each row's own input stream.
+- Only `expanding_apops` and `amgtp_only` are ablation-only; `expanding` and
+  `ttam` are shared with the main table.
 
 Shared bank horizons `HORIZONS5 = (roll1, roll3, roll7, roll14, expanding)`; coinciding
-truncated windows are fitted once and aliased (no double counting). `amgtp_only` /
-`ttam` share their selected AMG-TP module; `apops_only` / `ttam` share the AP-OPS
-algorithm and tuning rule applied to their own input stream.
+truncated windows are fitted once and aliased (no double counting).
+
+The validation-fitted simplex mixture is still fit in pass 1 and used only by
+the main-table `ops` arm; it is no longer an ablation predictor.
 
 ## 3. Staged selection (affordable; documented, not claimed jointly optimal)
 
@@ -67,8 +90,8 @@ algorithm and tuning rule applied to their own input stream.
    (exponentiated-gradient fit, deterministic).
 2. **Pass 2 — calibration** on the chosen module's causal inner prediction stream:
    pick OPS `(B, eta0, schedule)` for the `ops` arm on the fixed-mixture stream; pick
-   AP-OPS `(ons_lam, ons_eta, lambda_AP, tau)` separately on the fixed-mixture stream
-   (`apops_only`) and on the AMG-TP stream (`ttam`).
+   AP-OPS `(ons_lam, ons_eta, lambda_AP, tau)` separately on the expanding-history
+   stream (`expanding_apops`) and on the AMG-TP stream (`ttam`).
 3. **Pass 3** — replay the frozen winners over the prefix, score the origin day once,
    store per-origin predictions.
 
@@ -166,7 +189,14 @@ carried as constants, not re-tuned.
 ## 8. Completion criteria
 
 Completion = the experiments and their limitations are reported, **regardless of whether
-every comparison favours TTAM**. The figure retains unfavourable origins. Section 6.3
-discussion reports whether the direction/magnitude of `A_{apops_only} - A_{ttam}` and
-`A_{amgtp_only} - A_{ttam}` differ across datasets; synergy is not inferred merely
-because the full method has the lowest mean.
+every comparison favours TTAM**. The figure retains unfavourable origins.
+
+The 2×2 ablation is reported as marginal effects with paired day-bootstrap CIs:
+the AP-OPS (calibration) effect at each level of the historical factor
+(`expanding_apops − expanding`, `ttam − amgtp_only`), the AMG-TP (historical)
+effect at each level of the calibration factor (`amgtp_only − expanding`,
+`ttam − expanding_apops`), and the **interaction**
+`(ttam − amgtp_only) − (expanding_apops − expanding)`. A negative interaction
+CI would mean AMG-TP makes AP-OPS help more (synergy); a CI containing zero
+means the two timescales are additive. Synergy is not inferred merely because
+the full method has the lowest mean.
