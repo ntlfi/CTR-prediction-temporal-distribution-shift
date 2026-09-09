@@ -6,7 +6,7 @@ Window, ARW, AdaMoE, OPS, DualTime-CTR; Criteo + Avazu; seeds 0,1,2). If
 this session ends before the plan is finished, **read this file first**,
 then the spec (in the conversation that requested it) for exact formulas.
 
-## TTAM revised Section 6 -- IN PROGRESS (branch `ttam-additional-experiments`, started 2026-09-08)
+## TTAM revised Section 6 -- Criteo DONE, Avazu deferred (branch `ttam-additional-experiments`, started 2026-09-08)
 
 New plan `final_experiments/TTAM_Additional_Experiments_Plan.pdf` (8 Sep
 2026): evaluate the integrated **AMG-TP + AP-OPS** pipeline ("TTAM") under
@@ -47,19 +47,40 @@ Six-method main table + four-variant ablation + Criteo bidding replay.
   (twoscale) and the bidding cost loader do the identical
   `(day, sec_in_day)` stable sort with no row filtering at full data.
 
-**Running now:** full-data Criteo nested run --
-`final_experiments/ttam/criteo/nested/` (job = local background pid, log
-`nested_run.log`), `--n-workers 6`. No Slurm on this machine; the runner
-was parallelized specifically so a full Criteo run finishes here in hours
-rather than ~a day.
+### CRITEO NESTED RUN: DONE (2026-09-08, commit 45e50a6, local run ~1h)
+
+`final_experiments/ttam/criteo/nested/` (`run_ttam_nested.py --n-workers 4`;
+had to drop from 6 -> 4 after loky worker deaths under memory pressure --
+a root `java` job appeared using 26 GB; per-seed checkpointing added so
+the restart resumed at pass 2). Section 6: `TTAM_SECTION6_FINDINGS.md`,
+`TTAM_SECTION6_STATS.md`, `ttam/section6_figure.png`,
+`ttam/criteo/{nested,bidding}/`.
+
+**Prediction (equal-day mean log loss, D=15):** TTAM 0.608029 < OPS
+0.608201 < AdaMoE 0.608410 < ARW 0.608631 < BestFixedWindow 0.608744 <
+Expanding 0.609475. TTAM beats every baseline 15/15 origins, all CIs
+exclude 0; margin over OPS = 1.7e-4 (small, directionally unanimous).
+
+**Ablation -- the gain is the AP-OPS calibration layer, NOT AMG-TP:**
+`AP-OPS only` (no AMG-TP) 0.608031 == TTAM (gain +2.2e-6, CI [-1e-6,
++5.3e-6], TTAM wins only 11/15); `AMG-TP only` (no calib) 0.608401 ==
+`without both` 0.608408. Nested selection picks `amgtp_rho=0.2` (grid
+min) at all 15 origins, `lambda_AP=0.75` everywhere. **No synergy; this
+is AP-OPS re-confirmed under the corrected fully-nested protocol** (the
+prior AP-OPS result had inherited tuning from windows overlapping early
+outer days -- it survives reselecting every knob pre-origin).
+
+**Downstream bidding (Criteo, matched spend):** TTAM wins FEWER clicks
+than every baseline (-0.02% vs OPS to -0.07% vs AdaMoE), all CIs below
+zero. The log-loss edge does not convert to bidding value.
 
 **Not done:**
-- Full Criteo nested run completion + `ttam_stats.py` / `ttam_figure.py` /
-  `run_ttam_bidding.py` over its output (`TTAM_SECTION6_STATS.md`,
-  `section6_figure.png`, `criteo/bidding/`).
 - **Avazu** nested run -- Avazu banks not built; full 40M-row Avazu risks
-  OOM at 62 GB with no Slurm here. Deferred; needs the cluster or a
-  seed-serial low-memory bank build first.
+  OOM at 62 GB with no Slurm on the run host. Deferred; use
+  `ttam_banks_avazu.slurm` + `ttam_nested_avazu.slurm` on the cluster, or
+  a seed-serial low-memory bank build first. Re-running
+  `run_ttam_section6.sh` after `avazu/nested/` exists adds the Avazu panel
+  to the stats + figure automatically.
 - Manuscript placeholders (plan section 6.x) -- no paper source file in
   this repo (same standing note as below); the `.md` + figure are the
   deliverables produced here.
