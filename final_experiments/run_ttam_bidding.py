@@ -165,6 +165,13 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     nested_out = Path(args.nested_out)
 
+    pred_dir = nested_out / "final_predictions"
+    if not any(pred_dir.glob("origin*_seed*.npz")):
+        print(f"no per-origin prediction dumps under {pred_dir} -- nothing to replay.\n"
+              f"(they are gitignored; regenerate by re-running run_ttam_nested.py, or use the\n"
+              f" committed {out}/ tables if this replay was already done.)")
+        return
+
     cost_by_day = load_criteo_cost_by_day(args.data)
     cell, origins = analyse(nested_out, cost_by_day)
     cell.to_csv(out / "bidding_cells.csv", index=False)

@@ -31,6 +31,8 @@ $PY final_experiments/ttam_figure.py "${DIRS[@]}" \
     --out final_experiments/ttam/section6_figure.png
 
 echo "== Criteo bidding replay =="
+# skips itself (with a message) if the gitignored per-origin prediction
+# dumps have been cleaned up -- the committed bidding tables still stand.
 $PY final_experiments/run_ttam_bidding.py \
     --nested-out "$CRITEO" \
     --data data/criteo_attribution_dataset.tsv.gz \
