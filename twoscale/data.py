@@ -118,31 +118,49 @@ def _avazu_handles(src: Path):
 
 def load_avazu(src: str | Path, n_features: int = 2 ** 18,
                sample_frac: float = 0.2, seed: int = 0) -> Dataset:
+    """Chunk-hashed: each read chunk's category columns are hashed to a
+    sparse block immediately and the strings dropped, so the full ~40M-row
+    string frame is never materialised (peak memory ~one chunk + the
+    accumulating CSR). ``FeatureHasher`` is per-row and deterministic, so
+    ``vstack`` of the per-chunk hashes is bit-identical to hashing the
+    concatenated frame; the per-chunk ``rng.random`` sub-sampling call
+    sequence is unchanged, so a given ``(sample_frac, seed)`` gives the
+    same rows as before."""
+    from scipy.sparse import vstack as sparse_vstack
+
     rng = np.random.default_rng(seed)
     read_kw = dict(usecols=_AVAZU_USECOLS,
                    dtype={"click": np.int8, "hour": np.int64,
                           **{c: "string" for c in AVAZU_CAT_COLUMNS}})
-    parts = []
+    hasher = FeatureHasher(n_features=n_features, input_type="string")
+    x_blocks, clicks, hours = [], [], []
     for fh in _avazu_handles(src):
         for chunk in pd.read_csv(fh, chunksize=_AVAZU_CHUNK, **read_kw):
             if sample_frac < 1.0:
                 chunk = chunk.loc[rng.random(len(chunk)) < sample_frac]
-            parts.append(chunk)
-    df = pd.concat(parts, ignore_index=True)
-    if not len(df):
+            if not len(chunk):
+                continue
+            tok = chunk[AVAZU_CAT_COLUMNS].astype(str)
+            for col in AVAZU_CAT_COLUMNS:
+                tok[col] = col + "=" + tok[col]
+            x_blocks.append(hasher.transform(tok.values.tolist()))
+            clicks.append(chunk["click"].to_numpy(np.int8))
+            hours.append(chunk["hour"].to_numpy(np.int64))
+            del chunk, tok
+    if not x_blocks:
         raise FileNotFoundError(f"no rows read from {src}")
 
-    h = df["hour"].to_numpy(np.int64)
+    X = sparse_vstack(x_blocks, format="csr")
+    del x_blocks
+    y = np.concatenate(clicks)
+    h = np.concatenate(hours)
     ts = pd.to_datetime({"year": 2000 + h // 1_000_000, "month": (h // 10_000) % 100,
                          "day": (h // 100) % 100, "hour": h % 100})
-    day0 = ts.dt.normalize().min()
-    df["day"] = (ts.dt.normalize() - day0).dt.days.to_numpy().astype(np.int64)
-    df["sec_in_day"] = (ts.dt.hour.to_numpy() * 3600).astype(np.int64)
-    df = df.sort_values(["day", "sec_in_day"], kind="stable").reset_index(drop=True)
-    X = _hash_features(df, AVAZU_CAT_COLUMNS, n_features)
-    return Dataset(X=X, y=df["click"].to_numpy(np.int8),
-                   day=df["day"].to_numpy(), sec_in_day=df["sec_in_day"].to_numpy(),
-                   name="avazu")
+    day = (ts.dt.normalize() - ts.dt.normalize().min()).dt.days.to_numpy().astype(np.int64)
+    sec = (ts.dt.hour.to_numpy() * 3600).astype(np.int64)
+    order = np.lexsort((sec, day))          # stable sort by (day, then sec_in_day)
+    return Dataset(X=X[order], y=y[order].astype(np.int8),
+                   day=day[order], sec_in_day=sec[order], name="avazu")
 
 
 def load(source: str, path: str | Path, n_features: int = 2 ** 18,
