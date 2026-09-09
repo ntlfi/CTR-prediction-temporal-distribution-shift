@@ -399,11 +399,17 @@ def main():
     else:
         pass1 = {}
         for seed in SEEDS:
+            sp = out / f"pass1_seed{seed}.json"          # per-seed resume point
+            if sp.exists():
+                pass1[str(seed)] = json.loads(sp.read_text())
+                print(f"  pass1 seed {seed}: resumed from {sp.name}", flush=True)
+                continue
             bank, ctx = bank_for(seed)
             pass1[str(seed)] = {str(k): v for k, v in
                                 pass1_seed(bank, ctx, outer, warmup, seed,
                                            n_workers=args.n_workers).items()}
             del bank, ctx
+            sp.write_text(json.dumps(pass1[str(seed)], indent=2, default=float))
         p1_path.write_text(json.dumps(pass1, indent=2, default=float))
     modules = pick_modules(pass1, outer)
     (out / "selected_modules.json").write_text(json.dumps(modules, indent=2, default=float))
@@ -418,11 +424,17 @@ def main():
     else:
         pass2 = {}
         for seed in SEEDS:
+            sp = out / f"pass2_seed{seed}.json"          # per-seed resume point
+            if sp.exists():
+                pass2[str(seed)] = json.loads(sp.read_text())
+                print(f"  pass2 seed {seed}: resumed from {sp.name}", flush=True)
+                continue
             bank, ctx = bank_for(seed)
             pass2[str(seed)] = {str(k): v for k, v in
                                 pass2_seed(bank, ctx, outer, warmup, modules, block_sec, seed,
                                            n_workers=args.n_workers).items()}
             del bank, ctx
+            sp.write_text(json.dumps(pass2[str(seed)], indent=2, default=float))
         p2_path.write_text(json.dumps(pass2, indent=2, default=float))
     selected = pick_calibration(pass2, modules, outer)
     (out / "selected_configs.json").write_text(json.dumps(
@@ -437,27 +449,30 @@ def main():
     pred_dir = out / "final_predictions"
     pred_dir.mkdir(exist_ok=True)
     manifest_rows = []
-    per_seed_day_rows = {s: [] for s in SEEDS}
     for seed in SEEDS:
+        sd = out / f"seed{seed}"
+        sd.mkdir(exist_ok=True)
+        seed_csv = sd / "per_day_metrics.csv"
+        if seed_csv.exists() and (out / "nested_origin_manifest.csv").exists():
+            print(f"  pass3 seed {seed}: resumed from {seed_csv.name}", flush=True)
+            continue
         bank, ctx = bank_for(seed)
         todo = [d for d in outer if d in bank and str(d) in selected]
         results = Parallel(n_jobs=args.n_workers, prefer="processes")(
             delayed(_pass3_origin)(bank, ctx, d, warmup, selected[str(d)], block_sec, seed,
                                    pred_dir, seed == SEEDS[0])
             for d in todo)
+        seed_rows = []
         for d, day_rows, mrow in results:
             for r in day_rows:
-                per_seed_day_rows[seed].append({"day": int(d), **r})
+                seed_rows.append({"day": int(d), **r})
             if mrow is not None:
                 manifest_rows.append(mrow)
+        pd.DataFrame(seed_rows).to_csv(seed_csv, index=False)
         del bank, ctx
-    manifest_rows.sort(key=lambda r: r["origin"])
-
-    for seed in SEEDS:
-        sd = out / f"seed{seed}"
-        sd.mkdir(exist_ok=True)
-        pd.DataFrame(per_seed_day_rows[seed]).to_csv(sd / "per_day_metrics.csv", index=False)
-    pd.DataFrame(manifest_rows).to_csv(out / "nested_origin_manifest.csv", index=False)
+    if manifest_rows:
+        manifest_rows.sort(key=lambda r: r["origin"])
+        pd.DataFrame(manifest_rows).to_csv(out / "nested_origin_manifest.csv", index=False)
 
     (out / "summary.json").write_text(json.dumps({
         "source": args.source, "code_commit": git_commit(), "seeds": list(SEEDS),
