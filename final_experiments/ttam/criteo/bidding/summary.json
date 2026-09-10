@@ -1,10 +1,18 @@
 {
   "source": "criteo",
   "primary_budget_frac": 0.25,
+  "result_kind": "interpolated offline replay",
   "reference_cost": "sum of recorded display cost over each origin day's impressions",
   "budgets_reset": "daily; identical across paired methods per origin",
   "auction_rule": "b_i = scale * pctr_i ; win iff b_i >= cost_i ; pay cost_i on win",
-  "interpolation": "clicks interpolated to the common spend on each method's own global-scale frontier; bracketed on spend only; never on test clicks",
+  "interpolation": "clicks interpolated to the common per-origin target spend on each method's own global-scale frontier; bracketed on spend only, never on test clicks; results are an interpolated offline replay, not a live policy",
+  "bracket_check": {
+    "cells": 1080,
+    "target_inside_bracket": 1080,
+    "all_inside": true,
+    "clamped_cells": []
+  },
+  "realized_spend_note": "per-cell realized (paced) spend recorded in bidding_cells.csv (realized_spend / paced_spend columns)",
   "origins": [
     16,
     17,
@@ -27,85 +35,85 @@
   "main_table_primary": [
     {
       "method": "Expanding",
-      "ttam_clicks": 133881.70050100636,
-      "baseline_clicks": 133964.23846482523,
-      "mean_extra_clicks": -82.53796381886156,
+      "ttam_clicks": 133882.56087193437,
+      "baseline_clicks": 133966.19391755623,
+      "mean_extra_clicks": -83.63304562182263,
       "extra_clicks_ci95": [
-        -117.64610190908772,
-        -49.42183683873938
+        -116.66020573862001,
+        -51.80202666143164
       ],
-      "aggregate_click_gain_pct": -0.0616119382043423,
+      "aggregate_click_gain_pct": -0.062428470329845,
       "click_gain_pct_ci95": [
-        -0.08559610457373745,
-        -0.03775445817262302
+        -0.0851937503306921,
+        -0.03938147907472933
       ],
       "origins_won_by_ttam": 1,
       "D": 15
     },
     {
       "method": "Best Fixed Window",
-      "ttam_clicks": 133881.70050100636,
-      "baseline_clicks": 133955.55349109854,
-      "mean_extra_clicks": -73.85299009220519,
+      "ttam_clicks": 133882.56087193437,
+      "baseline_clicks": 133950.50379746512,
+      "mean_extra_clicks": -67.94292553072931,
       "extra_clicks_ci95": [
-        -111.96259305553548,
-        -33.37368792958515
+        -106.14762522901546,
+        -29.35639709791444
       ],
-      "aggregate_click_gain_pct": -0.05513245861591409,
+      "aggregate_click_gain_pct": -0.05072241134193023,
       "click_gain_pct_ci95": [
-        -0.08225478269309194,
-        -0.024909835892494847
+        -0.07797758172654046,
+        -0.02217894994164249
       ],
-      "origins_won_by_ttam": 2,
+      "origins_won_by_ttam": 4,
       "D": 15
     },
     {
       "method": "ARW",
-      "ttam_clicks": 133881.70050100636,
-      "baseline_clicks": 133952.3155963489,
-      "mean_extra_clicks": -70.61509534253759,
+      "ttam_clicks": 133882.56087193437,
+      "baseline_clicks": 133954.7805765193,
+      "mean_extra_clicks": -72.21970458493355,
       "extra_clicks_ci95": [
-        -100.320577710094,
-        -39.68286820450005
+        -102.24034801515315,
+        -42.80449561854537
       ],
-      "aggregate_click_gain_pct": -0.05271659174247434,
+      "aggregate_click_gain_pct": -0.05391349549012103,
       "click_gain_pct_ci95": [
-        -0.07428289966556756,
-        -0.02953666535981947
+        -0.07537655493843332,
+        -0.03209108015234108
       ],
       "origins_won_by_ttam": 2,
       "D": 15
     },
     {
       "method": "AdaMoE",
-      "ttam_clicks": 133881.70050100636,
-      "baseline_clicks": 133969.87806132084,
-      "mean_extra_clicks": -88.17756031450602,
+      "ttam_clicks": 133882.56087193437,
+      "baseline_clicks": 133971.06389139587,
+      "mean_extra_clicks": -88.50301946145386,
       "extra_clicks_ci95": [
-        -119.24403889627862,
-        -59.263038185725115
+        -122.75496823191587,
+        -56.667297175870864
       ],
-      "aggregate_click_gain_pct": -0.06581894496771046,
+      "aggregate_click_gain_pct": -0.06606129479812539,
       "click_gain_pct_ci95": [
-        -0.0872982043265691,
-        -0.044850612782676436
+        -0.08926234287393031,
+        -0.04298515627056965
       ],
-      "origins_won_by_ttam": 0,
+      "origins_won_by_ttam": 1,
       "D": 15
     },
     {
       "method": "OPS",
-      "ttam_clicks": 133881.70050100636,
-      "baseline_clicks": 133913.42914553315,
-      "mean_extra_clicks": -31.72864452677216,
+      "ttam_clicks": 133882.56087193437,
+      "baseline_clicks": 133915.2009865718,
+      "mean_extra_clicks": -32.64011463742936,
       "extra_clicks_ci95": [
-        -41.727692178954264,
-        -22.096379917322885
+        -43.1105112560457,
+        -21.184813583612268
       ],
-      "aggregate_click_gain_pct": -0.023693400078861337,
+      "aggregate_click_gain_pct": -0.024373718888504037,
       "click_gain_pct_ci95": [
-        -0.03104620851369644,
-        -0.01661700533823751
+        -0.03221755473233889,
+        -0.0157813373077631
       ],
       "origins_won_by_ttam": 1,
       "D": 15
@@ -115,172 +123,172 @@
     "10pct": [
       {
         "method": "Expanding",
-        "ttam_clicks": 88806.49120128686,
-        "baseline_clicks": 88808.1395526533,
-        "mean_extra_clicks": -1.6483513664531833,
+        "ttam_clicks": 88806.14312495332,
+        "baseline_clicks": 88809.30290317662,
+        "mean_extra_clicks": -3.159778223299266,
         "extra_clicks_ci95": [
-          -29.212100852773148,
-          25.83903750122931
+          -32.38178539311341,
+          25.598605777887713
         ],
-        "aggregate_click_gain_pct": -0.0018560814073476095,
+        "aggregate_click_gain_pct": -0.0035579360720294773,
         "click_gain_pct_ci95": [
-          -0.0321555764563386,
-          0.029707067030648737
+          -0.03571667447929139,
+          0.029419625424753626
         ],
-        "origins_won_by_ttam": 9,
+        "origins_won_by_ttam": 8,
         "D": 15
       },
       {
         "method": "Best Fixed Window",
-        "ttam_clicks": 88806.49120128686,
-        "baseline_clicks": 88789.0612022697,
-        "mean_extra_clicks": 17.4299990171392,
+        "ttam_clicks": 88806.14312495332,
+        "baseline_clicks": 88795.37194759304,
+        "mean_extra_clicks": 10.77117736027479,
         "extra_clicks_ci95": [
-          -1.4805514996434548,
-          37.68173532590513
+          -7.670449226205917,
+          28.38084656277093
         ],
-        "aggregate_click_gain_pct": 0.019630795484415486,
+        "aggregate_click_gain_pct": 0.012130336439875045,
         "click_gain_pct_ci95": [
-          -0.0016889886750637295,
-          0.042142631491826066
+          -0.008698363323356162,
+          0.031484707951290325
         ],
         "origins_won_by_ttam": 11,
         "D": 15
       },
       {
         "method": "ARW",
-        "ttam_clicks": 88806.49120128686,
-        "baseline_clicks": 88795.71182628929,
-        "mean_extra_clicks": 10.779374997547711,
+        "ttam_clicks": 88806.14312495332,
+        "baseline_clicks": 88798.37201101272,
+        "mean_extra_clicks": 7.771113940595145,
         "extra_clicks_ci95": [
-          -7.239858118961687,
-          28.988418215790706
+          -10.670158884630775,
+          26.077693231282876
         ],
-        "aggregate_click_gain_pct": 0.01213952202856472,
+        "aggregate_click_gain_pct": 0.008751414879126784,
         "click_gain_pct_ci95": [
-          -0.008213180266047893,
-          0.03258768165494974
+          -0.011950929600279547,
+          0.029577050832974017
         ],
-        "origins_won_by_ttam": 11,
+        "origins_won_by_ttam": 9,
         "D": 15
       },
       {
         "method": "AdaMoE",
-        "ttam_clicks": 88806.49120128686,
-        "baseline_clicks": 88817.25463952232,
-        "mean_extra_clicks": -10.763438235477468,
+        "ttam_clicks": 88806.14312495332,
+        "baseline_clicks": 88814.09466067384,
+        "mean_extra_clicks": -7.951535720500397,
         "extra_clicks_ci95": [
-          -24.46581470159627,
-          1.0456781209879378
+          -23.06861988227897,
+          5.699619078492372
         ],
-        "aggregate_click_gain_pct": -0.012118634244151494,
+        "aggregate_click_gain_pct": -0.00895301106306201,
         "click_gain_pct_ci95": [
-          -0.027125284532625304,
-          0.001216743509413476
+          -0.02555961120485062,
+          0.006533707785227882
         ],
-        "origins_won_by_ttam": 6,
+        "origins_won_by_ttam": 7,
         "D": 15
       },
       {
         "method": "OPS",
-        "ttam_clicks": 88806.49120128686,
-        "baseline_clicks": 88808.04212778219,
-        "mean_extra_clicks": -1.550926495360909,
+        "ttam_clicks": 88806.14312495332,
+        "baseline_clicks": 88806.24139662088,
+        "mean_extra_clicks": -0.09827166756925483,
         "extra_clicks_ci95": [
-          -8.763258660261029,
-          5.619588009955378
+          -7.555379735999862,
+          6.676599290353161
         ],
-        "aggregate_click_gain_pct": -0.0017463806859963071,
+        "aggregate_click_gain_pct": -0.00011065851456271147,
         "click_gain_pct_ci95": [
-          -0.009696835592032382,
-          0.006438474212511203
+          -0.008441427029515225,
+          0.00756173005833638
         ],
-        "origins_won_by_ttam": 7,
+        "origins_won_by_ttam": 8,
         "D": 15
       }
     ],
     "25pct": [
       {
         "method": "Expanding",
-        "ttam_clicks": 133881.70050100636,
-        "baseline_clicks": 133964.23846482523,
-        "mean_extra_clicks": -82.53796381886156,
+        "ttam_clicks": 133882.56087193437,
+        "baseline_clicks": 133966.19391755623,
+        "mean_extra_clicks": -83.63304562182263,
         "extra_clicks_ci95": [
-          -117.64610190908772,
-          -49.42183683873938
+          -116.66020573862001,
+          -51.80202666143164
         ],
-        "aggregate_click_gain_pct": -0.0616119382043423,
+        "aggregate_click_gain_pct": -0.062428470329845,
         "click_gain_pct_ci95": [
-          -0.08559610457373745,
-          -0.03775445817262302
+          -0.0851937503306921,
+          -0.03938147907472933
         ],
         "origins_won_by_ttam": 1,
         "D": 15
       },
       {
         "method": "Best Fixed Window",
-        "ttam_clicks": 133881.70050100636,
-        "baseline_clicks": 133955.55349109854,
-        "mean_extra_clicks": -73.85299009220519,
+        "ttam_clicks": 133882.56087193437,
+        "baseline_clicks": 133950.50379746512,
+        "mean_extra_clicks": -67.94292553072931,
         "extra_clicks_ci95": [
-          -111.96259305553548,
-          -33.37368792958515
+          -106.14762522901546,
+          -29.35639709791444
         ],
-        "aggregate_click_gain_pct": -0.05513245861591409,
+        "aggregate_click_gain_pct": -0.05072241134193023,
         "click_gain_pct_ci95": [
-          -0.08225478269309194,
-          -0.024909835892494847
+          -0.07797758172654046,
+          -0.02217894994164249
         ],
-        "origins_won_by_ttam": 2,
+        "origins_won_by_ttam": 4,
         "D": 15
       },
       {
         "method": "ARW",
-        "ttam_clicks": 133881.70050100636,
-        "baseline_clicks": 133952.3155963489,
-        "mean_extra_clicks": -70.61509534253759,
+        "ttam_clicks": 133882.56087193437,
+        "baseline_clicks": 133954.7805765193,
+        "mean_extra_clicks": -72.21970458493355,
         "extra_clicks_ci95": [
-          -100.320577710094,
-          -39.68286820450005
+          -102.24034801515315,
+          -42.80449561854537
         ],
-        "aggregate_click_gain_pct": -0.05271659174247434,
+        "aggregate_click_gain_pct": -0.05391349549012103,
         "click_gain_pct_ci95": [
-          -0.07428289966556756,
-          -0.02953666535981947
+          -0.07537655493843332,
+          -0.03209108015234108
         ],
         "origins_won_by_ttam": 2,
         "D": 15
       },
       {
         "method": "AdaMoE",
-        "ttam_clicks": 133881.70050100636,
-        "baseline_clicks": 133969.87806132084,
-        "mean_extra_clicks": -88.17756031450602,
+        "ttam_clicks": 133882.56087193437,
+        "baseline_clicks": 133971.06389139587,
+        "mean_extra_clicks": -88.50301946145386,
         "extra_clicks_ci95": [
-          -119.24403889627862,
-          -59.263038185725115
+          -122.75496823191587,
+          -56.667297175870864
         ],
-        "aggregate_click_gain_pct": -0.06581894496771046,
+        "aggregate_click_gain_pct": -0.06606129479812539,
         "click_gain_pct_ci95": [
-          -0.0872982043265691,
-          -0.044850612782676436
+          -0.08926234287393031,
+          -0.04298515627056965
         ],
-        "origins_won_by_ttam": 0,
+        "origins_won_by_ttam": 1,
         "D": 15
       },
       {
         "method": "OPS",
-        "ttam_clicks": 133881.70050100636,
-        "baseline_clicks": 133913.42914553315,
-        "mean_extra_clicks": -31.72864452677216,
+        "ttam_clicks": 133882.56087193437,
+        "baseline_clicks": 133915.2009865718,
+        "mean_extra_clicks": -32.64011463742936,
         "extra_clicks_ci95": [
-          -41.727692178954264,
-          -22.096379917322885
+          -43.1105112560457,
+          -21.184813583612268
         ],
-        "aggregate_click_gain_pct": -0.023693400078861337,
+        "aggregate_click_gain_pct": -0.024373718888504037,
         "click_gain_pct_ci95": [
-          -0.03104620851369644,
-          -0.01661700533823751
+          -0.03221755473233889,
+          -0.0157813373077631
         ],
         "origins_won_by_ttam": 1,
         "D": 15
@@ -289,85 +297,85 @@
     "50pct": [
       {
         "method": "Expanding",
-        "ttam_clicks": 168318.75867888954,
-        "baseline_clicks": 168384.0365792404,
-        "mean_extra_clicks": -65.27790035082532,
+        "ttam_clicks": 168319.6975221198,
+        "baseline_clicks": 168386.4006201323,
+        "mean_extra_clicks": -66.70309801253413,
         "extra_clicks_ci95": [
-          -91.42489456693151,
-          -35.19698887063574
+          -93.71113942514624,
+          -35.59026534645081
         ],
-        "aggregate_click_gain_pct": -0.038767273713691264,
+        "aggregate_click_gain_pct": -0.039613114697423235,
         "click_gain_pct_ci95": [
-          -0.05360969571617247,
-          -0.021156972167879484
+          -0.05490702509888257,
+          -0.02142508810258903
         ],
         "origins_won_by_ttam": 2,
         "D": 15
       },
       {
         "method": "Best Fixed Window",
-        "ttam_clicks": 168318.75867888954,
-        "baseline_clicks": 168404.96056338958,
-        "mean_extra_clicks": -86.2018844999955,
+        "ttam_clicks": 168319.6975221198,
+        "baseline_clicks": 168399.66582436467,
+        "mean_extra_clicks": -79.96830224486378,
         "extra_clicks_ci95": [
-          -119.13099787241138,
-          -50.878037178920806
+          -113.98192406876086,
+          -44.32980429823671
         ],
-        "aggregate_click_gain_pct": -0.05118725969333049,
+        "aggregate_click_gain_pct": -0.04748720958166475,
         "click_gain_pct_ci95": [
-          -0.06978124625498516,
-          -0.030334922472441406
+          -0.06640774489395929,
+          -0.026803503890304725
         ],
         "origins_won_by_ttam": 3,
         "D": 15
       },
       {
         "method": "ARW",
-        "ttam_clicks": 168318.75867888954,
-        "baseline_clicks": 168402.85388617293,
-        "mean_extra_clicks": -84.09520728338393,
+        "ttam_clicks": 168319.6975221198,
+        "baseline_clicks": 168401.55194522353,
+        "mean_extra_clicks": -81.8544231037648,
         "extra_clicks_ci95": [
-          -108.9428721215051,
-          -57.31158766907535
+          -107.2735343957636,
+          -54.524087987456596
         ],
-        "aggregate_click_gain_pct": -0.049936925261495624,
+        "aggregate_click_gain_pct": -0.04860669165944742,
         "click_gain_pct_ci95": [
-          -0.06403778856879372,
-          -0.034150935584964515
+          -0.06309185335122702,
+          -0.0326259478647839
         ],
         "origins_won_by_ttam": 2,
         "D": 15
       },
       {
         "method": "AdaMoE",
-        "ttam_clicks": 168318.75867888954,
-        "baseline_clicks": 168402.44719988725,
-        "mean_extra_clicks": -83.68852099768313,
+        "ttam_clicks": 168319.6975221198,
+        "baseline_clicks": 168402.0636133388,
+        "mean_extra_clicks": -82.36609121899819,
         "extra_clicks_ci95": [
-          -110.67504857770983,
-          -57.51092389794436
+          -111.624952854818,
+          -52.44477074592602
         ],
-        "aggregate_click_gain_pct": -0.049695549197315,
+        "aggregate_click_gain_pct": -0.04891038117449398,
         "click_gain_pct_ci95": [
-          -0.06433697725548582,
-          -0.03480060321917611
+          -0.06482061067757394,
+          -0.03171722146750877
         ],
         "origins_won_by_ttam": 1,
         "D": 15
       },
       {
         "method": "OPS",
-        "ttam_clicks": 168318.75867888954,
-        "baseline_clicks": 168354.55274994607,
-        "mean_extra_clicks": -35.79407105651723,
+        "ttam_clicks": 168319.6975221198,
+        "baseline_clicks": 168356.71270531093,
+        "mean_extra_clicks": -37.015183191123654,
         "extra_clicks_ci95": [
-          -45.71227950595101,
-          -25.96517496371404
+          -47.1015373829191,
+          -27.262187561240523
         ],
-        "aggregate_click_gain_pct": -0.02126112449698514,
+        "aggregate_click_gain_pct": -0.02198616413704446,
         "click_gain_pct_ci95": [
-          -0.02712360533329017,
-          -0.01537159106501651
+          -0.027926157565705267,
+          -0.01623819392638781
         ],
         "origins_won_by_ttam": 1,
         "D": 15
@@ -376,90 +384,90 @@
     "75pct": [
       {
         "method": "Expanding",
-        "ttam_clicks": 183552.99176217816,
-        "baseline_clicks": 183581.25914966376,
-        "mean_extra_clicks": -28.26738748557788,
+        "ttam_clicks": 183553.96698094913,
+        "baseline_clicks": 183582.89586604247,
+        "mean_extra_clicks": -28.928885093304174,
         "extra_clicks_ci95": [
-          -41.85898435152344,
-          -14.379656259613657
+          -42.595782916347666,
+          -14.593833139686419
         ],
-        "aggregate_click_gain_pct": -0.015397752263235365,
+        "aggregate_click_gain_pct": -0.015757941368588213,
         "click_gain_pct_ci95": [
-          -0.022601841053282445,
-          -0.007883228834415501
+          -0.022889665581193874,
+          -0.008000461362434041
         ],
         "origins_won_by_ttam": 2,
         "D": 15
       },
       {
         "method": "Best Fixed Window",
-        "ttam_clicks": 183552.99176217816,
-        "baseline_clicks": 183594.5690070499,
-        "mean_extra_clicks": -41.57724487172285,
+        "ttam_clicks": 183553.96698094913,
+        "baseline_clicks": 183592.13750970078,
+        "mean_extra_clicks": -38.170528751644696,
         "extra_clicks_ci95": [
-          -59.561596365691855,
-          -23.271370592698275
+          -56.85680293122442,
+          -19.80351444750443
         ],
-        "aggregate_click_gain_pct": -0.022646228097378263,
+        "aggregate_click_gain_pct": -0.02079093869127302,
         "click_gain_pct_ci95": [
-          -0.031799480046967865,
-          -0.012780141076351725
+          -0.030326999430985158,
+          -0.01094935343070036
         ],
         "origins_won_by_ttam": 3,
         "D": 15
       },
       {
         "method": "ARW",
-        "ttam_clicks": 183552.99176217816,
-        "baseline_clicks": 183593.8140940645,
-        "mean_extra_clicks": -40.8223318862787,
+        "ttam_clicks": 183553.96698094913,
+        "baseline_clicks": 183593.37903188865,
+        "mean_extra_clicks": -39.4120509395143,
         "extra_clicks_ci95": [
-          -54.987521661730526,
-          -26.20260542453936
+          -53.4099544579007,
+          -24.924192640084755
         ],
-        "aggregate_click_gain_pct": -0.02223513471178995,
+        "aggregate_click_gain_pct": -0.021467032824018517,
         "click_gain_pct_ci95": [
-          -0.02956742162235626,
-          -0.014404048807747927
+          -0.028621965666464355,
+          -0.013774199535143694
         ],
         "origins_won_by_ttam": 2,
         "D": 15
       },
       {
         "method": "AdaMoE",
-        "ttam_clicks": 183552.99176217816,
-        "baseline_clicks": 183592.2244743863,
-        "mean_extra_clicks": -39.232712208110996,
+        "ttam_clicks": 183553.96698094913,
+        "baseline_clicks": 183593.0889946003,
+        "mean_extra_clicks": -39.1220136511547,
         "extra_clicks_ci95": [
-          -53.808506947763384,
-          -25.470295978263803
+          -54.355157012101266,
+          -24.435877247484658
         ],
-        "aggregate_click_gain_pct": -0.02136948463937749,
+        "aggregate_click_gain_pct": -0.021309088411436417,
         "click_gain_pct_ci95": [
-          -0.028727266153016906,
-          -0.014132858284332528
+          -0.029045317204168253,
+          -0.013494002857372678
         ],
         "origins_won_by_ttam": 1,
         "D": 15
       },
       {
         "method": "OPS",
-        "ttam_clicks": 183552.99176217816,
-        "baseline_clicks": 183572.2627176343,
-        "mean_extra_clicks": -19.270955456106456,
+        "ttam_clicks": 183553.96698094913,
+        "baseline_clicks": 183573.49403718798,
+        "mean_extra_clicks": -19.527056238804168,
         "extra_clicks_ci95": [
-          -23.759515849301096,
-          -14.861708566953945
+          -23.834884329182533,
+          -15.421555867204686
         ],
-        "aggregate_click_gain_pct": -0.010497749044879878,
+        "aggregate_click_gain_pct": -0.010637187215534194,
         "click_gain_pct_ci95": [
-          -0.01289476149514135,
-          -0.008133448654601416
+          -0.012960825789309904,
+          -0.008449103960461724
         ],
-        "origins_won_by_ttam": 1,
+        "origins_won_by_ttam": 0,
         "D": 15
       }
     ]
   },
-  "avazu": "pending -- no recorded price field; a simulated price model would need a separate frozen specification (plan section 10)."
+  "avazu": "outside the main experiment -- no recorded price field; a simulated price model would need a separate frozen specification (plan section 10)."
 }

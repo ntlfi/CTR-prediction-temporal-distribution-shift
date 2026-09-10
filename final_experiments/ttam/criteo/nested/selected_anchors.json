@@ -1,0 +1,437 @@
+{
+  "16": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "17": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "18": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "19": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "20": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "21": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "22": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "23": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "24": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "25": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "26": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "27": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "28": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "29": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "30": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  }
+}

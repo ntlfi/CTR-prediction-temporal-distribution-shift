@@ -6,7 +6,7 @@ Window, ARW, AdaMoE, OPS, DualTime-CTR; Criteo + Avazu; seeds 0,1,2). If
 this session ends before the plan is finished, **read this file first**,
 then the spec (in the conversation that requested it) for exact formulas.
 
-## TTAM revised Section 6 -- Criteo + Avazu DONE; ablation revised to 2x2 (2026-09-09) (branch `ttam-additional-experiments`, started 2026-09-08)
+## TTAM revised Section 6 -- DONE, protocol-conformance final run (2026-09-10) (branch `ttam-additional-experiments`, started 2026-09-08)
 
 New plan `final_experiments/TTAM_Additional_Experiments_Plan.pdf` (8 Sep
 2026): evaluate the integrated **AMG-TP + AP-OPS** pipeline ("TTAM") under
@@ -114,8 +114,53 @@ was an artefact of ablating against the fitted mixture.
 AMG-TP historical model and the AP-OPS calibrator carry real weight
 against a naive baseline; they are non-additive with opposite sign
 across the two datasets. Full write-up `TTAM_SECTION6_FINDINGS.md` §6.3;
-two-panel figure `ttam/section6_figure.png`. `final_predictions/`
-(Criteo 0.6GB + Avazu 1.6GB) deleted after -- gitignored, regenerable.
+two-panel figure `ttam/section6_figure.png`.
+
+### PROTOCOL-CONFORMANCE PASS -- FINAL RUN (2026-09-10, commits c78cc57, 3b2282a + rerun)
+
+Reviewer required the implementation to match the stated protocol before
+finalising. Done, and **it changed no conclusion** (every number moved
+<= 5e-5 log loss):
+
+1. **30-min label delay enforced everywhere a cutoff reads labels** (new
+   `ttam/maturity.py`): expert-bank fits (day d's experts exclude day
+   d-1's post-84600s tail; empty-fit fallback = matured-history CTR, not
+   the scored day), inner-validation objective (`iw_on`), AMG-TP state
+   summaries (`_state_vector`), ARW/AdaMoE causal loss histories -- not
+   only the online calibrator queues. Bank caches keyed `_d1800`.
+   `ttam_tests` 13/13 (+ flip-day-k-tail -> k & k+1 experts byte-identical,
+   k+2 changes).
+2. **Per-origin calibration selection** of the previously-overlapping
+   settings: pass 2 split into 2a (reset-anchor daily-reset-OPS, one grid
+   per historical stream) + 2b (AP-OPS incl. meta LR `eta_m` in
+   {30,100,300}, anchor fixed). All shared across seeds; scores + picks
+   in `pass2a_*`/`pass2b_*`/`selected_anchors.json`. Result: the anchor
+   OPS re-derives `B 0.25 / eta0 0.3 / const` at EVERY origin/stream/
+   dataset (the old hardcoded value, vindicated); `eta_m` does NOT --
+   Criteo splits {30,100,300} across origins, so it genuinely needed
+   selecting.
+3. `load_criteo` / `load_avazu` full-data paths chunk-hashed (bit-identical;
+   OOM fix for the 62GB box).
+4. Reporting: "up to 3 eligible days"; `ttam_stats` appendix
+   impression-weighted log loss = one scalar per method,
+   `sum(mean_loss*n)/sum(n)` over all cells (was per-day iw re-averaged
+   equally). Bidding: 1080/1080 targets verified inside non-degenerate
+   brackets, labelled "interpolated offline replay", reported as observed.
+
+**Final numbers (equal-day mean log loss):**
+
+| cell | Criteo | Avazu |
+|---|---|---|
+| expanding | 0.609525 | 0.402094 |
+| expanding + AP-OPS | 0.608833 | 0.401742 |
+| AMG-TP only | 0.608457 | 0.401514 |
+| TTAM | 0.608029 | 0.400937 |
+| OPS (best baseline) | 0.608203 | 0.401147 |
+
+Interaction: Criteo +2.6e-4 [+1.4e-4,+4.0e-4] (substitutes, 14/15);
+Avazu -2.3e-4 [-3.4e-4,-1.1e-4] (synergy, 5/5). Bidding: TTAM -0.02%..-0.07%
+vs each baseline, all CIs < 0. `final_predictions/` (Criteo 0.6GB + Avazu
+1.6GB) deleted after -- gitignored, regenerable.
 
 **Not done:**
 - Avazu downstream bidding -- needs a frozen simulated-price spec (plan

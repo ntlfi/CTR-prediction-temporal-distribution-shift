@@ -1,0 +1,147 @@
+{
+  "5": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "6": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "7": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "8": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  },
+  "9": {
+    "ops": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_expanding": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    },
+    "anchor_amgtp": {
+      "B": 0.25,
+      "eta0": 0.3,
+      "schedule": "const",
+      "a_bounds": [
+        0.2,
+        5.0
+      ]
+    }
+  }
+}

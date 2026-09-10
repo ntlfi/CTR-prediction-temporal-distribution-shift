@@ -1,6 +1,6 @@
 {
   "source": "avazu",
-  "code_commit": "4a65e914e0cce61d6c9551f6d2f05e62d9efddac",
+  "code_commit": "3b2282a247ecb59b907a964023d688f2c00066de",
   "seeds": [
     0,
     1,
@@ -28,7 +28,7 @@
     "amgtp_only",
     "expanding_apops"
   ],
-  "runtime_s": 3121.2737114429474,
+  "runtime_s": 9716.088193893433,
   "grids": {
     "arw_delta": [
       0.05,
@@ -82,6 +82,11 @@
       "16",
       "inf"
     ],
-    "eta_m_fixed": 100.0
+    "apops_eta_m": [
+      30.0,
+      100.0,
+      300.0
+    ],
+    "anchor_ops": "per-origin, per-stream, from OPS_{B,eta0,sched}"
   }
 }
