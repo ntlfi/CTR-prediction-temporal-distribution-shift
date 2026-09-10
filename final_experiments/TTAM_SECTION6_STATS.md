@@ -14,11 +14,11 @@ metrics only (see the CSVs) and are not mixed with the equal-day gain.
 
 | method | mean score A_m | mean gain G_m | 95% day-bootstrap CI | block-2 MBB CI | origins won by TTAM |
 |---|---|---|---|---|---|
-| Expanding | 0.609475 | +0.001446 | [+0.001290, +0.001628] | [+0.001249, +0.001654] | 15/15 |
-| Best Fixed Window | 0.608744 | +0.000715 | [+0.000595, +0.000850] | [+0.000588, +0.000837] | 15/15 |
-| ARW | 0.608631 | +0.000603 | [+0.000525, +0.000678] | [+0.000504, +0.000686] | 15/15 |
-| AdaMoE | 0.608410 | +0.000381 | [+0.000300, +0.000475] | [+0.000292, +0.000473] | 15/15 |
-| OPS | 0.608201 | +0.000172 | [+0.000133, +0.000219] | [+0.000134, +0.000212] | 15/15 |
+| Expanding | 0.609525 | +0.001496 | [+0.001314, +0.001715] | [+0.001267, +0.001744] | 15/15 |
+| Best Fixed Window | 0.608713 | +0.000684 | [+0.000551, +0.000863] | [+0.000574, +0.000818] | 15/15 |
+| ARW | 0.608643 | +0.000614 | [+0.000522, +0.000714] | [+0.000504, +0.000723] | 15/15 |
+| AdaMoE | 0.608464 | +0.000435 | [+0.000320, +0.000586] | [+0.000317, +0.000588] | 15/15 |
+| OPS | 0.608203 | +0.000174 | [+0.000136, +0.000220] | [+0.000137, +0.000213] | 15/15 |
 | TTAM | 0.608029 | (reference) | -- | -- | -- |
 
 ### 6.3 Ablation -- 2x2: historical predictor x calibration
@@ -27,19 +27,19 @@ Mean score A_m per cell (lower = better):
 
 | historical \ calibration | none | AP-OPS |
 |---|---|---|
-| **expanding history** | 0.609475 | 0.608807 |
-| **AMG-TP** | 0.608401 | 0.608029 (= TTAM) |
+| **expanding history** | 0.609525 | 0.608833 |
+| **AMG-TP** | 0.608457 | 0.608029 (= TTAM) |
 
 Marginal effects (mean difference, negative => the added component lowers loss;
 95% paired day-bootstrap CI; "excl. 0" = interval does not contain zero):
 
 | effect | at | mean | 95% day-bootstrap CI | lower on | excl. 0 |
 |---|---|---|---|---|---|
-| AP-OPS (calibration) | historical = expanding | -6.68e-04 | [-8.74e-04, -5.04e-04] | 15/15 | yes |
-| AP-OPS (calibration) | historical = AMG-TP | -3.72e-04 | [-4.65e-04, -2.91e-04] | 15/15 | yes |
-| AMG-TP (historical) | calibration = none | -1.07e-03 | [-1.23e-03, -9.26e-04] | 15/15 | yes |
-| AMG-TP (historical) | calibration = AP-OPS | -7.78e-04 | [-8.58e-04, -7.04e-04] | 15/15 | yes |
-| interaction | (t-a) - (ea-e) | +2.96e-04 | [+1.46e-04, +4.58e-04] | 1/15 | yes |
+| AP-OPS (calibration) | historical = expanding | -6.92e-04 | [-9.33e-04, -5.06e-04] | 15/15 | yes |
+| AP-OPS (calibration) | historical = AMG-TP | -4.28e-04 | [-5.77e-04, -3.13e-04] | 15/15 | yes |
+| AMG-TP (historical) | calibration = none | -1.07e-03 | [-1.20e-03, -9.37e-04] | 15/15 | yes |
+| AMG-TP (historical) | calibration = AP-OPS | -8.04e-04 | [-8.79e-04, -7.38e-04] | 15/15 | yes |
+| interaction | (t-a) - (ea-e) | +2.64e-04 | [+1.37e-04, +4.00e-04] | 1/15 | yes |
 
 Interaction < 0 would mean AMG-TP makes AP-OPS help more (synergy); a CI containing 0 means the two timescales are additive.
 
@@ -51,12 +51,12 @@ Interaction < 0 would mean AMG-TP makes AP-OPS help more (synergy); a CI contain
 
 | method | mean score A_m | mean gain G_m | 95% day-bootstrap CI | block-2 MBB CI | origins won by TTAM |
 |---|---|---|---|---|---|
-| Expanding | 0.402094 | +0.001160 | [+0.000925, +0.001402] | [+0.001035, +0.001340] | 5/5 |
-| Best Fixed Window | 0.402213 | +0.001279 | [+0.000204, +0.002682] | [+0.000080, +0.002559] | 4/5 |
-| ARW | 0.402359 | +0.001425 | [+0.000286, +0.002695] | [+0.000080, +0.002713] | 4/5 |
-| AdaMoE | 0.401538 | +0.000604 | [+0.000344, +0.000897] | [+0.000344, +0.000883] | 5/5 |
-| OPS | 0.401147 | +0.000213 | [+0.000137, +0.000281] | [+0.000165, +0.000248] | 5/5 |
-| TTAM | 0.400934 | (reference) | -- | -- | -- |
+| Expanding | 0.402094 | +0.001157 | [+0.000923, +0.001400] | [+0.001033, +0.001337] | 5/5 |
+| Best Fixed Window | 0.402213 | +0.001277 | [+0.000202, +0.002679] | [+0.000078, +0.002555] | 4/5 |
+| ARW | 0.402359 | +0.001423 | [+0.000284, +0.002690] | [+0.000078, +0.002709] | 4/5 |
+| AdaMoE | 0.401538 | +0.000601 | [+0.000342, +0.000894] | [+0.000342, +0.000880] | 5/5 |
+| OPS | 0.401147 | +0.000210 | [+0.000135, +0.000279] | [+0.000162, +0.000246] | 5/5 |
+| TTAM | 0.400937 | (reference) | -- | -- | -- |
 
 ### 6.3 Ablation -- 2x2: historical predictor x calibration
 
@@ -64,18 +64,18 @@ Mean score A_m per cell (lower = better):
 
 | historical \ calibration | none | AP-OPS |
 |---|---|---|
-| **expanding history** | 0.402094 | 0.401737 |
-| **AMG-TP** | 0.401514 | 0.400934 (= TTAM) |
+| **expanding history** | 0.402094 | 0.401742 |
+| **AMG-TP** | 0.401514 | 0.400937 (= TTAM) |
 
 Marginal effects (mean difference, negative => the added component lowers loss;
 95% paired day-bootstrap CI; "excl. 0" = interval does not contain zero):
 
 | effect | at | mean | 95% day-bootstrap CI | lower on | excl. 0 |
 |---|---|---|---|---|---|
-| AP-OPS (calibration) | historical = expanding | -3.57e-04 | [-5.48e-04, -1.81e-04] | 5/5 | yes |
-| AP-OPS (calibration) | historical = AMG-TP | -5.80e-04 | [-8.97e-04, -3.05e-04] | 5/5 | yes |
+| AP-OPS (calibration) | historical = expanding | -3.52e-04 | [-5.42e-04, -1.76e-04] | 5/5 | yes |
+| AP-OPS (calibration) | historical = AMG-TP | -5.77e-04 | [-8.94e-04, -3.03e-04] | 5/5 | yes |
 | AMG-TP (historical) | calibration = none | -5.80e-04 | [-9.18e-04, -2.71e-04] | 5/5 | yes |
-| AMG-TP (historical) | calibration = AP-OPS | -8.02e-04 | [-1.13e-03, -5.35e-04] | 5/5 | yes |
-| interaction | (t-a) - (ea-e) | -2.22e-04 | [-3.33e-04, -1.12e-04] | 5/5 | yes |
+| AMG-TP (historical) | calibration = AP-OPS | -8.05e-04 | [-1.14e-03, -5.31e-04] | 5/5 | yes |
+| interaction | (t-a) - (ea-e) | -2.25e-04 | [-3.35e-04, -1.14e-04] | 5/5 | yes |
 
 Interaction < 0 would mean AMG-TP makes AP-OPS help more (synergy); a CI containing 0 means the two timescales are additive.

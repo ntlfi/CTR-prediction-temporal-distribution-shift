@@ -75,18 +75,53 @@ def _hash_features(df: pd.DataFrame, columns, n_features: int):
 # --------------------------------------------------------------------------- #
 #  Criteo Attribution                                                          #
 # --------------------------------------------------------------------------- #
+_CRITEO_CHUNK = 2_000_000
+
+
 def load_criteo(tsv_path: str | Path, n_features: int = 2 ** 18,
                 sample_frac: float = 1.0, seed: int = 0) -> Dataset:
-    df = pd.read_csv(tsv_path, sep="\t", usecols=CRITEO_RAW_COLUMNS)
     if sample_frac < 1.0:
+        # sub-sampled path (smoke tests, other repo scripts) -- unchanged so the
+        # exact rows for a given (sample_frac, seed) are reproducible.
+        df = pd.read_csv(tsv_path, sep="\t", usecols=CRITEO_RAW_COLUMNS)
         df = df.sample(frac=sample_frac, random_state=seed)
-    df["day"] = (df["timestamp"] // SECONDS_PER_DAY).astype(np.int64)
-    df["sec_in_day"] = (df["timestamp"] % SECONDS_PER_DAY).astype(np.int64)
-    df = df.sort_values(["day", "sec_in_day"], kind="stable").reset_index(drop=True)
-    X = _hash_features(df, CRITEO_CAT_COLUMNS, n_features)
-    return Dataset(X=X, y=df["click"].to_numpy(np.int8),
-                   day=df["day"].to_numpy(), sec_in_day=df["sec_in_day"].to_numpy(),
-                   name="criteo")
+        df["day"] = (df["timestamp"] // SECONDS_PER_DAY).astype(np.int64)
+        df["sec_in_day"] = (df["timestamp"] % SECONDS_PER_DAY).astype(np.int64)
+        df = df.sort_values(["day", "sec_in_day"], kind="stable").reset_index(drop=True)
+        X = _hash_features(df, CRITEO_CAT_COLUMNS, n_features)
+        return Dataset(X=X, y=df["click"].to_numpy(np.int8),
+                       day=df["day"].to_numpy(), sec_in_day=df["sec_in_day"].to_numpy(),
+                       name="criteo")
+
+    # full-data path: chunk-hash so the full ~16.5M-row string frame is never
+    # materialised (FeatureHasher is per-row -> vstack of per-chunk hashes is
+    # bit-identical to hashing the whole frame; the stable sort on
+    # (day, sec_in_day) is the same permutation).
+    from scipy.sparse import vstack as sparse_vstack
+    hasher = FeatureHasher(n_features=n_features, input_type="string")
+    # explicit int64 for the categorical columns -> per-chunk `.astype(str)` is
+    # identical to whole-file inference (the Criteo attribution cat columns are
+    # clean integers, no NaN), so no `"5"` vs `"5.0"` drift across chunks.
+    _dt = {"timestamp": np.int64, "click": np.int8, **{c: np.int64 for c in CRITEO_CAT_COLUMNS}}
+    x_blocks, clicks, ts = [], [], []
+    for chunk in pd.read_csv(tsv_path, sep="\t", usecols=CRITEO_RAW_COLUMNS,
+                             dtype=_dt, chunksize=_CRITEO_CHUNK):
+        tok = chunk[CRITEO_CAT_COLUMNS].astype(str)
+        for col in CRITEO_CAT_COLUMNS:
+            tok[col] = col + "=" + tok[col]
+        x_blocks.append(hasher.transform(tok.values.tolist()))
+        clicks.append(chunk["click"].to_numpy(np.int8))
+        ts.append(chunk["timestamp"].to_numpy(np.int64))
+        del chunk, tok
+    X = sparse_vstack(x_blocks, format="csr")
+    del x_blocks
+    y = np.concatenate(clicks)
+    t = np.concatenate(ts)
+    day = (t // SECONDS_PER_DAY).astype(np.int64)
+    sec = (t % SECONDS_PER_DAY).astype(np.int64)
+    order = np.lexsort((sec, day))                 # stable sort by (day, then sec_in_day)
+    return Dataset(X=X[order], y=y[order].astype(np.int8),
+                   day=day[order], sec_in_day=sec[order], name="criteo")
 
 
 # --------------------------------------------------------------------------- #

@@ -1,6 +1,6 @@
 {
   "source": "avazu",
-  "code_commit": "4a65e914e0cce61d6c9551f6d2f05e62d9efddac",
+  "code_commit": "3b2282a247ecb59b907a964023d688f2c00066de",
   "outer_days": [
     5,
     6,
@@ -10,7 +10,12 @@
   ],
   "block_sec": 3600,
   "delay_sec": 1800,
-  "eta_m": 100.0,
+  "eta_m_grid": [
+    30.0,
+    100.0,
+    300.0
+  ],
+  "anchor_ops_grid": "OPS_{B,eta0,sched}",
   "s_l_half_lives_h": [
     4.0,
     16.0
@@ -67,17 +72,37 @@
           5.0
         ]
       },
+      "anchor_expanding": {
+        "B": 0.25,
+        "eta0": 0.3,
+        "schedule": "const",
+        "a_bounds": [
+          0.2,
+          5.0
+        ]
+      },
+      "anchor_amgtp": {
+        "B": 0.25,
+        "eta0": 0.3,
+        "schedule": "const",
+        "a_bounds": [
+          0.2,
+          5.0
+        ]
+      },
       "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.25,
-        "tau_h": 4.0
+        "tau_h": 4.0,
+        "eta_m": 30.0
       },
       "apops_amgtp": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.25,
-        "tau_h": 4.0
+        "tau_h": 4.0,
+        "eta_m": 30.0
       }
     },
     "6": {
@@ -132,17 +157,37 @@
           5.0
         ]
       },
+      "anchor_expanding": {
+        "B": 0.25,
+        "eta0": 0.3,
+        "schedule": "const",
+        "a_bounds": [
+          0.2,
+          5.0
+        ]
+      },
+      "anchor_amgtp": {
+        "B": 0.25,
+        "eta0": 0.3,
+        "schedule": "const",
+        "a_bounds": [
+          0.2,
+          5.0
+        ]
+      },
       "apops_expanding": {
-        "ons_lam": 1.0,
-        "ons_eta": 4.0,
+        "ons_lam": 0.1,
+        "ons_eta": 0.25,
         "lambda_ap": 0.25,
-        "tau_h": 4.0
+        "tau_h": 4.0,
+        "eta_m": 30.0
       },
       "apops_amgtp": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.5,
-        "tau_h": 4.0
+        "tau_h": 4.0,
+        "eta_m": 30.0
       }
     },
     "7": {
@@ -197,17 +242,37 @@
           5.0
         ]
       },
+      "anchor_expanding": {
+        "B": 0.25,
+        "eta0": 0.3,
+        "schedule": "const",
+        "a_bounds": [
+          0.2,
+          5.0
+        ]
+      },
+      "anchor_amgtp": {
+        "B": 0.25,
+        "eta0": 0.3,
+        "schedule": "const",
+        "a_bounds": [
+          0.2,
+          5.0
+        ]
+      },
       "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.5,
-        "tau_h": 4.0
+        "tau_h": 4.0,
+        "eta_m": 30.0
       },
       "apops_amgtp": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.5,
-        "tau_h": 4.0
+        "tau_h": 4.0,
+        "eta_m": 30.0
       }
     },
     "8": {
@@ -262,17 +327,37 @@
           5.0
         ]
       },
+      "anchor_expanding": {
+        "B": 0.25,
+        "eta0": 0.3,
+        "schedule": "const",
+        "a_bounds": [
+          0.2,
+          5.0
+        ]
+      },
+      "anchor_amgtp": {
+        "B": 0.25,
+        "eta0": 0.3,
+        "schedule": "const",
+        "a_bounds": [
+          0.2,
+          5.0
+        ]
+      },
       "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.75,
-        "tau_h": 4.0
+        "tau_h": Infinity,
+        "eta_m": 30.0
       },
       "apops_amgtp": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.75,
-        "tau_h": 16.0
+        "tau_h": 16.0,
+        "eta_m": 100.0
       }
     },
     "9": {
@@ -327,17 +412,37 @@
           5.0
         ]
       },
+      "anchor_expanding": {
+        "B": 0.25,
+        "eta0": 0.3,
+        "schedule": "const",
+        "a_bounds": [
+          0.2,
+          5.0
+        ]
+      },
+      "anchor_amgtp": {
+        "B": 0.25,
+        "eta0": 0.3,
+        "schedule": "const",
+        "a_bounds": [
+          0.2,
+          5.0
+        ]
+      },
       "apops_expanding": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
-        "lambda_ap": 0.5,
-        "tau_h": 16.0
+        "lambda_ap": 0.75,
+        "tau_h": Infinity,
+        "eta_m": 30.0
       },
       "apops_amgtp": {
         "ons_lam": 0.1,
         "ons_eta": 0.25,
         "lambda_ap": 0.75,
-        "tau_h": 4.0
+        "tau_h": 4.0,
+        "eta_m": 30.0
       }
     }
   }

@@ -52,6 +52,7 @@ from apops.method import APOPSConfig, build_ap_experts
 from apops.aggregate import MetaConfig, aggregate
 
 from .bank import HORIZONS5
+from .maturity import day_matured_mask
 
 # --------------------------------------------------------------------------- #
 #  helpers                                                                     #
@@ -59,6 +60,16 @@ from .bank import HORIZONS5
 def _rec(bank, d, p):
     return {"day": int(d), "y": bank[d].y, "p": np.asarray(p, float),
             "sec_in_day": bank[d].sec_in_day}
+
+
+def _matured_day_logloss(db, p):
+    """``day_logloss`` on the impressions of day ``db.d`` that have matured
+    by the *next* midnight -- the earliest cutoff a causal loss history or
+    weight update for that day is used at."""
+    m = day_matured_mask(db.sec_in_day)
+    y = np.asarray(db.y, float)[m]
+    p = np.asarray(p, float)[m]
+    return day_logloss(y, p) if len(y) else 0.0
 
 
 def _days(bank, days):
@@ -122,7 +133,7 @@ def arw(bank, days, delta, min_history: int = 3, fallback: str = "expanding"):
         records.append(_rec(bank, d, bank[d].preds[chosen]))
         choices.append({"day": d, "chosen": chosen})
         for h in HORIZONS5:
-            loss_hist[h].append(day_logloss(bank[d].y, bank[d].preds[h]))
+            loss_hist[h].append(_matured_day_logloss(bank[d], bank[d].preds[h]))
     return records, choices
 
 
@@ -145,7 +156,7 @@ def adamoe(bank, days, lam):
         q = preds @ w
         records.append(_rec(bank, d, q))
         trace.append({"day": d, **dict(zip(HORIZONS5, w.tolist()))})
-        losses = np.array([day_logloss(bank[d].y, bank[d].preds[h]) for h in HORIZONS5])
+        losses = np.array([_matured_day_logloss(bank[d], bank[d].preds[h]) for h in HORIZONS5])
         target = _softmax(-losses)
         w = lam * w + (1.0 - lam) * target
         w = w / w.sum()

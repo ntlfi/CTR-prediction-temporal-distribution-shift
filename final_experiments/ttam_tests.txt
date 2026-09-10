@@ -9,5 +9,7 @@
 [PASS] cross-midnight label updates the persistent expert on the next day
 [PASS] AMG-TP memory m_t = (1-rho) m_{t-1} + rho * mean_x pi_deployed_t
 [PASS] identical inputs reproduce identical TTAM outputs
+[PASS] delayed label: flipping day k's unmatured tail leaves day k + k+1 experts unchanged
+[PASS] delayed label: that same tail (now matured) does change day k+2's experts
 
-11 passed, 0 failed
+13 passed, 0 failed

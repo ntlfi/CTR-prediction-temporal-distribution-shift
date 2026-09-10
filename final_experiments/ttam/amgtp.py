@@ -36,6 +36,7 @@ from m5_multiscale_gate import MultiExpertGate, _entropy
 from amgtp_method import PersistenceNet
 
 from .bank import HORIZONS5
+from .maturity import available_mask
 
 SECONDS_PER_DAY = 86_400
 CONTEXT_M = 32           # dimension of the cached per-example context sketch
@@ -80,23 +81,37 @@ def _gate_features(db, C_day, norm_t, recent_loss):
     return feats.astype(np.float32), preds
 
 
-def _state_vector(bank, days, t, T, prev_gate_move, prev_mean_q, m_prev):
-    """r_psi input s_{t-1}, entirely from days < t."""
+def _state_vector(bank, days, t, T, prev_gate_move, prev_mean_q, m_prev, delay_sec):
+    """r_psi input s_{t-1}. Every summary is over labels available by the
+    start of day ``t`` -- the last past day's tail that has not matured by
+    then is excluded (plan: the 30-min delay applies to loss / CTR
+    summaries too, not only the online calibrator queues)."""
     past = [d for d in days if d < t and d in bank]
     norm_t = t / max(T, 1)
     if not past:
         return np.zeros(N_STATE, dtype=np.float32)
     prev = past[-1]
-    recent_loss = np.array([_perday_logloss(bank[prev].y, bank[prev].preds[h]) for h in HORIZONS5])
+
+    def _avail(d):
+        return available_mask(np.full(len(bank[d].sec_in_day), d, np.int64),
+                              bank[d].sec_in_day, t, delay_sec)
+
+    a_prev = _avail(prev)
+    yp = np.asarray(bank[prev].y, float)[a_prev]
+    recent_loss = np.array([_perday_logloss(yp, np.asarray(bank[prev].preds[h], float)[a_prev])
+                            for h in HORIZONS5]) if a_prev.any() else np.zeros(K)
     if len(past) >= 2:
-        pl2 = np.array([_perday_logloss(bank[past[-2]].y, bank[past[-2]].preds[h]) for h in HORIZONS5])
+        a2 = _avail(past[-2])
+        y2 = np.asarray(bank[past[-2]].y, float)[a2]
+        pl2 = np.array([_perday_logloss(y2, np.asarray(bank[past[-2]].preds[h], float)[a2])
+                        for h in HORIZONS5]) if a2.any() else np.zeros(K)
         loss_jump = float(np.abs(recent_loss - pl2).max())
     else:
         loss_jump = 0.0
-    p_short = np.asarray(bank[prev].preds["roll3"], float)
-    p_long = np.asarray(bank[prev].preds["expanding"], float)
-    disagreement = float(np.abs(p_short - p_long).mean())
-    recent_ctr = float(np.asarray(bank[prev].y, float).mean())
+    p_short = np.asarray(bank[prev].preds["roll3"], float)[a_prev]
+    p_long = np.asarray(bank[prev].preds["expanding"], float)[a_prev]
+    disagreement = float(np.abs(p_short - p_long).mean()) if a_prev.any() else 0.0
+    recent_ctr = float(yp.mean()) if a_prev.any() else 0.0
     q_vs_m = float(np.abs(np.asarray(prev_mean_q) - np.asarray(m_prev)).sum()) if prev_mean_q is not None else 0.0
     return np.concatenate([recent_loss,
                            [disagreement, recent_ctr, prev_gate_move, norm_t,
@@ -142,7 +157,8 @@ def run_amgtp5(bank: dict, context_by_day: dict, days, cfg: AMGTPConfig, seed: i
         sec = np.asarray(db.sec_in_day, float)
         C_day = np.asarray(context_by_day[t], dtype=np.float64)
         s_prev = torch.tensor(
-            _state_vector(bank, days, t, T, prev_gate_move, prev_mean_q, m_state.numpy()),
+            _state_vector(bank, days, t, T, prev_gate_move, prev_mean_q, m_state.numpy(),
+                          cfg.delay_sec),
             dtype=torch.float32)
         recent_loss = s_prev.numpy()[:K]
         feats_np, preds_np = _gate_features(db, C_day, t / max(T, 1), recent_loss)

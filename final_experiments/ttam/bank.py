@@ -42,6 +42,8 @@ from sklearn.linear_model import SGDClassifier
 
 from twoscale.data import Dataset
 
+from .maturity import DELAY_SEC, available_mask
+
 HORIZONS5 = ("roll1", "roll3", "roll7", "roll14", "expanding")
 _WINDOW = {"roll1": 1, "roll3": 3, "roll7": 7, "roll14": 14, "expanding": None}
 BACKBONE_ALPHA = 1e-4
@@ -74,13 +76,17 @@ class DayBank5:
     fit_time: float = 0.0
 
 
-def _fit_one(X, day_arr, y, sl, lo, hi, alpha, seed):
-    """Fit the logistic regression whose training rows are days [lo, hi)."""
-    mask = (day_arr >= lo) & (day_arr < hi)
+def _fit_one(X, day_arr, sec_arr, y, sl, lo, hi, alpha, seed, delay_sec):
+    """Fit the logistic regression whose training rows are days [lo, hi)
+    **restricted to labels available by the start of day ``hi``** (the
+    prediction day). This drops day ``hi-1``'s last ``delay_sec`` seconds
+    (and anything on/after ``hi``); days <= ``hi-2`` are unaffected."""
+    avail = available_mask(day_arr, sec_arr, hi, delay_sec)
+    mask = (day_arr >= lo) & avail
     ntr = int(mask.sum())
     n_test = sl.stop - sl.start
     if ntr == 0 or len(np.unique(y[mask])) < 2:
-        base = float(y[sl].mean()) if n_test else 0.0
+        base = float(y[mask].mean()) if ntr else 0.5   # matured-history prior, never y[sl]
         return (lo, hi), np.full(n_test, base), ntr
     clf = SGDClassifier(loss="log_loss", penalty="l2", alpha=alpha, random_state=seed)
     clf.fit(X[mask], y[mask])
@@ -88,7 +94,7 @@ def _fit_one(X, day_arr, y, sl, lo, hi, alpha, seed):
 
 
 def build_bank5(ds: Dataset, eval_days, alpha: float = BACKBONE_ALPHA, seed: int = 0,
-                n_jobs: int = 4, verbose: bool = False) -> dict:
+                n_jobs: int = 4, verbose: bool = False, delay_sec: int = DELAY_SEC) -> dict:
     """Fit every distinct effective expert for every day in ``eval_days``
     (train rows = days < d within the horizon window). Returns
     ``{d: DayBank5}``. Distinct ``(lo, hi)`` training ranges are fitted
@@ -110,7 +116,7 @@ def build_bank5(ds: Dataset, eval_days, alpha: float = BACKBONE_ALPHA, seed: int
 
     t0 = time.time()
     results = Parallel(n_jobs=n_jobs, prefer="threads")(
-        delayed(_fit_one)(ds.X, ds.day, ds.y, slices[d], lo, hi, alpha, seed)
+        delayed(_fit_one)(ds.X, ds.day, ds.sec_in_day, ds.y, slices[d], lo, hi, alpha, seed, delay_sec)
         for d, lo, hi in jobs)
     fitted = {(d, lo, hi): (pred, ntr)
               for (d, lo, hi), ((lo2, hi2), pred, ntr) in zip(jobs, results)}

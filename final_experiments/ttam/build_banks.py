@@ -23,6 +23,7 @@ from twoscale.data import load
 from final_experiments.ttam.bank import (BACKBONE_ALPHA, DayBank5, HORIZONS5,
                                          build_bank5)
 from final_experiments.ttam.amgtp import CONTEXT_M
+from final_experiments.ttam.maturity import DELAY_SEC
 from withinday.contextsketch import build_projection, context_sketch
 
 SEEDS = (0, 1, 2)
@@ -30,7 +31,9 @@ MAX_DAY = {"criteo": 31, "avazu": 10}
 
 
 def cache_path(cache_dir: Path, source: str, seed: int, n_features: int, sample_frac: float) -> Path:
-    return cache_dir / f"{source}_seed{seed}_nf{n_features}_sf{sample_frac:g}.npz"
+    # `_d<delay>` tags the label-maturity rule -- old (leaky) caches without
+    # it are simply not found and get rebuilt.
+    return cache_dir / f"{source}_seed{seed}_nf{n_features}_sf{sample_frac:g}_d{DELAY_SEC}.npz"
 
 
 def context_path(cache_dir: Path, source: str, seed: int, n_features: int, sample_frac: float) -> Path:

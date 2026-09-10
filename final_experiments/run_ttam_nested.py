@@ -1,34 +1,40 @@
-"""Corrected fully-nested rolling-origin evaluation of the nine TTAM
-variants (plan sections 2-6).
+"""Corrected fully-nested rolling-origin evaluation of the 6 main-table
+TTAM methods + the 2x2 ablation (TTAM_FROZEN.md).
 
 Every data-tuned setting is chosen from data strictly before the
 evaluated origin.  For each outer origin ``d`` (Criteo 16-30, Avazu 5-9;
 zero-based):
 
-  * inner validation = the three latest eligible days before ``d``;
+  * inner validation = up to the three latest eligible days before ``d``
+    (the first Avazu origin has only two);
   * one configuration is chosen per knob, shared by seeds 0/1/2, by
-    **mean inner-validation log loss across the seeds** (plan section 3);
+    **mean inner-validation impression-weighted log loss across seeds**;
   * the chosen configuration's state is replayed over the whole prefix
     ``<= d`` to initialise it, then day ``d`` is scored exactly once;
   * day ``d`` influences only later origins.
 
-Staged selection (plan section 6): the historical module is chosen first
-on *uncalibrated* inner loss (pass 1), then the calibration settings on
-the chosen module's causal inner prediction stream (pass 2); pass 3
-replays the frozen winners and scores + stores the origin-day
-predictions.  All three passes read the five-horizon bank and context
-sketch from the disk cache (``final_experiments/ttam/build_banks.py``) so
-the backbone is fitted once.
+Staged selection:
+  pass 1  -- historical module (BFW h*, arw delta, adamoe lambda, amgtp
+             rho, fixed-mixture weights) on *uncalibrated* inner loss.
+  pass 2a -- the AP-OPS **reset-anchor** daily-reset-OPS settings, one
+             grid per historical stream (fixed mixture / expanding /
+             AMG-TP), on that stream's causal inner predictions.
+  pass 2b -- the AP-OPS settings (ons_lam, ons_eta, lambda_AP, tau **and
+             the meta learning rate eta_m**) with the anchor from 2a
+             fixed.
+  pass 3  -- replay the frozen winners, score the origin day, store it.
 
-Maturity rule (plan section 3): a label is eligible only once its 30-min
-delay has elapsed; this is enforced inside the online calibrators
-(``apops`` absolute-time queue) and inside AMG-TP's period update
-(``ttam.amgtp``).  Inner-validation days are wholly in the past of every
-origin, so their labels are all matured for selection.
+Label maturity (30 min / 1800 s) is enforced *everywhere* a cutoff reads
+labels (``final_experiments/ttam/maturity.py``): the expert-bank fits
+(day ``d-1``'s post-84600 s tail excluded), the inner-validation scoring
+(``iw_on``), AMG-TP's state summaries and the ARW / AdaMoE loss histories,
+in addition to the online calibrator queues that already had it. Pending
+labels are kept and picked up by the next cutoff that follows their
+arrival.
 
-Output mirrors ``run_apops_nested.py`` / ``run_rolling.py``:
-``seed{k}/per_day_metrics.csv``, ``nested_origin_manifest.csv``,
-``selected_configs.json``, ``final_predictions/``, ``summary.json``.
+Output: ``seed{k}/per_day_metrics.csv``, ``nested_origin_manifest.csv``,
+``selected_anchors.json``, ``selected_configs.json``,
+``final_predictions/``, ``summary.json``.
 """
 from __future__ import annotations
 
@@ -53,13 +59,9 @@ from final_experiments.ttam.fixed_mix import (effective_weight_report,
 from final_experiments.ttam.amgtp import AMGTPConfig, run_amgtp5
 from final_experiments.ttam import method as V
 from final_experiments.ttam.method import apops_config, apops_on
+from final_experiments.ttam.maturity import available_mask
 from apops.method import build_ap_experts
 from apops.aggregate import MetaConfig, aggregate
-
-# The AP-OPS reset anchor R is the repo's verified Online Platt Scaling with
-# its component-study setting, frozen (dataset-independent 2-parameter map);
-# the standalone ``ops`` arm tunes OPS separately for its own fair best case.
-ANCHOR_OPS_HP = {"B": 0.25, "eta0": 0.3, "schedule": "const", "a_bounds": (0.2, 5.0)}
 
 SEEDS = (0, 1, 2)
 INNER_K = 3
@@ -73,6 +75,8 @@ ARW_DELTA_GRID = [0.05, 0.10, 0.20]
 ADAMOE_LAMBDA_GRID = [0.0, 0.25, 0.50, 0.75, 0.99]
 AMGTP_RHO_GRID = [0.2, 0.3, 0.5]                    # gate/persistence memory rate
 
+# daily-reset OPS grid -- used both for the main-table `ops` arm and, per
+# origin per historical stream, for the AP-OPS **reset-anchor** R (pass 2a).
 OPS_B_GRID = [0.25, 0.5, 1.0]
 OPS_ETA0_GRID = [0.03, 0.1, 0.3]
 OPS_SCHED_GRID = ["const", "inv_sqrt"]
@@ -81,11 +85,11 @@ ONS_LAM_GRID = [0.1, 1.0]
 ONS_ETA_GRID = [0.25, 1.0, 4.0]
 APOPS_LAMBDA_GRID = [0.0, 0.25, 0.50, 0.75, 1.0]
 APOPS_TAU_GRID = [4.0, 16.0, float("inf")]
-APOPS_ETA_M = 100.0                                 # fixed a priori (dataset-independent block-loss scale)
+APOPS_ETA_M_GRID = [30.0, 100.0, 300.0]             # meta learning rate -- now selected per origin (pass 2b)
 
-SEL_BOUNDS = {"a_bounds": [0.2, 5.0], "b_bounds": [-0.25, 0.25]}
+SEL_BOUNDS = {"a_bounds": [0.2, 5.0], "b_bounds": [-0.25, 0.25]}   # persistent-Platt (a,b) box, fixed a priori
 OPS_HP_BASE = {"a_bounds": (0.2, 5.0)}
-S_L_HALF_LIVES = (4.0, 16.0)
+S_L_HALF_LIVES = (4.0, 16.0)                        # S/L expert memory, fixed a priori (AP-OPS component study)
 # Main table (6) + the 2x2 ablation. The ablation crosses
 #   historical predictor in {AMG-TP, expanding-history}  x  calibration in {AP-OPS, none}
 # giving: ttam (AMG-TP + AP-OPS) / amgtp_only (AMG-TP + none) /
@@ -129,8 +133,21 @@ def inner_days_for(d: int, bank_days, warmup: int):
     return eligible[-INNER_K:]
 
 
-def iw_on(records, day_set):
-    return impression_weighted_logloss([r for r in records if r["day"] in day_set])
+def iw_on(records, day_set, origin):
+    """Impression-weighted inner-validation log loss over ``day_set``,
+    restricted to labels available by the start of day ``origin`` -- the
+    latest inner day's post-``86400 - DELAY_SEC`` tail is excluded."""
+    sub = []
+    for r in records:
+        e = r["day"]
+        if e not in day_set:
+            continue
+        sec = np.asarray(r["sec_in_day"])
+        avail = available_mask(np.full(len(sec), e, np.int64), sec, origin, DELAY_SEC)
+        if not avail.any():
+            continue
+        sub.append({"y": np.asarray(r["y"])[avail], "p": np.asarray(r["p"], float)[avail]})
+    return impression_weighted_logloss(sub)
 
 
 def amgtp_cfg(rho: float, delay_sec: int) -> AMGTPConfig:
@@ -153,21 +170,21 @@ def _pass1_origin(bank, ctx, d, bank_days, warmup, seed):
     w = fit_simplex_weights(bank, inner)
     rec["simplex_w"] = w.tolist()
 
-    rec["bfw"] = {h: iw_on(V.q_records(bank, hist, {e: bank[e].preds[h] for e in hist}), iset)
+    rec["bfw"] = {h: iw_on(V.q_records(bank, hist, {e: bank[e].preds[h] for e in hist}), iset, d)
                   for h in HORIZONS5}
     rec["arw"] = {}
     for delta in ARW_DELTA_GRID:
         recs, _ = V.arw(bank, hist, delta=delta)
-        rec["arw"][f"{delta:g}"] = iw_on(recs, iset)
+        rec["arw"][f"{delta:g}"] = iw_on(recs, iset, d)
     rec["adamoe"] = {}
     for lam in ADAMOE_LAMBDA_GRID:
         recs, _ = V.adamoe(bank, hist, lam=lam)
-        rec["adamoe"][f"{lam:g}"] = iw_on(recs, iset)
+        rec["adamoe"][f"{lam:g}"] = iw_on(recs, iset, d)
     rec["amgtp"] = {}
     for rho in AMGTP_RHO_GRID:
         qa, _ = run_amgtp5(bank, ctx, hist, amgtp_cfg(rho, DELAY_SEC), seed=seed)
         recs = V.q_records(bank, hist, qa)
-        rec["amgtp"][f"{rho:g}"] = iw_on(recs, iset)
+        rec["amgtp"][f"{rho:g}"] = iw_on(recs, iset, d)
     print(f"    pass1 origin {d}: inner={inner}", flush=True)
     return d, rec
 
@@ -230,58 +247,86 @@ def _q_streams(bank, ctx, days, modsel, seed):
     return q_fixed, q_exp, qa
 
 
-def _ops_grid_inner(bank, days, q_by_day, iset, block_sec):
+def _ops_grid_inner(bank, days, q_by_day, iset, block_sec, origin):
     rows = {}
     for B, eta0, sched in product(OPS_B_GRID, OPS_ETA0_GRID, OPS_SCHED_GRID):
         hp = {"B": B, "eta0": eta0, "schedule": sched, **OPS_HP_BASE}
         recs = V.ops(bank, days, q_by_day, hp, block_sec, DELAY_SEC)
-        rows[f"B{B:g}_e{eta0:g}_{sched}"] = (iw_on(recs, iset), hp)
+        rows[f"B{B:g}_e{eta0:g}_{sched}"] = (iw_on(recs, iset, origin), hp)
     return rows
 
 
-def _apops_grid_inner(bank, days, q_by_day, iset, block_sec):
-    """(ons_lam, ons_eta) fix the persistent experts; (lambda_AP, tau)
-    are the meta knobs. Experts are built once per (lam, eta)."""
+def _apops_grid_inner(bank, days, q_by_day, iset, block_sec, anchor_hp, origin):
+    """AP-OPS grid with the reset-anchor OPS **fixed** to ``anchor_hp``
+    (selected in pass 2a). (ons_lam, ons_eta) fix the persistent experts --
+    built once per pair; (lambda_AP, tau, eta_m) are the meta knobs."""
     rows = {}
     for lam, eta in product(ONS_LAM_GRID, ONS_ETA_GRID):
         base = apops_config(SEL_BOUNDS, block_sec, DELAY_SEC, ons_lam=lam, ons_eta=eta,
-                            eta_m=APOPS_ETA_M, lambda_ap=0.0, tau_h=4.0,
+                            eta_m=APOPS_ETA_M_GRID[0], lambda_ap=0.0, tau_h=4.0,
                             persist_hl_h=S_L_HALF_LIVES[0])
-        experts, _ = build_ap_experts(bank, days, q_by_day, base, ANCHOR_OPS_HP, learn_slope=True)
-        for lap, tau in product(APOPS_LAMBDA_GRID, APOPS_TAU_GRID):
-            mcfg = MetaConfig(eta_m=APOPS_ETA_M, switch_half_life_h=tau,
+        experts, _ = build_ap_experts(bank, days, q_by_day, base, anchor_hp, learn_slope=True)
+        for lap, tau, em in product(APOPS_LAMBDA_GRID, APOPS_TAU_GRID, APOPS_ETA_M_GRID):
+            mcfg = MetaConfig(eta_m=em, switch_half_life_h=tau,
                               block_sec=block_sec, delay_sec=DELAY_SEC, lambda_ap=lap)
             recs, _ = aggregate(experts, bank, days, mcfg)
-            key = f"lam{lam:g}_eta{eta:g}_lap{lap:g}_tau{tau_key(tau)}"
-            rows[key] = (iw_on(recs, set(iset)),
-                         {"ons_lam": lam, "ons_eta": eta, "lambda_ap": lap, "tau_h": tau})
+            key = f"lam{lam:g}_eta{eta:g}_lap{lap:g}_tau{tau_key(tau)}_em{em:g}"
+            rows[key] = (iw_on(recs, set(iset), origin),
+                         {"ons_lam": lam, "ons_eta": eta, "lambda_ap": lap, "tau_h": tau, "eta_m": em})
     return rows
 
 
-def _pass2_origin(bank, ctx, d, bank_days, warmup, modsel, block_sec, seed):
-    """Calibration-grid inner loss for one outer origin, on the module
-    stream chosen for it in pass 1. Independent across origins."""
+# ---- pass 2a: reset-anchor OPS selection (one grid per historical stream) --- #
+def _pass2a_origin(bank, ctx, d, bank_days, warmup, modsel, block_sec, seed):
     _limit_worker_threads()
     inner = inner_days_for(d, bank_days, warmup)
     iset = set(inner)
     hist = [e for e in bank_days if e < d]
     q_fixed, q_exp, q_amgtp = _q_streams(bank, ctx, hist, modsel, seed)
-
-    rec = {}
-    rec["ops_fixed"] = {k: v[0] for k, v in _ops_grid_inner(bank, hist, q_fixed, iset, block_sec).items()}
-    rec["apops_expanding"] = {k: v[0] for k, v in _apops_grid_inner(bank, hist, q_exp, iset, block_sec).items()}
-    rec["apops_amgtp"] = {k: v[0] for k, v in _apops_grid_inner(bank, hist, q_amgtp, iset, block_sec).items()}
-    print(f"    pass2 origin {d}: seed {seed}", flush=True)
+    rec = {
+        "ops_fixed": {k: v[0] for k, v in _ops_grid_inner(bank, hist, q_fixed, iset, block_sec, d).items()},
+        "ops_expanding": {k: v[0] for k, v in _ops_grid_inner(bank, hist, q_exp, iset, block_sec, d).items()},
+        "ops_amgtp": {k: v[0] for k, v in _ops_grid_inner(bank, hist, q_amgtp, iset, block_sec, d).items()},
+    }
+    print(f"    pass2a origin {d}: seed {seed}", flush=True)
     return d, rec
 
 
-def pass2_seed(bank, ctx, outer_days, warmup, modules, block_sec, seed, n_workers=1):
+# ---- pass 2b: AP-OPS selection with the anchor fixed (incl. eta_m) --------- #
+def _pass2b_origin(bank, ctx, d, bank_days, warmup, modsel, anchors, block_sec, seed):
+    _limit_worker_threads()
+    inner = inner_days_for(d, bank_days, warmup)
+    iset = set(inner)
+    hist = [e for e in bank_days if e < d]
+    q_exp = _q_expanding(bank, hist)
+    q_amgtp, _ = run_amgtp5(bank, ctx, hist, amgtp_cfg(modsel["amgtp_rho"], DELAY_SEC), seed=seed)
+    rec = {
+        "apops_expanding": {k: v[0] for k, v in _apops_grid_inner(
+            bank, hist, q_exp, iset, block_sec, anchors["anchor_expanding"], d).items()},
+        "apops_amgtp": {k: v[0] for k, v in _apops_grid_inner(
+            bank, hist, q_amgtp, iset, block_sec, anchors["anchor_amgtp"], d).items()},
+    }
+    print(f"    pass2b origin {d}: seed {seed}", flush=True)
+    return d, rec
+
+
+def pass2a_seed(bank, ctx, outer_days, warmup, modules, block_sec, seed, n_workers=1):
     bank_days = sorted(bank)
     todo = [d for d in outer_days if d in bank and str(d) in modules]
-    results = Parallel(n_jobs=n_workers, prefer="processes")(
-        delayed(_pass2_origin)(bank, ctx, d, bank_days, warmup, modules[str(d)], block_sec, seed)
+    r = Parallel(n_jobs=n_workers, prefer="processes")(
+        delayed(_pass2a_origin)(bank, ctx, d, bank_days, warmup, modules[str(d)], block_sec, seed)
         for d in todo)
-    return dict(results)
+    return dict(r)
+
+
+def pass2b_seed(bank, ctx, outer_days, warmup, modules, anchors, block_sec, seed, n_workers=1):
+    bank_days = sorted(bank)
+    todo = [d for d in outer_days if d in bank and str(d) in modules and str(d) in anchors]
+    r = Parallel(n_jobs=n_workers, prefer="processes")(
+        delayed(_pass2b_origin)(bank, ctx, d, bank_days, warmup, modules[str(d)],
+                                anchors[str(d)], block_sec, seed)
+        for d in todo)
+    return dict(r)
 
 
 def _decode_ops(key: str) -> dict:
@@ -290,27 +335,45 @@ def _decode_ops(key: str) -> dict:
 
 
 def _decode_apops(key: str) -> dict:
-    lam, eta, lap, tau = key.split("_")
+    lam, eta, lap, tau, em = key.split("_")
     return {"ons_lam": float(lam[3:]), "ons_eta": float(eta[3:]), "lambda_ap": float(lap[3:]),
-            "tau_h": (float("inf") if tau[3:] == "inf" else float(tau[3:]))}
+            "tau_h": (float("inf") if tau[3:] == "inf" else float(tau[3:])), "eta_m": float(em[2:])}
 
 
-def pick_calibration(pass2: dict, modules: dict, outer_days) -> dict:
+def _seed_mean_argmin(per_seed, key):
+    cands = per_seed[0][key].keys()
+    means = {c: float(np.mean([ps[key][c] for ps in per_seed])) for c in cands}
+    return min(means, key=means.get)
+
+
+def pick_anchors(pass2a: dict, modules: dict, outer_days) -> dict:
+    """Per origin, the reset-anchor daily-reset-OPS config for each
+    historical stream, shared across seeds (mean inner loss)."""
     sel = {}
     for d in outer_days:
-        per_seed = [pass2[str(s)][str(d)] for s in SEEDS if str(d) in pass2.get(str(s), {})]
+        per_seed = [pass2a[str(s)][str(d)] for s in SEEDS if str(d) in pass2a.get(str(s), {})]
         if not per_seed:
             continue
+        sel[str(d)] = {
+            "ops": _decode_ops(_seed_mean_argmin(per_seed, "ops_fixed")),           # main-table `ops` arm
+            "anchor_expanding": _decode_ops(_seed_mean_argmin(per_seed, "ops_expanding")),
+            "anchor_amgtp": _decode_ops(_seed_mean_argmin(per_seed, "ops_amgtp")),
+        }
+    return sel
 
-        def best(key):
-            cands = per_seed[0][key].keys()
-            means = {c: float(np.mean([ps[key][c] for ps in per_seed])) for c in cands}
-            return min(means, key=means.get)
 
+def pick_calibration(pass2b: dict, anchors: dict, modules: dict, outer_days) -> dict:
+    sel = {}
+    for d in outer_days:
+        per_seed = [pass2b[str(s)][str(d)] for s in SEEDS if str(d) in pass2b.get(str(s), {})]
+        if not per_seed or str(d) not in anchors:
+            continue
         cfg = dict(modules[str(d)])
-        cfg["ops"] = _decode_ops(best("ops_fixed"))
-        cfg["apops_expanding"] = _decode_apops(best("apops_expanding"))
-        cfg["apops_amgtp"] = _decode_apops(best("apops_amgtp"))
+        cfg["ops"] = anchors[str(d)]["ops"]
+        cfg["anchor_expanding"] = anchors[str(d)]["anchor_expanding"]
+        cfg["anchor_amgtp"] = anchors[str(d)]["anchor_amgtp"]
+        cfg["apops_expanding"] = _decode_apops(_seed_mean_argmin(per_seed, "apops_expanding"))
+        cfg["apops_amgtp"] = _decode_apops(_seed_mean_argmin(per_seed, "apops_amgtp"))
         sel[str(d)] = cfg
     return sel
 
@@ -327,14 +390,13 @@ def score_origin(bank, ctx, d, warmup, sel, block_sec, seed):
     q_exp = _q_expanding(bank, prefix)                    # 2x2 expanding cells
     q_amgtp, amg_trace = run_amgtp5(bank, ctx, prefix, amgtp_cfg(sel["amgtp_rho"], DELAY_SEC), seed=seed)
 
+    ae, aa = sel["apops_expanding"], sel["apops_amgtp"]
     ac_exp = apops_config(SEL_BOUNDS, block_sec, DELAY_SEC,
-                          ons_lam=sel["apops_expanding"]["ons_lam"], ons_eta=sel["apops_expanding"]["ons_eta"],
-                          eta_m=APOPS_ETA_M, lambda_ap=sel["apops_expanding"]["lambda_ap"],
-                          tau_h=sel["apops_expanding"]["tau_h"], persist_hl_h=S_L_HALF_LIVES[0])
+                          ons_lam=ae["ons_lam"], ons_eta=ae["ons_eta"], eta_m=ae["eta_m"],
+                          lambda_ap=ae["lambda_ap"], tau_h=ae["tau_h"], persist_hl_h=S_L_HALF_LIVES[0])
     ac_amgtp = apops_config(SEL_BOUNDS, block_sec, DELAY_SEC,
-                            ons_lam=sel["apops_amgtp"]["ons_lam"], ons_eta=sel["apops_amgtp"]["ons_eta"],
-                            eta_m=APOPS_ETA_M, lambda_ap=sel["apops_amgtp"]["lambda_ap"],
-                            tau_h=sel["apops_amgtp"]["tau_h"], persist_hl_h=S_L_HALF_LIVES[0])
+                            ons_lam=aa["ons_lam"], ons_eta=aa["ons_eta"], eta_m=aa["eta_m"],
+                            lambda_ap=aa["lambda_ap"], tau_h=aa["tau_h"], persist_hl_h=S_L_HALF_LIVES[0])
 
     streams = {
         "expanding": V.expanding(bank, prefix),
@@ -344,8 +406,8 @@ def score_origin(bank, ctx, d, warmup, sel, block_sec, seed):
         "ops": V.ops(bank, prefix, q_fixed, sel["ops"], block_sec, DELAY_SEC),
         # 2x2 ablation: {AMG-TP, expanding} x {AP-OPS, none}
         "amgtp_only": V.q_records(bank, prefix, q_amgtp),
-        "expanding_apops": apops_on(bank, prefix, q_exp, ac_exp, ANCHOR_OPS_HP)[0],
-        "ttam": apops_on(bank, prefix, q_amgtp, ac_amgtp, ANCHOR_OPS_HP)[0],
+        "expanding_apops": apops_on(bank, prefix, q_exp, ac_exp, sel["anchor_expanding"])[0],
+        "ttam": apops_on(bank, prefix, q_amgtp, ac_amgtp, sel["anchor_amgtp"])[0],
     }
     day_rows, preds = [], {}
     for name, recs in streams.items():
@@ -436,29 +498,44 @@ def main():
         print(f"pass 1 done ({time.time() - t0:.0f}s)", flush=True)
         return
 
-    # ---- pass 2 --------------------------------------------------------
-    p2_path = out / "pass2_calib_inner.json"
-    if p2_path.exists():
-        pass2 = json.loads(p2_path.read_text())
-    else:
-        pass2 = {}
+    # ---- pass 2a: reset-anchor OPS selection --------------------------
+    def _run_seeded(path, seed_fn, per_seed_name):
+        agg_path = out / path
+        if agg_path.exists():
+            return json.loads(agg_path.read_text())
+        agg = {}
         for seed in SEEDS:
-            sp = out / f"pass2_seed{seed}.json"          # per-seed resume point
+            sp = out / per_seed_name(seed)
             if sp.exists():
-                pass2[str(seed)] = json.loads(sp.read_text())
-                print(f"  pass2 seed {seed}: resumed from {sp.name}", flush=True)
+                agg[str(seed)] = json.loads(sp.read_text())
+                print(f"  {sp.stem}: resumed", flush=True)
                 continue
             bank, ctx = bank_for(seed)
-            pass2[str(seed)] = {str(k): v for k, v in
-                                pass2_seed(bank, ctx, outer, warmup, modules, block_sec, seed,
-                                           n_workers=args.n_workers).items()}
+            agg[str(seed)] = {str(k): v for k, v in seed_fn(bank, ctx, seed).items()}
             del bank, ctx
-            sp.write_text(json.dumps(pass2[str(seed)], indent=2, default=float))
-        p2_path.write_text(json.dumps(pass2, indent=2, default=float))
-    selected = pick_calibration(pass2, modules, outer)
+            sp.write_text(json.dumps(agg[str(seed)], indent=2, default=float))
+        agg_path.write_text(json.dumps(agg, indent=2, default=float))
+        return agg
+
+    pass2a = _run_seeded(
+        "pass2a_anchor_inner.json",
+        lambda bank, ctx, seed: pass2a_seed(bank, ctx, outer, warmup, modules, block_sec, seed,
+                                            n_workers=args.n_workers),
+        lambda s: f"pass2a_seed{s}.json")
+    anchors = pick_anchors(pass2a, modules, outer)
+    (out / "selected_anchors.json").write_text(json.dumps(anchors, indent=2, default=float))
+
+    # ---- pass 2b: AP-OPS selection (anchor fixed, eta_m in grid) ------
+    pass2b = _run_seeded(
+        "pass2b_apops_inner.json",
+        lambda bank, ctx, seed: pass2b_seed(bank, ctx, outer, warmup, modules, anchors, block_sec, seed,
+                                            n_workers=args.n_workers),
+        lambda s: f"pass2b_seed{s}.json")
+    selected = pick_calibration(pass2b, anchors, modules, outer)
     (out / "selected_configs.json").write_text(json.dumps(
         {"source": args.source, "code_commit": git_commit(), "outer_days": outer,
-         "block_sec": block_sec, "delay_sec": DELAY_SEC, "eta_m": APOPS_ETA_M,
+         "block_sec": block_sec, "delay_sec": DELAY_SEC,
+         "eta_m_grid": APOPS_ETA_M_GRID, "anchor_ops_grid": "OPS_{B,eta0,sched}",
          "s_l_half_lives_h": list(S_L_HALF_LIVES), "per_origin": selected}, indent=2, default=float))
     if args.only_pass == 2:
         print(f"pass 2 done ({time.time() - t0:.0f}s)", flush=True)
@@ -502,7 +579,8 @@ def main():
                   "amgtp_rho": AMGTP_RHO_GRID, "ops_B": OPS_B_GRID, "ops_eta0": OPS_ETA0_GRID,
                   "ops_sched": OPS_SCHED_GRID, "ons_lam": ONS_LAM_GRID, "ons_eta": ONS_ETA_GRID,
                   "apops_lambda": APOPS_LAMBDA_GRID, "apops_tau": [tau_key(t) for t in APOPS_TAU_GRID],
-                  "eta_m_fixed": APOPS_ETA_M},
+                  "apops_eta_m": APOPS_ETA_M_GRID,
+                  "anchor_ops": "per-origin, per-stream, from OPS_{B,eta0,sched}"},
     }, indent=2, default=float))
     print(f"\nnested TTAM run done in {time.time() - t0:.0f}s -> {out}/", flush=True)
 
