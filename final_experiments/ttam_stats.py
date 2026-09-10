@@ -129,7 +129,11 @@ def paired_table(wide_ll: pd.DataFrame, methods: list, wide_secondary: dict) -> 
             "D": D,
         }
         for sname, sw in wide_secondary.items():
-            if m in sw.columns:
+            if isinstance(sw, pd.Series):        # one impression-weighted scalar per method
+                if m in sw.index:
+                    row[f"appendix_{sname}"] = float(sw[m])
+                    row[f"appendix_{sname}_ttam"] = float(sw[TTAM])
+            elif m in sw.columns:                # equal-day-averaged per-day frame (Brier, ECE)
                 row[f"appendix_{sname}"] = float(sw[m].to_numpy().mean())
                 row[f"appendix_{sname}_ttam"] = float(sw[TTAM].to_numpy().mean())
         rows.append(row)
@@ -209,13 +213,15 @@ def analyse(result_dir: Path, label: str) -> dict:
     raw = load_per_seed(result_dir)
     wide_ll = seed_average(raw, "log_loss")
 
-    # impression-weighted log loss per (method, day): sum_s sum_i ll / sum_s n
+    # appendix impression-weighted log loss: ONE scalar per method =
+    #   sum over every (day, seed) cell of (mean_loss * n)  /  sum of n
+    # (the old code impression-weighted within a day then averaged days
+    #  equally -- double-counting the equal-day weighting).
     raw["ll_sum"] = raw["log_loss"] * raw["n"]
-    agg = raw.groupby(["method", "day"])[["ll_sum", "n"]].sum().reset_index()
-    agg["iwll"] = agg["ll_sum"] / agg["n"]
-    iw = agg.pivot(index="day", columns="method", values="iwll").sort_index()
+    iw = raw.groupby("method").apply(
+        lambda g: g["ll_sum"].sum() / g["n"].sum(), include_groups=False)
     secondary = {"iw_log_loss": iw}
-    for col in ("brier", "ece"):
+    for col in ("brier", "ece"):     # secondary appendix metrics: seed-averaged, equal-day
         if col in raw.columns:
             secondary[col] = seed_average(raw, col)
 

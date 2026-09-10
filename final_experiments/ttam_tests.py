@@ -164,6 +164,28 @@ def run(data_path, sample_frac, n_features, n_jobs):
     check("identical inputs reproduce identical TTAM outputs",
           np.array_equal(_cat(ttam_a), _cat(ttam_again)))
 
+    # 8. 30-min label delay in the historical / expert-bank side:
+    #    flipping day k's UNMATURED tail (sec_in_day > 86400 - 1800) must
+    #    leave day k's and day k+1's expert predictions unchanged (both
+    #    training cutoffs precede those labels' arrival) but change day k+2.
+    k = 6
+    slk = ds.day_slice(k)
+    tail = np.asarray(ds.sec_in_day[slk]) > (86400 - delay_sec)
+    if tail.any() and (k + 2) in bank:
+        y_pert = np.asarray(ds.y).copy()
+        idx = np.arange(slk.start, slk.stop)[tail]
+        y_pert[idx] = 1 - y_pert[idx]
+        ds_p = dc_replace(ds, y=y_pert.astype(ds.y.dtype))
+        bank_p = build_bank5(ds_p, days, seed=0, n_jobs=n_jobs, verbose=False)
+        same_k = all(np.array_equal(bank[k].preds[h], bank_p[k].preds[h]) for h in HORIZONS5)
+        same_k1 = all(np.array_equal(bank[k + 1].preds[h], bank_p[k + 1].preds[h]) for h in HORIZONS5)
+        changed_k2 = any(not np.array_equal(bank[k + 2].preds[h], bank_p[k + 2].preds[h])
+                         for h in HORIZONS5)
+        check("delayed label: flipping day k's unmatured tail leaves day k + k+1 experts unchanged",
+              same_k and same_k1)
+        check("delayed label: that same tail (now matured) does change day k+2's experts",
+              changed_k2)
+
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)

@@ -110,12 +110,17 @@ def analyse(nested_out: Path, cost_by_day: dict) -> dict:
                     continue
                 p = z[m].astype(np.float64)
                 for frac in BUDGET_FRACS:
-                    cl, blo, bhi = clicks_at_spend(p, y, cost_d, frac * ref_cost)
+                    target = frac * ref_cost
+                    cl, blo, bhi = clicks_at_spend(p, y, cost_d, target)
+                    # target lies strictly inside a non-degenerate bracket iff it was
+                    # interpolated rather than clamped to a frontier endpoint.
+                    inside = bool(blo < target < bhi) or bool(blo == bhi == target)
                     # paced daily-budget realisation (secondary / spend-honest)
-                    ps, _ = paced_auction(p, y, cost_d, np.zeros(len(p), int), frac * ref_cost)
+                    ps, _ = paced_auction(p, y, cost_d, np.zeros(len(p), int), target)
                     per_cell.append({"origin": d, "seed": s, "method": m, "budget_frac": frac,
-                                     "ref_cost": ref_cost, "clicks_matched": cl,
+                                     "ref_cost": ref_cost, "target_spend": target, "clicks_matched": cl,
                                      "bracket_spend_lo": blo, "bracket_spend_hi": bhi,
+                                     "target_in_bracket": inside, "realized_spend": ps["spend"],
                                      "paced_clicks": ps["clicks"], "paced_spend": ps["spend"]})
     return pd.DataFrame(per_cell), origins
 
@@ -176,6 +181,14 @@ def main():
     cell, origins = analyse(nested_out, cost_by_day)
     cell.to_csv(out / "bidding_cells.csv", index=False)
 
+    # every target must sit inside a real interpolation bracket -- report it
+    n_cells = len(cell)
+    n_inside = int(cell["target_in_bracket"].sum())
+    clamped = cell.loc[~cell["target_in_bracket"], ["origin", "seed", "method", "budget_frac"]]
+    bracket_ok = n_inside == n_cells
+    print(f"bracket check: {n_inside}/{n_cells} target spends inside a non-degenerate "
+          f"interpolation bracket" + ("" if bracket_ok else f"  ({len(clamped)} clamped to a frontier endpoint)"))
+
     tables = {}
     for frac in BUDGET_FRACS:
         t = paired_bidding_table(cell, frac)
@@ -185,18 +198,26 @@ def main():
     primary = paired_bidding_table(cell, PRIMARY_FRAC)
     (out / "summary.json").write_text(json.dumps({
         "source": "criteo", "primary_budget_frac": PRIMARY_FRAC,
+        "result_kind": "interpolated offline replay",
         "reference_cost": "sum of recorded display cost over each origin day's impressions",
         "budgets_reset": "daily; identical across paired methods per origin",
         "auction_rule": "b_i = scale * pctr_i ; win iff b_i >= cost_i ; pay cost_i on win",
-        "interpolation": "clicks interpolated to the common spend on each method's own "
-                         "global-scale frontier; bracketed on spend only; never on test clicks",
+        "interpolation": "clicks interpolated to the common per-origin target spend on each "
+                         "method's own global-scale frontier; bracketed on spend only, never on "
+                         "test clicks; results are an interpolated offline replay, not a live policy",
+        "bracket_check": {"cells": n_cells, "target_inside_bracket": n_inside,
+                          "all_inside": bracket_ok,
+                          "clamped_cells": clamped.to_dict("records") if not bracket_ok else []},
+        "realized_spend_note": "per-cell realized (paced) spend recorded in bidding_cells.csv "
+                               "(realized_spend / paced_spend columns)",
         "origins": origins, "resample_seed": RESAMPLE_SEED, "n_boot": N_BOOT,
         "main_table_primary": primary.to_dict("records"), "appendix_tables": tables,
-        "avazu": "pending -- no recorded price field; a simulated price model would need a "
-                 "separate frozen specification (plan section 10).",
+        "avazu": "outside the main experiment -- no recorded price field; a simulated price model "
+                 "would need a separate frozen specification (plan section 10).",
     }, indent=2, default=float))
 
-    print("\n=== TTAM downstream bidding (Criteo, 25% daily budget, matched spend) ===")
+    print("\n=== TTAM downstream bidding (Criteo, 25% daily budget, matched spend; "
+          "interpolated offline replay) ===")
     print(primary.to_string(index=False))
     print(f"\n-> {out}/")
 
